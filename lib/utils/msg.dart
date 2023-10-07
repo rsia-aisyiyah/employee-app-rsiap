@@ -15,6 +15,7 @@ class Msg {
       ),
       duration: const Duration(seconds: snackBarDuration),
       backgroundColor: primaryColor,
+      behavior: SnackBarBehavior.floating,
     ));
   }
 
@@ -41,6 +42,7 @@ class Msg {
       ),
       duration: const Duration(seconds: snackBarDuration),
       backgroundColor: successColor,
+      behavior: SnackBarBehavior.floating,
     ));
   }
 
@@ -67,6 +69,7 @@ class Msg {
       ),
       duration: const Duration(seconds: snackBarDuration),
       backgroundColor: successColor,
+      behavior: SnackBarBehavior.floating,
     ));
   }
 
@@ -93,6 +96,7 @@ class Msg {
       ),
       duration: const Duration(seconds: snackBarDuration),
       backgroundColor: successColor,
+      behavior: SnackBarBehavior.floating,
     ));
   }
 
@@ -121,6 +125,7 @@ class Msg {
       ),
       duration: const Duration(seconds: snackBarDuration),
       backgroundColor: errorColor,
+      behavior: SnackBarBehavior.floating,
     ));
   }
 }

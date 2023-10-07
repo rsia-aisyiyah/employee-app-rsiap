@@ -3,32 +3,30 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/request.dart';
-import 'package:rsia_employee_app/components/cards/card_berkas_pegawai.dart';
+import 'package:rsia_employee_app/components/cards/card_file_manager.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class BerkasPegawai extends StatefulWidget {
-  const BerkasPegawai({super.key});
+class FileManager extends StatefulWidget {
+  const FileManager({super.key});
 
   @override
-  State<BerkasPegawai> createState() => _BerkasPegawaiState();
+  State<FileManager> createState() => _FileManagerState();
 }
 
-class _BerkasPegawaiState extends State<BerkasPegawai> {
-  SharedPreferences? pref;
-  List dataBerkas = [];
+class _FileManagerState extends State<FileManager> {
+  bool isLoding = true;
+  List dataFileManager = [];
   late String title;
   late String url;
-  late String nik;
-  bool isLoding = true;
 
   @override
   void initState() {
     super.initState();
     _initialSet();
-    fetchBerkas().then((value) {
+    fetchFileManager().then((value) {
       if (mounted) {
         _setData(value);
       }
@@ -36,32 +34,28 @@ class _BerkasPegawaiState extends State<BerkasPegawai> {
   }
 
   _initialSet() {
-    title = "Berkas Pegawai";
-    url = "/pegawai/detail";
+    title = "Dokumen & Surat";
+    url = "/file-manager";
   }
 
   _setData(value) {
     print(value['data']);
     if (value['success']) {
       setState(() {
-        dataBerkas = value['data']['berkas_pegawai'] ?? [];
+        dataFileManager = value['data'] ?? [];
         isLoding = false;
       });
     } else {
       setState(() {
         isLoding = false;
-        dataBerkas = [];
+        dataFileManager = [];
       });
     }
   }
 
-  Future fetchBerkas() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
-    nik = decodeToken['sub'];
+  Future fetchFileManager() async {
     var strUrl = url;
-    var res = await Api().postData({'nik': nik}, strUrl);
+    var res = await Api().getData(strUrl);
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
       print(body);
@@ -85,7 +79,7 @@ class _BerkasPegawaiState extends State<BerkasPegawai> {
         backgroundColor: bgColor,
         appBar: AppBar(
           title: Text(
-            "Berkas Kepegawaian",
+            "Dokumen & Surat",
             style: TextStyle(
               color: textWhite,
               fontSize: 20,
@@ -101,13 +95,13 @@ class _BerkasPegawaiState extends State<BerkasPegawai> {
                 shrinkWrap: true,
                 physics: ClampingScrollPhysics(),
                 padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
-                itemCount: dataBerkas.isEmpty ? 1 : dataBerkas.length,
+                itemCount: dataFileManager.isEmpty ? 1 : dataFileManager.length,
                 itemBuilder: (context, index) {
-                  if (dataBerkas.isNotEmpty) {
+                  if (dataFileManager.isNotEmpty) {
                     return InkWell(
                       onTap: () {},
-                      child: cardBerkasPegawai(
-                          dataBerkasPegawai: dataBerkas[index]),
+                      child: cardFileManager(
+                          dataFileManager: dataFileManager[index]),
                     );
                   }
                 },

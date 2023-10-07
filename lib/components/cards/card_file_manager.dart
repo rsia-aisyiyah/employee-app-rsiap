@@ -16,20 +16,20 @@ import 'package:open_file_plus/open_file_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
-// cardBerkasPegawai(berkas) {
+// cardFileManager(berkas) {
 //   print(berkas['master_berkas_pegawai']['nama_berkas']);
-//   return cardBerkasPegawai(berkas);
+//   return cardFileManager(berkas);
 // }
 
-class cardBerkasPegawai extends StatefulWidget {
-  final Map dataBerkasPegawai;
-  const cardBerkasPegawai({super.key, required this.dataBerkasPegawai});
+class cardFileManager extends StatefulWidget {
+  final Map dataFileManager;
+  const cardFileManager({super.key, required this.dataFileManager});
 
   @override
-  State<cardBerkasPegawai> createState() => _cardBerkasPegawaiState();
+  State<cardFileManager> createState() => _cardFileManagerState();
 }
 
-class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
+class _cardFileManagerState extends State<cardFileManager> {
   bool isHAveDownloading = false;
 
   bool downloading = false;
@@ -39,7 +39,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
   String filePath = '';
   var error = '';
   double progress = 0;
-  String baseUrl = 'https://sim.rsiaaisyiyah.com/webapps/penggajian/';
+  String baseUrl = 'https://sim.rsiaaisyiyah.com/rsiap/file/berkas/';
   String fileExt = '';
 
   @override
@@ -148,7 +148,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
   }
 
   void checkFile() async {
-    String url = baseUrl + widget.dataBerkasPegawai['berkas'];
+    String url = baseUrl + widget.dataFileManager['file'];
     var dir;
     if (Platform.isAndroid) {
       dir = (await getExternalStorageDirectory())?.path;
@@ -158,6 +158,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
     filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
     fileExt = url.substring(url.lastIndexOf('.') + 1).toUpperCase();
 
+    print(fileExt);
     print("Lokasi File $filePath");
 
     File file = File(filePath);
@@ -165,11 +166,11 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
     if (isExist) {
       setState(() {
         isHAveDownloading = true;
-        fileExt;
+        fileExt = url.substring(url.lastIndexOf('.') + 1).toUpperCase();
       });
     } else {
       setState(() {
-        fileExt;
+        fileExt = url.substring(url.lastIndexOf('.') + 1).toUpperCase();
       });
     }
   }
@@ -257,8 +258,8 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withOpacity(0.5),
-                        blurRadius: 1,
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 0,
                         offset: const Offset(2, 2),
                       )
                     ],
@@ -270,8 +271,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.dataBerkasPegawai['master_berkas_pegawai']
-                              ['nama_berkas'],
+                          widget.dataFileManager['nama_file'],
                           style: TextStyle(
                               fontSize: 14, fontWeight: FontWeight.w500),
                         )
@@ -328,15 +328,15 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                   height: 70,
                   width: (MediaQuery.of(context).size.width - 35) * 0.2,
                   decoration: BoxDecoration(
-                    color: bgWhite,
-                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withOpacity(0.5),
-                        blurRadius: 1,
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 0,
                         offset: const Offset(2, 2),
                       )
                     ],
+                    color: bgWhite,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -345,9 +345,9 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                       InkWell(
                           onTap: () {
                             print(baseUrl +
-                                widget.dataBerkasPegawai['berkas'].toString());
+                                widget.dataFileManager['file'].toString());
                             requestPermission(baseUrl +
-                                widget.dataBerkasPegawai['berkas'].toString());
+                                widget.dataFileManager['file'].toString());
                           },
                           child: Stack(
                             alignment: Alignment.center,
@@ -405,11 +405,18 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                 //       ),
                 //       color: bgWhite,
                 //     ),
-                //     child: Icon(
-                //       Icons.picture_as_pdf,
-                //       color: Colors.red,
-                //       size: 18,
+                //     child: Padding(
+                //       padding: const EdgeInsets.all(1.0),
+                //       child: Text(
+                //         fileExt,
+                //         style: TextStyle(fontSize: 10),
+                //       ),
                 //     ),
+                //     // child: Icon(
+                //     //   Icons.picture_as_pdf,
+                //     //   color: Colors.red,
+                //     //   size: 18,
+                //     // ),
                 //   ),
                 // ),
               ],

@@ -138,90 +138,90 @@ class _ProfilePageState extends State<ProfilePage> {
         ? loadingku()
         : Scaffold(
             backgroundColor: bgColor,
-            body: SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          height: 110,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                                image:
-                                    AssetImage("assets/images/depan-rsia.jpg"),
-                                fit: BoxFit.cover,
-                                opacity: 0.3),
-                            color: primaryColor.withOpacity(0.4),
-                            borderRadius: BorderRadius.only(
-                                bottomRight: Radius.circular(50)),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 5, horizontal: 0),
-                                child: Image.asset(
-                                  'assets/images/logo-text-rsiap2.png',
-                                  // height: 70,
-                                  width: 50,
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    vertical: 10, horizontal: 20),
-                                child: Image.asset(
-                                  'assets/images/logo-larsi.png',
-                                  // height: 100,
-                                  width: 70,
-                                ),
-                              ),
-                            ],
-                          ),
+            body: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        height: 110 + MediaQuery.of(context).padding.top,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                              image: AssetImage("assets/images/depan-rsia.jpg"),
+                              fit: BoxFit.cover,
+                              opacity: 0.3),
+                          color: primaryColor.withOpacity(0.4),
+                          borderRadius: BorderRadius.only(
+                              bottomRight: Radius.circular(50)),
                         ),
-                        Positioned(
-                            bottom: -15,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 140),
-                              child: Text(
-                                "Masa Kerja : " +
-                                    duration.years.toString() +
-                                    " th " +
-                                    duration.months.toString() +
-                                    " bln " +
-                                    duration.days.toString() +
-                                    " hr ",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 5),
+                              child: Image.asset(
+                                'assets/images/logo-rsia-aisyiyah.png',
+                                height: 80 + MediaQuery.of(context).padding.top,
+                                width: 85,
                               ),
-                            )),
-                        Positioned(
-                            bottom: -30,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 140),
-                              child: Text(
-                                "Mulai bergabung " +
-                                    Helper.formatDate3(
-                                        _bio['mulai_kontrak'].toString()),
-                                style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.italic),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 20),
+                              child: Image.asset(
+                                'assets/images/logo-larsi.png',
+                                height: 80 + MediaQuery.of(context).padding.top,
+                                width: 85,
                               ),
-                            )),
-                        Positioned(
-                          bottom: -55,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                          bottom: -15,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 140),
+                            child: Text(
+                              "Masa Kerja : " +
+                                  duration.years.toString() +
+                                  " th " +
+                                  duration.months.toString() +
+                                  " bln " +
+                                  duration.days.toString() +
+                                  " hr ",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )),
+                      Positioned(
+                          bottom: -30,
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 140),
+                            child: Text(
+                              "Mulai bergabung " +
+                                  Helper.formatDate3(
+                                      _bio['mulai_kontrak'].toString()),
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w400,
+                                  fontStyle: FontStyle.italic),
+                            ),
+                          )),
+                      Positioned(
+                        bottom: -55,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: InkWell(
+                            onTap: () {
+                              _logout();
+                            },
                             child: Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(100.0),
@@ -260,44 +260,50 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 60,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        _bio['nama'].toString(),
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 60,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _bio['nama'].toString(),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(
-                      height: 5,
+                  ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _bio['nik'].toString(),
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        _bio['nik'].toString(),
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w400),
-                      ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _bio['dpt']['nama'].toString(),
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        _bio['dpt']['nama'].toString(),
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w400),
-                      ),
-                    ),
-                    SizedBox(
-                      height: 15,
-                    ),
-                    cardBio(dataTbl, dataTbl2),
-                  ],
-                ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  cardBio(
+                    dataTbl,
+                    dataTbl2,
+                  ),
+                  SizedBox(
+                    height: 70,
+                  )
+                ],
               ),
             ),
           );
@@ -325,10 +331,8 @@ Widget cardBio(data, data2) {
     child: Container(
       decoration: BoxDecoration(
         color: bgWhite,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
+        borderRadius: const BorderRadius.all(Radius.circular(10)),
+        border: Border.all(width: 0.5),
         boxShadow: [
           BoxShadow(
             color: textColor.withOpacity(0.1),

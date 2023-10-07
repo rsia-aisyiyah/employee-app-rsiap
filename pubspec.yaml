@@ -47,9 +47,18 @@ dependencies:
   mailer: ^6.0.0
   flutter_otp_text_field: ^1.1.1
   age_calculator: ^1.0.0
-  flutter_downloader: ^1.11.3
+  flutter_downloader: 
   path_provider: ^2.1.1
   permission_handler: ^11.0.0
+  dio:
+  open_file_plus:
+  app_settings:
+  flutter_svg:
+  firebase_core: ^2.15.0
+  firebase_messaging: ^14.6.5
+  flutter_local_notifications: ^15.1.0+1
+  firebase_analytics: ^10.5.0
+
 
 
 
@@ -83,6 +92,7 @@ flutter:
     - assets/images/logo-text-rsiap.png
     - assets/images/logo-text-rsiap2.png
     - assets/images/depan-rsia.jpg
+    - assets/images/logo-rsia-aisyiyah.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

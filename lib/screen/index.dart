@@ -1,7 +1,12 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:rsia_employee_app/api/firebase_api.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/config.dart';
+import 'package:rsia_employee_app/screen/menu/cuti.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IndexScreen extends StatefulWidget {
   const IndexScreen({super.key});
@@ -17,6 +22,43 @@ class _IndexScreenState extends State<IndexScreen> {
   @override
   void initState() {
     super.initState();
+    // firebaseInit();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Got a message whilst in the foreground!');
+      print('Message data: ${message.data}');
+
+      if (message.notification != null) {
+        print('Message also contained a notification: ${message.notification}');
+      }
+    });
+  }
+
+  void firebaseInit() async {
+    await Firebase.initializeApp();
+    await FirebaseApi().initNotif(context);
+    // await FirebaseMessaging.instance.subscribeToTopic('pegawai');
+    final fcmToken = await FirebaseMessaging.instance.getToken();
+    print(fcmToken);
+    SharedPreferences.getInstance().then((prefs) async {
+      var nik = prefs.getString('sub')!;
+      //   var spesialis = prefs.getString('spesialis')!.toLowerCase();
+
+      await FirebaseMessaging.instance
+          .subscribeToTopic("${nik.replaceAll('"', '')}");
+
+      //   if (spesialis.contains('kandungan')) {
+      //     await FirebaseMessaging.instance.subscribeToTopic('kandungan');
+      //   } else if (spesialis.contains('umum')) {
+      //     await FirebaseMessaging.instance.subscribeToTopic('umum');
+      //   } else if (spesialis.contains('anak')) {
+      //     await FirebaseMessaging.instance.subscribeToTopic('anak');
+      //   }
+    });
   }
 
   void _changeSelectedNavbar(int index) {
@@ -38,8 +80,16 @@ class _IndexScreenState extends State<IndexScreen> {
         return false;
       },
       child: Scaffold(
+        extendBody: true,
         floatingActionButton: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Cuti(),
+              ),
+            );
+          },
           backgroundColor: primaryColor,
           elevation: 0,
           child: Icon(
@@ -47,7 +97,7 @@ class _IndexScreenState extends State<IndexScreen> {
             size: 36,
           ),
         ),
-        backgroundColor: bgColor,
+        // backgroundColor: bgColor,
         body: navigationItems[_selectedNavbar]['widget'] as Widget,
         bottomNavigationBar: ClipRRect(
           borderRadius: const BorderRadius.only(

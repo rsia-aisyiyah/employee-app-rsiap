@@ -46,6 +46,8 @@ class ModalCuti extends StatefulWidget {
 }
 
 class _ModalCutiState extends State<ModalCuti> {
+  String? idx;
+
   Widget _customCapsuleFilter(
       String title, String key, String value, String id, String id_value) {
     return Expanded(
@@ -54,6 +56,7 @@ class _ModalCutiState extends State<ModalCuti> {
           setState(() {
             widget.filterData[key] = value;
             widget.filterData[id] = id_value;
+            idx = id_value;
           });
         },
         child: Container(
@@ -139,6 +142,55 @@ class _ModalCutiState extends State<ModalCuti> {
               ),
               const SizedBox(height: 10),
               Text(
+                "Jenis Cuti",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Flex(
+                direction: Axis.horizontal,
+                children: [
+                  _customCapsuleFilter(
+                    "Cuti Tahunan",
+                    'jenis',
+                    'Cuti Tahunan',
+                    'id_jenis',
+                    '1',
+                  ),
+                  const SizedBox(width: 10),
+                  _customCapsuleFilter(
+                    "Cuti Bersalin",
+                    'jenis',
+                    'Cuti Bersalin',
+                    'id_jenis',
+                    '2',
+                  ),
+                ],
+              ),
+              Flex(
+                direction: Axis.horizontal,
+                children: [
+                  _customCapsuleFilter(
+                    "Cuti Diluar Tanggungan",
+                    'jenis',
+                    'Cuti Diluar Tanggungan',
+                    'id_jenis',
+                    '3',
+                  ),
+                  const SizedBox(width: 10),
+                  _customCapsuleFilter(
+                    "Cuti Besar",
+                    'jenis',
+                    'Cuti Besar',
+                    'id_jenis',
+                    '4',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
                 "Tanggal Cuti",
                 style: TextStyle(
                   fontSize: 14,
@@ -192,74 +244,48 @@ class _ModalCutiState extends State<ModalCuti> {
                         fontWeight: FontWeight.bold,
                       ),
                       selectedDayHighlightColor: primaryColor,
-                      calendarType: CalendarDatePicker2Type.single,
+                      calendarType: idx == '2'
+                          ? CalendarDatePicker2Type.range
+                          : CalendarDatePicker2Type.single,
                     ),
                   );
 
                   if (res != null) {
-                    String startDate = DateFormat('yyyy-MM-dd').format(
-                      res.first!,
-                    );
+                    if (idx == '2') {
+                      String startDate = DateFormat('yyyy-MM-dd').format(
+                        res.first!,
+                      );
 
-                    // String endDate = DateFormat('yyyy-MM-dd').format(
-                    //   res.last!,
-                    // );
+                      String endDate = DateFormat('yyyy-MM-dd').format(
+                        res.last!,
+                      );
 
-                    setState(() {
-                      widget.dateinput.text = "$startDate";
-                      widget.filterData[widget.tglFilterKey] = startDate;
-                    });
+                      setState(() {
+                        widget.dateinput.text = "$startDate - $endDate";
+                        widget.filterData[widget.tglFilterKey] = {
+                          "start": startDate,
+                          "end": endDate
+                        };
+                      });
+                    } else {
+                      String startDate = DateFormat('yyyy-MM-dd').format(
+                        res.first!,
+                      );
+
+                      // String endDate = DateFormat('yyyy-MM-dd').format(
+                      //   res.last!,
+                      // );
+
+                      setState(() {
+                        widget.dateinput.text = "$startDate";
+                        widget.filterData[widget.tglFilterKey] = {
+                          "start": startDate,
+                          "end": startDate
+                        };
+                      });
+                    }
                   }
                 },
-              ),
-              const SizedBox(height: 10),
-              Text(
-                "Jenis Cuti",
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Flex(
-                direction: Axis.horizontal,
-                children: [
-                  _customCapsuleFilter(
-                    "Cuti Tahunan",
-                    'jenis',
-                    'Cuti Tahunan',
-                    'id_jenis',
-                    '1',
-                  ),
-                  const SizedBox(width: 10),
-                  _customCapsuleFilter(
-                    "Cuti Bersalin",
-                    'jenis',
-                    'Cuti Bersalin',
-                    'id_jenis',
-                    '2',
-                  ),
-                ],
-              ),
-              Flex(
-                direction: Axis.horizontal,
-                children: [
-                  _customCapsuleFilter(
-                    "Cuti Diluar Tanggungan",
-                    'jenis',
-                    'Cuti Diluar Tanggungan',
-                    'id_jenis',
-                    '3',
-                  ),
-                  const SizedBox(width: 10),
-                  _customCapsuleFilter(
-                    "Cuti Besar",
-                    'jenis',
-                    'Cuti Besar',
-                    'id_jenis',
-                    '4',
-                  ),
-                ],
               ),
             ],
           ),

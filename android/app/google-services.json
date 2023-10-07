@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "715153893769",
+    "project_id": "push-notif-rsia-pegawai",
+    "storage_bucket": "push-notif-rsia-pegawai.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:715153893769:android:30154f60fca76b1c0cd958",
+        "android_client_info": {
+          "package_name": "com.rsia_employee.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDagsa1vqNvZnNxIG3axx5i51PxvlOSSjc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

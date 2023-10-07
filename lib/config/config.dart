@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/screen/home.dart';
 import 'package:rsia_employee_app/screen/menu/berkas_pegawai.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
+import 'package:rsia_employee_app/screen/menu/file_manager.dart';
 import 'package:rsia_employee_app/screen/menu/jasa_medis.dart';
 import 'package:rsia_employee_app/screen/menu/otp_jasa_medis.dart';
 import 'package:rsia_employee_app/screen/menu/presensi.dart';
@@ -50,7 +51,7 @@ List<Map<String, Object>> menuScreenItems = [
   },
   {
     'label': 'Dokumen & Surat',
-    'widget': '',
+    'widget': const FileManager(),
     'disabled': false,
     'icon': Icons.file_copy
   },
