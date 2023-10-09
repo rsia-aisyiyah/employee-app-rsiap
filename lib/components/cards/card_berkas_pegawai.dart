@@ -121,7 +121,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
 
   Future<void> requestPermission(downloadUrl) async {
     try {
-      final status = await Permission.storage.request();
+      final status = await Permission.manageExternalStorage.request();
       PermissionStatus _permissionStatus = status;
       if (_permissionStatus.isGranted) {
         openFile(downloadUrl);

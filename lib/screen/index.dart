@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/firebase_api.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
@@ -16,13 +17,14 @@ class IndexScreen extends StatefulWidget {
 }
 
 class _IndexScreenState extends State<IndexScreen> {
+  // String nik = "";
   int _selectedNavbar = 0;
   final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
-    // firebaseInit();
+    firebaseInit();
   }
 
   @override
@@ -41,24 +43,21 @@ class _IndexScreenState extends State<IndexScreen> {
   void firebaseInit() async {
     await Firebase.initializeApp();
     await FirebaseApi().initNotif(context);
-    // await FirebaseMessaging.instance.subscribeToTopic('pegawai');
-    final fcmToken = await FirebaseMessaging.instance.getToken();
-    print(fcmToken);
-    SharedPreferences.getInstance().then((prefs) async {
-      var nik = prefs.getString('sub')!;
-      //   var spesialis = prefs.getString('spesialis')!.toLowerCase();
+    // await FirebaseMessaging.instance.subscribeToTopic('dokter');
 
-      await FirebaseMessaging.instance
-          .subscribeToTopic("${nik.replaceAll('"', '')}");
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    var token = localStorage.getString('token');
+    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
+    var nik = decodeToken['sub'];
+    await FirebaseMessaging.instance.subscribeToTopic("3.912.0819");
 
-      //   if (spesialis.contains('kandungan')) {
-      //     await FirebaseMessaging.instance.subscribeToTopic('kandungan');
-      //   } else if (spesialis.contains('umum')) {
-      //     await FirebaseMessaging.instance.subscribeToTopic('umum');
-      //   } else if (spesialis.contains('anak')) {
-      //     await FirebaseMessaging.instance.subscribeToTopic('anak');
-      //   }
-    });
+    // SharedPreferences.getInstance().then((prefs) async {
+    //   var nik = prefs.getString('sub')!;
+    //   print("NIK : " + nik);
+
+    //   await FirebaseMessaging.instance
+    //       .subscribeToTopic("${nik.replaceAll('"', '')}");
+    // });
   }
 
   void _changeSelectedNavbar(int index) {

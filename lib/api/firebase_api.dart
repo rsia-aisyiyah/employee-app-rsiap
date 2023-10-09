@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
+import 'package:rsia_employee_app/screen/menu/otp_jasa_medis.dart';
 
 late BuildContext ctx;
 FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -18,7 +19,7 @@ final _androidChannel = AndroidNotificationChannel(
 Future<void> handleBackgroundMessage(RemoteMessage message) async {
   Navigator.of(ctx).push(
     MaterialPageRoute(
-      builder: (context) => const Cuti(),
+      builder: (context) => const OtpJasaMedis(),
     ),
   );
 }
@@ -26,7 +27,7 @@ Future<void> handleBackgroundMessage(RemoteMessage message) async {
 Future<void> handleMessage(RemoteMessage message) async {
   Navigator.of(ctx).push(
     MaterialPageRoute(
-      builder: (context) => const Cuti(),
+      builder: (context) => const OtpJasaMedis(),
     ),
   );
 }
