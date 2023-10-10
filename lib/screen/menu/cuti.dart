@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:hexcolor/hexcolor.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/api/request.dart';
@@ -75,7 +76,7 @@ class _CutiState extends State<Cuti> {
       setState(() {
         dataCuti = value['data']['cuti'] ?? [];
         dataCuti.sort((a, b) => b['tanggal_cuti'].compareTo(a['tanggal_cuti']));
-// id_pegawai = value['data']['id'][0] ?? '';
+        // id_pegawai = value['data']['id'][0] ?? '';
         id_pegawai = value['data']['id'].toString();
         nama = value['data']['nama'].toString();
         dep_id = value['data']['departemen'].toString();
@@ -336,8 +337,9 @@ class _CutiState extends State<Cuti> {
                             width:
                                 MediaQuery.of(context).size.width / 2 - 30 - 10,
                             decoration: BoxDecoration(
-                                color: primaryColor,
-                                borderRadius: BorderRadius.circular(20)),
+                              color: primaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             child: Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
@@ -367,8 +369,9 @@ class _CutiState extends State<Cuti> {
                             width:
                                 MediaQuery.of(context).size.width / 2 - 30 - 10,
                             decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(20)),
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             child: Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
@@ -398,14 +401,17 @@ class _CutiState extends State<Cuti> {
                     width: MediaQuery.of(context).size.width / 2 - 30,
                     height: 110,
                     decoration: BoxDecoration(
-                        color: bgWhite,
-                        borderRadius: BorderRadius.circular(20)),
+                      color: bgWhite,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: Column(
                         children: [
-                          Text("SEMESTER II",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          Text(
+                            "SEMESTER II",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           SizedBox(
                             height: 10,
                           ),
@@ -414,8 +420,9 @@ class _CutiState extends State<Cuti> {
                             width:
                                 MediaQuery.of(context).size.width / 2 - 30 - 10,
                             decoration: BoxDecoration(
-                                color: primaryColor,
-                                borderRadius: BorderRadius.circular(20)),
+                              color: primaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             child: Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
@@ -445,8 +452,9 @@ class _CutiState extends State<Cuti> {
                             width:
                                 MediaQuery.of(context).size.width / 2 - 30 - 10,
                             decoration: BoxDecoration(
-                                color: Colors.green,
-                                borderRadius: BorderRadius.circular(20)),
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
                             child: Padding(
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 10),
@@ -485,16 +493,92 @@ class _CutiState extends State<Cuti> {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: ClampingScrollPhysics(),
-                    // padding: EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                     itemCount: dataCuti.isEmpty ? 1 : dataCuti.length,
                     itemBuilder: (context, index) {
                       if (dataCuti.isNotEmpty) {
-                        return InkWell(
-                          onTap: () {},
-                          child: CardCuti(
-                            dataCuti: dataCuti[index],
-                            onDelete: () =>
-                                _deleteItem(dataCuti[index]['id_cuti']),
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 15),
+                          child: Dismissible(
+                            key: Key(index.toString()),
+                            onDismissed: (direction) {
+                              setState(() {
+                                _deleteItem(dataCuti[index]['id_cuti']);
+                                dataCuti.removeAt(index);
+                              });
+
+                              Msg.success(context, "Cuti dalam proses penghapusan");
+                            },
+                            confirmDismiss: (DismissDirection direction) async {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Hapus Pengajuan Cuti"),
+                                    content: const Text(
+                                      "Apakah anda yakin akan menghapus pengajuan cuti yang anda lakukan ?",
+                                    ),
+                                    actions: <Widget>[
+                                      ElevatedButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: const Text("No"),
+                                      ),
+                                      ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red
+                                        ),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        child: const Text("Yes"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            background: Container(
+                              decoration: BoxDecoration(
+                                color: HexColor('#FF6962'),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    child: Text(
+                                      "Delete",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20),
+                                    child: Text(
+                                      "Delete",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            child: CardCuti(
+                              dataCuti: dataCuti[index],
+                              onDelete: () => _deleteItem(
+                                dataCuti[index]['id_cuti'],
+                              ),
+                            ),
                           ),
                         );
                       }

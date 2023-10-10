@@ -120,30 +120,19 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
   // }
 
   Future<void> requestPermission(downloadUrl) async {
-    try {
-      final status = await Permission.manageExternalStorage.request();
-      PermissionStatus _permissionStatus = status;
-      if (_permissionStatus.isGranted) {
-        openFile(downloadUrl);
-      } else if (_permissionStatus.isDenied) {
-        print("Izin sistem tidak diperoleh untuk membuka file");
-      } else if (_permissionStatus.isPermanentlyDenied) {
-        print("Izin sistem untuk membuka file tidak diterima");
-        AppSettings.openAppSettings();
-      }
-    } on PlatformException catch (e) {
-      if (e.code == 'PERMISSION_DENIED') {
-        error = "Tidak dapat memperoleh izin dari sistem untuk membuka file";
-      } else if (e.code == 'PERMISSION_DENIED_NEVER_ASK') {
-        error =
-            "Izin Ditolak - minta pengguna untuk mengaktifkannya di pengaturan aplikasi";
-      }
-      if (Platform.isIOS)
-        print("Izin sistem untuk membuka file tidak dapat diperoleh");
-    } catch (_) {
-      if (Platform.isIOS)
-        print("Tidak dapat memperoleh izin dari sistem untuk membuka file");
-      return;
+    var manExtStorage = await Permission.manageExternalStorage.status;
+    var manStorage = await Permission.storage.status;
+
+    if (!manExtStorage.isGranted) {
+      await Permission.manageExternalStorage.request();
+    } else {
+      openFile(downloadUrl);
+    }
+
+    if(!manStorage.isGranted) {
+      await Permission.storage.request();
+    } else {
+      openFile(downloadUrl);
     }
   }
 
@@ -270,10 +259,13 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.dataBerkasPegawai['master_berkas_pegawai']
-                              ['nama_berkas'],
+                          widget.dataBerkasPegawai['master_berkas_pegawai']['nama_berkas'],
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         )
                       ],
                     ),
@@ -346,8 +338,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                           onTap: () {
                             print(baseUrl +
                                 widget.dataBerkasPegawai['berkas'].toString());
-                            requestPermission(baseUrl +
-                                widget.dataBerkasPegawai['berkas'].toString());
+                            requestPermission(baseUrl + widget.dataBerkasPegawai['berkas'].toString());
                           },
                           child: Stack(
                             alignment: Alignment.center,

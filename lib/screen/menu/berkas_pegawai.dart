@@ -107,7 +107,8 @@ class _BerkasPegawaiState extends State<BerkasPegawai> {
                     return InkWell(
                       onTap: () {},
                       child: cardBerkasPegawai(
-                          dataBerkasPegawai: dataBerkas[index]),
+                          dataBerkasPegawai: dataBerkas[index],
+                      ),
                     );
                   }
                 },

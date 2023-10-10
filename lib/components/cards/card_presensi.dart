@@ -22,17 +22,19 @@ cardPresensi(presensi) {
                       width: 65,
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                          color: bgWhite,
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                          borderRadius: BorderRadius.all(Radius.circular(10))),
+                        color: bgWhite,
+                        boxShadow: [
+                          BoxShadow(
+                            color: primaryColor.withOpacity(0.3),
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                        borderRadius: BorderRadius.all(
+                          Radius.circular(10),
+                        ),
+                      ),
                       child: Column(
-                        // crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
@@ -50,15 +52,16 @@ cardPresensi(presensi) {
                       ),
                     ),
                     Container(
-                        alignment: Alignment.topCenter,
-                        height: 55,
-                        width: 70,
-                        padding: EdgeInsets.all(10),
-                        child: Text(
-                          Helper.dateToMonthYear(presensi['jam_datang']),
-                          style: TextStyle(
-                              fontSize: 10, fontWeight: FontWeight.bold),
-                        )),
+                      alignment: Alignment.topCenter,
+                      height: 55,
+                      width: 70,
+                      padding: EdgeInsets.all(10),
+                      child: Text(
+                        Helper.dateToMonthYear(presensi['jam_datang']),
+                        style: TextStyle(
+                            fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ],
                 ),
                 SizedBox(
@@ -70,21 +73,20 @@ cardPresensi(presensi) {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Container(
-                        // alignment: Alignment.center,
-                        height: 55,
-                        // width: MediaQuery.of(context).size.width,
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                            color: bgWhite,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryColor.withOpacity(0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10))),
+                          color: bgWhite,
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.3),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -116,21 +118,20 @@ cardPresensi(presensi) {
                         height: 5,
                       ),
                       Container(
-                        // alignment: Alignment.center,
-                        height: 55,
-
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                            color: bgWhite,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryColor.withOpacity(0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10))),
+                          color: bgWhite,
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.3),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -166,16 +167,18 @@ cardPresensi(presensi) {
                         height: 40,
                         padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                            color: bgWhite,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryColor.withOpacity(0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10))),
+                          color: bgWhite,
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.3),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                          borderRadius: BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                        ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

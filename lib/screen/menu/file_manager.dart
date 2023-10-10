@@ -1,13 +1,11 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/cards/card_file_manager.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class FileManager extends StatefulWidget {
   const FileManager({super.key});
@@ -101,7 +99,8 @@ class _FileManagerState extends State<FileManager> {
                     return InkWell(
                       onTap: () {},
                       child: cardFileManager(
-                          dataFileManager: dataFileManager[index]),
+                          dataFileManager: dataFileManager[index],
+                      ),
                     );
                   }
                 },

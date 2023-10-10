@@ -9,6 +9,7 @@ import 'package:rsia_employee_app/utils/msg.dart';
 class CardCuti extends StatefulWidget {
   final Map dataCuti;
   final VoidCallback onDelete;
+
   const CardCuti({
     super.key,
     required this.dataCuti,
@@ -46,44 +47,62 @@ class _CardCutiState extends State<CardCuti> {
 
   @override
   Widget build(BuildContext context) {
-    // print(widget.dataCuti);
     return Column(
-      // mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Stack(
           clipBehavior: Clip.none,
           children: [
             Container(
               height: 90,
-              width: MediaQuery.of(context).size.width - 40,
+              width: MediaQuery.of(context).size.width,
               decoration: BoxDecoration(
-                  color: bgWhite, borderRadius: BorderRadius.circular(20)),
+                color: bgWhite,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(10),
                 child: Row(
                   children: [
                     Container(
-                      width: 50,
-                      height: 70,
+                      height: double.infinity,
+                      padding: EdgeInsets.symmetric(horizontal: 15),
                       decoration: BoxDecoration(
-                          color: primaryColor,
-                          borderRadius: BorderRadius.circular(20)),
+                        color: primaryColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                              Helper.dayToNum(
-                                  widget.dataCuti['tanggal_cuti'].toString()),
-                              style: TextStyle(fontSize: 18, color: textWhite)),
+                            Helper.dayToNum(
+                              widget.dataCuti['tanggal_cuti'].toString(),
+                            ),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: textWhite,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           Text(
-                              Helper.daytoMonth(
-                                  widget.dataCuti['tanggal_cuti'].toString()),
-                              style: TextStyle(fontSize: 12, color: textWhite)),
+                            Helper.daytoMonth(
+                              widget.dataCuti['tanggal_cuti'].toString(),
+                            ),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textWhite,
+                              fontWeight: FontWeight.bold
+                            ),
+                          ),
                           Text(
-                              Helper.daytoYear(
-                                  widget.dataCuti['tanggal_cuti'].toString()),
-                              style: TextStyle(fontSize: 12, color: textWhite)),
+                            Helper.daytoYear(
+                              widget.dataCuti['tanggal_cuti'].toString(),
+                            ),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textWhite,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -119,8 +138,7 @@ class _CardCutiState extends State<CardCuti> {
                             ),
                             widget.dataCuti['status_cuti'].toString() == "2"
                                 ? textDisetujui()
-                                : widget.dataCuti['status_cuti'].toString() ==
-                                        "0"
+                                : widget.dataCuti['status_cuti'].toString() == "0"
                                     ? textPengajuan()
                                     : textDitolak(),
                             // Icon(
@@ -141,19 +159,48 @@ class _CardCutiState extends State<CardCuti> {
                     top: -18,
                     right: -18,
                     child: ElevatedButton(
-                      onPressed: () {
-                        widget.onDelete();
+                      onPressed: () async {
+                        return await showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text("Hapus Pengajuan Cuti"),
+                              content: const Text(
+                                "Apakah anda yakin akan menghapus pengajuan cuti yang anda lakukan ?",
+                              ),
+                              actions: <Widget>[
+                                ElevatedButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: const Text("No"),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red
+                                  ),
+                                  onPressed: () {
+                                    widget.onDelete();
+                                    Navigator.of(context).pop(true);
+                                  },
+                                  child: const Text("Yes"),
+                                ),
+                              ],
+                            );
+                          },
+                        );
                       },
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          padding: EdgeInsets.all(5),
-                          minimumSize: Size(25, 25),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.only(
-                                  topRight: Radius.circular(10),
-                                  bottomLeft: Radius.circular(10),
-                                  topLeft: Radius.circular(10),
-                                  bottomRight: Radius.circular(10)))),
+                        backgroundColor: Colors.red,
+                        padding: EdgeInsets.all(5),
+                        minimumSize: Size(25, 25),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(10),
+                            bottomLeft: Radius.circular(10),
+                            topLeft: Radius.circular(10),
+                            bottomRight: Radius.circular(10),
+                          ),
+                        ),
+                      ),
                       child: Icon(
                         Icons.dangerous_sharp,
                         size: 16,
@@ -163,7 +210,6 @@ class _CardCutiState extends State<CardCuti> {
                 : Container()
           ],
         ),
-        const SizedBox(height: 10),
       ],
     );
   }
@@ -172,9 +218,14 @@ class _CardCutiState extends State<CardCuti> {
 Widget textDisetujui() {
   return Row(
     children: [
-      Text("Disetujui",
-          style: TextStyle(
-              fontSize: 16, color: Colors.green, fontWeight: FontWeight.bold)),
+      Text(
+        "Disetujui",
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.green,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       Icon(
         Icons.check_circle_rounded,
         color: Colors.green,
@@ -186,14 +237,23 @@ Widget textDisetujui() {
 
 Widget textPengajuan() {
   return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    mainAxisAlignment: MainAxisAlignment.center,
+    mainAxisSize: MainAxisSize.min,
     children: [
-      Text("Pengajuan",
-          style: TextStyle(
-              fontSize: 16, color: Colors.blue, fontWeight: FontWeight.bold)),
+      Text(
+        "Pengajuan",
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.blue,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      const SizedBox(width: 10),
       Icon(
         Icons.send_rounded,
         color: Colors.blue,
-        size: 28,
+        size: 20,
       )
     ],
   );
@@ -202,9 +262,14 @@ Widget textPengajuan() {
 Widget textDitolak() {
   return Row(
     children: [
-      Text("Ditolak",
-          style: TextStyle(
-              fontSize: 16, color: Colors.red, fontWeight: FontWeight.bold)),
+      Text(
+        "Ditolak",
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.red,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       Icon(
         Icons.dangerous,
         color: Colors.red,
