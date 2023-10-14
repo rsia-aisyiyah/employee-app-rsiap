@@ -77,7 +77,7 @@ class _IndexScreenState extends State<IndexScreen> {
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     var nik = decodeToken['sub'];
-    await FirebaseMessaging.instance.subscribeToTopic("3.912.0819");
+    await FirebaseMessaging.instance.subscribeToTopic(nik);
 
     // SharedPreferences.getInstance().then((prefs) async {
     //   var nik = prefs.getString('sub')!;
@@ -104,7 +104,7 @@ class _IndexScreenState extends State<IndexScreen> {
           });
           return false;
         }
-        return false;
+        return true;
       },
       child: Scaffold(
         extendBody: true,

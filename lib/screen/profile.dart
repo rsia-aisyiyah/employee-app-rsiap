@@ -16,6 +16,9 @@ import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:age_calculator/age_calculator.dart';
 
+enum SampleItem { itemOne, itemTwo, itemThree }
+
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -24,6 +27,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  SampleItem? selectedMenu;
   late DateDuration duration;
   late Map<String, dynamic> dataTbl;
   late Map<String, dynamic> dataTbl2;
@@ -220,7 +224,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           child: InkWell(
                             onTap: () {
-                              _logout();
+
                             },
                             child: Container(
                               decoration: BoxDecoration(
@@ -309,6 +313,8 @@ class _ProfilePageState extends State<ProfilePage> {
           );
   }
 }
+
+
 
 Widget buttonLogout() {
   return InkWell(

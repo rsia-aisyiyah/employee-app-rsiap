@@ -132,9 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
                   child: Image.asset(
-                    'assets/images/logo-text-rsiap2.png',
-                    height: 70,
-                    width: 70,
+                    'assets/images/logo-rsia-aisyiyah.png',
+                    height: 100,
+                    width: 100,
                   ),
                 ),
                 Padding(
@@ -269,7 +269,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       child: TextFormField(
                                         maxLines: 1,
-                                        initialValue: '3.912.0819',
                                         decoration: InputDecoration(
                                           hintText: labelUsername,
                                           contentPadding:
@@ -307,7 +306,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                           maxLines: 1,
                                           obscureText: _secureText,
                                           style: TextStyle(color: textColor),
-                                          initialValue: '1234554321',
                                           decoration: InputDecoration(
                                             hintText: labelPassword,
                                             border: InputBorder.none,

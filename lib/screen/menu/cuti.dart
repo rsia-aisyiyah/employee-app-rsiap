@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:hexcolor/hexcolor.dart';
@@ -496,91 +497,14 @@ class _CutiState extends State<Cuti> {
                     itemCount: dataCuti.isEmpty ? 1 : dataCuti.length,
                     itemBuilder: (context, index) {
                       if (dataCuti.isNotEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 15),
-                          child: Dismissible(
-                            key: Key(index.toString()),
-                            onDismissed: (direction) {
-                              setState(() {
-                                _deleteItem(dataCuti[index]['id_cuti']);
-                                dataCuti.removeAt(index);
-                              });
-
-                              Msg.success(context, "Cuti dalam proses penghapusan");
-                            },
-                            confirmDismiss: (DismissDirection direction) async {
-                              return await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: const Text("Hapus Pengajuan Cuti"),
-                                    content: const Text(
-                                      "Apakah anda yakin akan menghapus pengajuan cuti yang anda lakukan ?",
-                                    ),
-                                    actions: <Widget>[
-                                      ElevatedButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: const Text("No"),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.red
-                                        ),
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: const Text("Yes"),
-                                      ),
-                                    ],
-                                  );
-                                },
+                        return dataCuti[index]['status_cuti'] == 0
+                            ? slideToDelete(index)
+                            : CardCuti(
+                                dataCuti: dataCuti[index],
+                                onDelete: () => _deleteItem(
+                                  dataCuti[index]['id_cuti'],
+                                ),
                               );
-                            },
-                            background: Container(
-                              decoration: BoxDecoration(
-                                color: HexColor('#FF6962'),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
-                                    child: Text(
-                                      "Delete",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20),
-                                    child: Text(
-                                      "Delete",
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        fontSize: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            child: CardCuti(
-                              dataCuti: dataCuti[index],
-                              onDelete: () => _deleteItem(
-                                dataCuti[index]['id_cuti'],
-                              ),
-                            ),
-                          ),
-                        );
                       }
                     },
                   ),
@@ -601,6 +525,131 @@ class _CutiState extends State<Cuti> {
         ),
       );
     }
+  }
+
+  Widget slideToDelete(index) {
+    return Stack(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 15, bottom: 15),
+          child: Container(
+              height: 60,
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                    padding: const EdgeInsets.only(right: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Swipe To Delete",
+                          style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w500),
+                        ),
+                        Icon(
+                          Icons.delete_forever_outlined,
+                          color: Colors.white,
+                          size: 32,
+                        )
+                      ],
+                    )),
+              )),
+        ),
+        Dismissible(
+          direction: DismissDirection.endToStart,
+          key: Key(index.toString()),
+          onDismissed: (direction) {
+            setState(() {
+              _deleteItem(dataCuti[index]['id_cuti']);
+              dataCuti.removeAt(index);
+            });
+
+            Msg.success(context, "Cuti dalam proses penghapusan");
+          },
+          confirmDismiss: (DismissDirection direction) async {
+            return await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  iconPadding: EdgeInsets.only(top: 15,bottom: 10),
+                  icon: Icon(Icons.warning,color: Colors.orangeAccent,size: 32,),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  title: const Text("Hapus Pengajuan Cuti"),
+                  content: const Text(
+                    "Apakah anda yakin akan menghapus pengajuan cuti ?",
+                  ),
+                  actionsAlignment: MainAxisAlignment.spaceAround,
+                  actions: <Widget>[
+                    ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text("NO"),
+                    ),
+                    ElevatedButton(
+                      style:
+                          ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text("YES"),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          // background: Container(
+          //   decoration: BoxDecoration(
+          //     color: HexColor('#FF6962'),
+          //     borderRadius: BorderRadius.circular(20),
+          //   ),
+          //   child: Row(
+          //     crossAxisAlignment: CrossAxisAlignment.center,
+          //     mainAxisAlignment:
+          //     MainAxisAlignment.spaceBetween,
+          //     children: [
+          //       Padding(
+          //         padding: const EdgeInsets.symmetric(
+          //             horizontal: 20),
+          //         child: Text(
+          //           "Delete",
+          //           style: TextStyle(
+          //             fontWeight: FontWeight.bold,
+          //             color: Colors.white,
+          //             fontSize: 20,
+          //           ),
+          //         ),
+          //       ),
+          //       Padding(
+          //         padding: const EdgeInsets.symmetric(
+          //             horizontal: 20),
+          //         child: Text(
+          //           "Delete",
+          //           style: TextStyle(
+          //             fontWeight: FontWeight.bold,
+          //             color: Colors.white,
+          //             fontSize: 20,
+          //           ),
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+          child: CardCuti(
+            dataCuti: dataCuti[index],
+            onDelete: () => _deleteItem(
+              dataCuti[index]['id_cuti'],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget loadingIcon() {

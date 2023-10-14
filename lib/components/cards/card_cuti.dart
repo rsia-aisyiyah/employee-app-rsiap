@@ -164,24 +164,25 @@ class _CardCutiState extends State<CardCuti> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
+                              iconPadding: EdgeInsets.only(top: 15,bottom: 10),
+                              icon: Icon(Icons.warning,color: Colors.orangeAccent,size: 32,),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10)),
                               title: const Text("Hapus Pengajuan Cuti"),
                               content: const Text(
-                                "Apakah anda yakin akan menghapus pengajuan cuti yang anda lakukan ?",
+                                "Apakah anda yakin akan menghapus pengajuan cuti ?",
                               ),
+                              actionsAlignment: MainAxisAlignment.spaceAround,
                               actions: <Widget>[
                                 ElevatedButton(
                                   onPressed: () => Navigator.of(context).pop(false),
-                                  child: const Text("No"),
+                                  child: const Text("NO"),
                                 ),
                                 ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red
-                                  ),
-                                  onPressed: () {
-                                    widget.onDelete();
-                                    Navigator.of(context).pop(true);
-                                  },
-                                  child: const Text("Yes"),
+                                  style:
+                                  ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  child: const Text("YES"),
                                 ),
                               ],
                             );
@@ -209,6 +210,9 @@ class _CardCutiState extends State<CardCuti> {
                   )
                 : Container()
           ],
+        ),
+        SizedBox(
+          height: 10,
         ),
       ],
     );
