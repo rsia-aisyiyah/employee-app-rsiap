@@ -108,7 +108,7 @@ cardPresensi(presensi) {
                               ],
                             ),
                             Icon(
-                              Icons.login,
+                              Icons.timer_outlined,
                               color: Colors.green,
                             )
                           ],
@@ -153,7 +153,7 @@ cardPresensi(presensi) {
                               ],
                             ),
                             Icon(
-                              Icons.logout,
+                              Icons.timer_off_outlined,
                               color: Colors.red,
                             )
                           ],
@@ -197,16 +197,16 @@ cardPresensi(presensi) {
                             ),
                             presensi['status'] == "Tepat Waktu"
                                 ? Icon(
-                                    Icons.done_all,
+                                    Icons.info_rounded,
                                     color: Colors.greenAccent,
                                   )
                                 : presensi['status'] == "Terlambat Toleransi"
                                     ? Icon(
-                                        Icons.warning,
+                                        Icons.info_rounded,
                                         color: Colors.amber[300],
                                       )
                                     : Icon(
-                                        Icons.dangerous_rounded,
+                                        Icons.info_rounded,
                                         color: Colors.red,
                                       )
                           ],

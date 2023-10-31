@@ -99,7 +99,7 @@ class _HomePageState extends State<HomePage> {
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
-          _jadwal = body['data'];
+          _jadwal = body['data']['jam_masuk'];
         });
       }
     } else {
@@ -302,7 +302,8 @@ class _HomePageState extends State<HomePage> {
                                             borderRadius:
                                                 BorderRadius.circular(100.0),
                                             child: CachedNetworkImage(
-                                              imageUrl: photoUrl + _bio['photo'].toString(),
+                                              imageUrl: photoUrl +
+                                                  _bio['photo'].toString(),
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
@@ -343,8 +344,33 @@ class _HomePageState extends State<HomePage> {
                                               : "Libur",
                                           style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 14),
+                                              fontSize: 12),
                                         ),
+                                        _jadwal['shift'].toString() != ""
+                                            ? Text(
+                                                " (" +
+                                                    _jadwal['jam_masuk']
+                                                        .toString()
+                                                        .substring(
+                                                            0,
+                                                            _jadwal['jam_masuk']
+                                                                    .toString()
+                                                                    .length -
+                                                                3) +
+                                                    " - " +
+                                                    _jadwal['jam_pulang']
+                                                        .toString()
+                                                        .substring(
+                                                            0,
+                                                            _jadwal['jam_pulang']
+                                                                    .toString()
+                                                                    .length -
+                                                                3)+")",
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12),
+                                              )
+                                            : Text(""),
                                       ],
                                     ),
                                     SizedBox(

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:convert';
 import 'dart:async';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
@@ -35,10 +36,15 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
   bool isLoading = true;
   bool isLoadingButton = true;
   bool button = true;
+  bool isSuccess = true;
   String kode = "";
+  var email = "";
   var _pegawai = {};
   var _smtp = {};
   var random = Random().nextInt(8000) + 1000;
+
+  final _formKey = GlobalKey<FormState>();
+
 
   final TextEditingController _otp = TextEditingController();
 
@@ -52,6 +58,28 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
       }
     });
   }
+
+  Future updateEmail() async {
+    var data = {
+      'nik': nik,
+      'email': email,
+    };
+
+    // print(data);
+    var res = await Api().postData(data, '/pegawai/update-email');
+    if (res.statusCode == 200) {
+      var body = json.decode(res.body);
+      isSuccess = true;
+      Msg.success(context, body['message']);
+      return body;
+    } else {
+      var body = json.decode(res.body);
+      isSuccess = false;
+      Msg.error(context, body['message']);
+      return body;
+    }
+  }
+
 
   void _activeButton() {
     setState(() {
@@ -184,12 +212,12 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
     String password = _smtp['data']['password'].toString();
     final smtpServer = gmail(username, password);
     final message = Message()
-      ..from = Address(username, 'Mobile Dokter RSIAP')
+      ..from = Address(username, 'Employee Self Service RSIAP')
       ..recipients.add(recipientEmail)
       ..subject = 'Kode Verifikasi Jasa Medis'
-      ..text = 'Kode Verifikasi untuk akses ke menu Jasa Medis anda : '
+      ..text = 'Kode Verifikasi untuk akses ke menu Jasa Pelayanan anda : '
       ..html =
-          '<p>Kode Verifikasi untuk akses menu Jasa Medis Anda : </p><h1>$mailMessage<h1>';
+          '<p>Kode Verifikasi untuk akses menu Jasa Pelayanan Anda : </p><h1>$mailMessage<h1>';
 
     try {
       await send(message, smtpServer);
@@ -337,12 +365,19 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
                                           vertical: 10),
                                     ),
                                     onPressed: () {
-                                      sendMail(
-                                        recipientEmail: _pegawai['data']
-                                                ['rsia_email_pegawai']['email']
-                                            .toString(),
-                                        mailMessage: random.toString(),
-                                      );
+                                      print(_pegawai['data']['rsia_email_pegawai']['email'].toString());
+                                      if(_pegawai['data']['rsia_email_pegawai']['email'].toString()=='null'){
+                                        showDataAlert();
+                                      } else {
+                                        sendMail(
+                                          recipientEmail: _pegawai['data']
+                                                  ['rsia_email_pegawai']['email']
+                                              .toString(),
+                                          mailMessage: random.toString(),
+                                        );
+                                      }
+                                      // _pegawai['data']['rsia_email_pegawai']['email'].toString() ==  ? showDataAlert() :
+
                                     },
                                     // child: const Text('Kirim Kode Verifikasi'),
                                   ),
@@ -448,11 +483,143 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
       ),
     );
   }
+  void main() {
+    var rng = Random();
+    // for (var i = 0; i < 10; i++) {
+    print(rng.nextInt(8000) + 1000);
+    // }
+  }
+
+  showDataAlert() {
+    final OtpJasaMedis otp= new OtpJasaMedis();
+
+    showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) {
+          return Form(
+            key: _formKey,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(
+                    15,
+                  ),
+                ),
+              ),
+              contentPadding: EdgeInsets.only(
+                top: 5.0,
+              ),
+              // title: Text(
+              //   "Tambah Email",
+              //   style: TextStyle(fontSize: 24.0),
+              // ),
+              content: Container(
+                // height: 400,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              "Data email belum ada",
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w500
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            child: SizedBox(
+                              // height: 50,
+                              child: TextFormField(
+                                maxLines: 1,
+                                decoration: InputDecoration(
+                                    helperText: "Silahkan masukkan email anda",
+                                    contentPadding:
+                                    EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                    border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10)
+                                    ),
+
+                                    hintText: 'Masukkan email disini',
+
+                                    labelText: 'Email'),
+                                onSaved: (value) {
+                                  email = value!;
+                                },
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Field tidak boleh kosong';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: double.infinity,
+                            height: 50,
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(25)
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_formKey.currentState!.validate()) {
+                                  _formKey.currentState!.save();
+                                  if(EmailValidator.validate(email)){
+                                    updateEmail();
+                                    print(isSuccess);
+                                      if(isSuccess){
+                                        Navigator.of(context).pop();
+                                      }
+                                  } else {
+                                    Msg.error(context, 'Format Email tidak sesuai');
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                  primary: primaryColor,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                              ),
+                              child: Text(
+                                "Submit",
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        top: -10,
+                        right: -5,
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(20)
+                            ),
+                            child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Icon(Icons.close_rounded,color: bgWhite,))),),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
+  }
 }
 
-void main() {
-  var rng = Random();
-  // for (var i = 0; i < 10; i++) {
-  print(rng.nextInt(8000) + 1000);
-  // }
-}
+
+
+

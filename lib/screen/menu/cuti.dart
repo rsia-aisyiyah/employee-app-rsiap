@@ -311,13 +311,13 @@ class _CutiState extends State<Cuti> {
         ),
         body: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(10),
             child: Column(children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    width: MediaQuery.of(context).size.width / 2 - 30,
+                    width: MediaQuery.of(context).size.width / 2 - 20,
                     height: 110,
                     decoration: BoxDecoration(
                         color: bgWhite,
@@ -399,7 +399,7 @@ class _CutiState extends State<Cuti> {
                     ),
                   ),
                   Container(
-                    width: MediaQuery.of(context).size.width / 2 - 30,
+                    width: MediaQuery.of(context).size.width / 2 - 20,
                     height: 110,
                     decoration: BoxDecoration(
                       color: bgWhite,
