@@ -47,8 +47,6 @@ class _ProfilePageState extends State<ProfilePage> {
         if (mounted) {
           setState(() {
             isLoading = false;
-
-            // print(_getBio());
           });
         }
       });
@@ -68,12 +66,10 @@ class _ProfilePageState extends State<ProfilePage> {
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
-    // print(nik);
 
-    // print(nik);
     var res = await Api().postData({'nik': nik}, '/pegawai/detail');
     var body = json.decode(res.body);
-    print(body);
+    
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
@@ -129,7 +125,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
     };
 
-    // print(data);
     var res = await Api().postData(data, '/pegawai/update-profil');
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
@@ -145,23 +140,21 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void setDataTbl(detailBio) {
-    duration = AgeCalculator.age(DateTime.parse(detailBio['mulai_kontrak']));
-    print(duration.years);
+    duration = AgeCalculator.age(DateTime.parse(detailBio['mulai_kerja']));
     dataTbl = {
       "No. KTP": detailBio['no_ktp'],
       "Jenis Kelamin": detailBio['jk'],
-      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] +
-          ", " +
-          Helper.formatDate3(detailBio['tgl_lahir']),
+      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] + ", " + Helper.formatDate3(detailBio['tgl_lahir']),
       "Alamat": detailBio['alamat'],
       "Pendidikan": detailBio['pendidikan'],
       "Jabatan": detailBio['jbtn'],
       "Bidang": detailBio['bidang'],
       "Status": detailBio['stts_kerja']['ktg'],
+      "Mulai Kontrak": Helper.formatDate2(detailBio['mulai_kontrak']),
     };
     dataTbl2 = {
-      "No. HP": detailBio['petugas']['no_telp'],
-      "Email": detailBio['rsia_email_pegawai']['email'],
+      "No. HP": detailBio['petugas']['no_telp'] ?? '-',
+      "Email": detailBio['rsia_email_pegawai']['email'] ?? '-',
     };
   }
 
@@ -306,15 +299,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 10),
+                                        horizontal: 10,
+                                      ),
                                       child: Text(
-                                        "Masa Kerja : " +
-                                            duration.years.toString() +
-                                            " th " +
-                                            duration.months.toString() +
-                                            " bln " +
-                                            duration.days.toString() +
-                                            " hr ",
+                                        "Masa Kerja : " + duration.years.toString() +
+                                            " th " + duration.months.toString() +
+                                            " bln " + duration.days.toString() + " hr ",
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -323,16 +313,15 @@ class _ProfilePageState extends State<ProfilePage> {
                                     ),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
-                                          horizontal: 10),
+                                        horizontal: 10,
+                                      ),
                                       child: Text(
-                                        "Mulai bergabung " +
-                                            Helper.formatDate3(
-                                                _bio['mulai_kontrak']
-                                                    .toString()),
+                                        "Mulai bergabung " + Helper.formatDate3(_bio['mulai_kerja'].toString()),
                                         style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w400,
-                                            fontStyle: FontStyle.italic),
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w400,
+                                          fontStyle: FontStyle.italic,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -434,7 +423,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: AlertDialog(
                             iconPadding: EdgeInsets.only(top: 15, bottom: 5),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             title: const Text("Form Edit Profile"),
                             content: Container(
                               // height: 400,
@@ -558,10 +548,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 _formKey.currentState!.save();
                                                 if(EmailValidator.validate(email)){
                                                   updateProfil();
-                                                  print(isSuccess);
+
                                                   if(isSuccess){
                                                     Navigator.of(context).pop();
                                                   }
+
                                                 } else {
                                                   Msg.error(context, 'Format Email tidak sesuai');
                                                 }
@@ -569,7 +560,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                             },
                                             style: ElevatedButton.styleFrom(
                                                 primary: primaryColor,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(15),
+                                                )
                                             ),
                                             child: Text(
                                               "Submit",
@@ -614,8 +607,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         size: 18,
                         color: Colors.black,
                       ),
-                      Text(" |",style: TextStyle(color: Colors.black),),
-                      Text("| Edit Data", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),)
+                      Text(
+                        " |",
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      Text(
+                        "| Edit Data",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
                     ],
                   ),
                 ),
@@ -627,6 +629,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: <Widget>[
                     const SectionTitle(title: "Data Pegawai"),
                     GenTable(data: dataTbl),
+                    const SizedBox(height: 20),
                     const SectionTitle(title: "Kontak"),
                     GenTable(data: dataTbl2),
                     // const SizedBox(height: 20),
