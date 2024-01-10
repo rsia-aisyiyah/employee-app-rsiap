@@ -243,8 +243,8 @@ class _cardFileManagerState extends State<cardFileManager> {
                     boxShadow: [
                       BoxShadow(
                         color: primaryColor.withOpacity(0.3),
-                        blurRadius: 0,
-                        offset: const Offset(2, 2),
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
                       )
                     ],
                   ),
@@ -271,11 +271,11 @@ class _cardFileManagerState extends State<cardFileManager> {
                   child: Container(
                     decoration: BoxDecoration(
                       boxShadow: [
-                        BoxShadow(
-                          color: textColor.withOpacity(0.5),
-                          blurRadius: 0,
-                          offset: const Offset(1, 1),
-                        )
+                        // BoxShadow(
+                        //   color: textColor.withOpacity(0.5),
+                        //   blurRadius: 0,
+                        //   offset: const Offset(1, 1),
+                        // )
                       ],
                       borderRadius: BorderRadius.circular(5),
                       color: primaryColor,
@@ -317,8 +317,8 @@ class _cardFileManagerState extends State<cardFileManager> {
                     boxShadow: [
                       BoxShadow(
                         color: primaryColor.withOpacity(0.3),
-                        blurRadius: 0,
-                        offset: const Offset(2, 2),
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
                       )
                     ],
                     color: bgWhite,
@@ -342,7 +342,7 @@ class _cardFileManagerState extends State<cardFileManager> {
                                 isHAveDownloading
                                     ? Icon(
                                         Icons.menu_book_rounded,
-                                        color: Colors.green[300],
+                                        color: primaryColor,
                                         size: 32,
                                       )
                                     : Icon(
@@ -351,18 +351,23 @@ class _cardFileManagerState extends State<cardFileManager> {
                                         size: 32,
                                       ),
                               downloading
-                                  ? Container(
-                                      width: 50,
-                                      height: 25,
-                                      padding: const EdgeInsets.all(8),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10)),
-                                        child: LinearProgressIndicator(
-                                          backgroundColor: bgColor,
-                                          color: primaryColor,
-                                        ),
-                                      ))
+                                  ? Column(
+                                    children: [
+                                      Container(
+                                          width: 50,
+                                          height: 25,
+                                          padding: const EdgeInsets.all(8),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(10)),
+                                            child: LinearProgressIndicator(
+                                              backgroundColor: bgColor,
+                                              color: primaryColor,
+                                            ),
+                                          )),
+                                      Text(progressString)
+                                    ],
+                                  )
                                   : Container(),
                               // ShowOrHideDownloadDialog(),
                             ],

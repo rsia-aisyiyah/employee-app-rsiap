@@ -91,6 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
     var res = await Api().postRequest('/auth/logout');
     var body = json.decode(res.body);
 
+    loadingku();
     if (body['success']) {
       await FirebaseMessaging.instance.unsubscribeFromTopic(nik);
 
@@ -107,12 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
       SharedPreferences.getInstance().then((prefs) {
         prefs.remove('token');
         Msg.success(context, logoutSuccessMsg);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const LoginScreen(),
-          ),
-        );
+        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute( builder: (ctx) => LoginScreen()), (route) => false);
       });
     }
   }

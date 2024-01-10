@@ -246,9 +246,9 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withOpacity(0.5),
-                        blurRadius: 1,
-                        offset: const Offset(2, 2),
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
                       )
                     ],
                   ),
@@ -277,11 +277,11 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                   child: Container(
                     decoration: BoxDecoration(
                       boxShadow: [
-                        BoxShadow(
-                          color: textColor.withOpacity(0.5),
-                          blurRadius: 0,
-                          offset: const Offset(1, 1),
-                        )
+                        // BoxShadow(
+                        //   color: textColor.withOpacity(0.5),
+                        //   blurRadius: 0,
+                        //   offset: const Offset(1, 1),
+                        // )
                       ],
                       borderRadius: BorderRadius.circular(5),
                       color: primaryColor,
@@ -324,9 +324,9 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
-                        color: primaryColor.withOpacity(0.5),
-                        blurRadius: 1,
-                        offset: const Offset(2, 2),
+                        color: primaryColor.withOpacity(0.3),
+                        blurRadius: 3,
+                        offset: const Offset(0, 2),
                       )
                     ],
                   ),
@@ -347,7 +347,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                                 isHAveDownloading
                                     ? Icon(
                                         Icons.menu_book_rounded,
-                                        color: Colors.green[300],
+                                        color: primaryColor,
                                         size: 32,
                                       )
                                     : Icon(
@@ -356,18 +356,23 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                                         size: 32,
                                       ),
                               downloading
-                                  ? Container(
-                                      width: 50,
-                                      height: 25,
-                                      padding: const EdgeInsets.all(8),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.all(
-                                            Radius.circular(10)),
-                                        child: LinearProgressIndicator(
-                                          backgroundColor: bgColor,
-                                          color: primaryColor,
-                                        ),
-                                      ))
+                                  ? Column(
+                                    children: [
+                                      Container(
+                                          width: 50,
+                                          height: 25,
+                                          padding: const EdgeInsets.all(8),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(10)),
+                                            child: LinearProgressIndicator(
+                                              backgroundColor: bgColor,
+                                              color: primaryColor,
+                                            ),
+                                          )),
+                                      Text(progressString),
+                                    ],
+                                  )
                                   : Container(),
                               // ShowOrHideDownloadDialog(),
                             ],

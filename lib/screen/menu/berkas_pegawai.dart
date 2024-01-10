@@ -37,14 +37,14 @@ class _BerkasPegawaiState extends State<BerkasPegawai> {
 
   _initialSet() {
     title = "Berkas Pegawai";
-    url = "/pegawai/detail";
+    url = "/pegawai/berkas-pegawai";
   }
 
   _setData(value) {
     print(value['data']);
     if (value['success']) {
       setState(() {
-        dataBerkas = value['data']['berkas_pegawai'] ?? [];
+        dataBerkas = value['data'] ?? [];
         isLoding = false;
       });
     } else {

@@ -26,8 +26,8 @@ class _IndexScreenState extends State<IndexScreen> {
   @override
   void initState() {
     super.initState();
-    checkForUpdate();
     firebaseInit();
+    checkForUpdate();
   }
 
   @override

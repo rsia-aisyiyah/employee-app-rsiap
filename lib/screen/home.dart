@@ -335,44 +335,48 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     Spacer(),
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          _jadwal['shift'].toString() != ""
-                                              ? _jadwal['shift'].toString()
-                                              : "Libur",
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12),
-                                        ),
-                                        _jadwal['shift'].toString() != ""
-                                            ? Text(
-                                                " (" +
-                                                    _jadwal['jam_masuk']
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                _jadwal['shift'].toString() !=
+                                                        ""
+                                                    ? _jadwal['shift']
                                                         .toString()
-                                                        .substring(
-                                                            0,
-                                                            _jadwal['jam_masuk']
-                                                                    .toString()
-                                                                    .length -
-                                                                3) +
-                                                    " - " +
-                                                    _jadwal['jam_pulang']
-                                                        .toString()
-                                                        .substring(
-                                                            0,
-                                                            _jadwal['jam_pulang']
-                                                                    .toString()
-                                                                    .length -
-                                                                3)+")",
+                                                    : "Libur",
                                                 style: TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 12),
-                                              )
-                                            : Text(""),
-                                      ],
-                                    ),
+                                              ),
+                                              _jadwal['shift'].toString() != ""
+                                                  ? Text(
+                                                      " (" +
+                                                          _jadwal['jam_masuk']
+                                                              .toString()
+                                                              .substring(
+                                                                  0,
+                                                                  _jadwal['jam_masuk']
+                                                                          .toString()
+                                                                          .length -
+                                                                      3) +
+                                                          " - " +
+                                                          _jadwal['jam_pulang']
+                                                              .toString()
+                                                              .substring(
+                                                                  0,
+                                                                  _jadwal['jam_pulang']
+                                                                          .toString()
+                                                                          .length -
+                                                                      3) +
+                                                          ")",
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 12),
+                                                    )
+                                                  : Text("-"),
+                                            ],
+                                          ),
                                     SizedBox(
                                       height: 5,
                                     ),
