@@ -160,223 +160,222 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return isLoading
-        ? loadingku()
-        : Scaffold(
-            backgroundColor: bgColor,
-            body: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
+    ? loadingku()
+    : Scaffold(
+        backgroundColor: bgColor,
+        body: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Stack(
-                    clipBehavior: Clip.none,
+                  Column(
                     children: [
-                      Column(
-                        children: [
-                          Container(
-                            height: 110 + MediaQuery.of(context).padding.top,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage("assets/images/depan-rsia.jpg"),
-                                fit: BoxFit.cover,
-                                opacity: 0.3,
-                              ),
-                              color: primaryColor.withOpacity(0.4),
-                              borderRadius: BorderRadius.only(
-                                bottomRight: Radius.circular(50),
-                              ),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 5),
-                                  child: Image.asset(
-                                    'assets/images/logo-rsia-aisyiyah.png',
-                                    height: 80 + MediaQuery.of(context).padding.top,
-                                    width: 85,
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 20),
-                                  child: Image.asset(
-                                    'assets/images/logo-larsi.png',
-                                    height: 80 + MediaQuery.of(context).padding.top,
-                                    width: 85,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      Container(
+                        height: 110 + MediaQuery.of(context).padding.top,
+                        decoration: BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage("assets/images/depan-rsia.jpg"),
+                            fit: BoxFit.cover,
+                            opacity: 0.3,
                           ),
-                          const SizedBox(
-                            height: 50,
-                          ),
-                        ],
-                      ),
-                      Positioned(
-                        bottom: 0,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: InkWell(
-                            onTap: () {
-                              showMenu(
-                                context: context,
-                                position:
-                                    RelativeRect.fromLTRB(100, 100, 100, 100),
-                                items: [
-                                  PopupMenuItem(
-                                    child: InkWell(
-                                      onTap: () => _logout(),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.logout,
-                                            color: textColor,
-                                          ),
-                                          const SizedBox(width: 10),
-                                          Text(
-                                            "Logout",
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w400,
-                                              color: textColor,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                            child: Row(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(100.0),
-                                    border: Border.all(
-                                      color: bgColor,
-                                      width: 5,
-                                    ),
-                                  ),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(100.0),
-                                    child: CachedNetworkImage(
-                                      imageUrl: photoUrl + _bio['photo'].toString(),
-                                      width: 100,
-                                      height: 100,
-                                      fit: BoxFit.cover,
-                                      alignment: Alignment.topCenter,
-                                      placeholder: (context, url) => Container(
-                                        width: 70,
-                                        height: 70,
-                                        color: Colors.grey[300],
-                                        child: Center(
-                                          child: CircularProgressIndicator(
-                                            color: bgColor,
-                                          ),
-                                        ),
-                                      ),
-                                      errorWidget: (context, url, error) =>
-                                          Container(
-                                        width: 80,
-                                        height: 80,
-                                        color: Colors.grey[300],
-                                        child: const Icon(Icons.error),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    SizedBox(
-                                      height: 50,
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                      child: Text(
-                                        "Masa Kerja : " +
-                                            duration.years.toString() +
-                                            " th " +
-                                            duration.months.toString() +
-                                            " bln " +
-                                            duration.days.toString() +
-                                            " hr ",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                      child: Text(
-                                        "Mulai bergabung " +
-                                            Helper.formatDate3(
-                                                _bio['mulai_kerja'].toString()),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w400,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                          color: primaryColor.withOpacity(0.4),
+                          borderRadius: BorderRadius.only(
+                            bottomRight: Radius.circular(50),
                           ),
                         ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(right: 5),
+                              child: Image.asset(
+                                'assets/images/logo-rsia-aisyiyah.png',
+                                height: 80 + MediaQuery.of(context).padding.top,
+                                width: 85,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(right: 20),
+                              child: Image.asset(
+                                'assets/images/logo-larsi.png',
+                                height: 80 + MediaQuery.of(context).padding.top,
+                                width: 85,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 50,
                       ),
                     ],
                   ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      _bio['nama'].toString(),
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Positioned(
+                    bottom: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: InkWell(
+                        onTap: () {
+                          showMenu(
+                            context: context,
+                            position:
+                                RelativeRect.fromLTRB(100, 100, 100, 100),
+                            items: [
+                              PopupMenuItem(
+                                child: InkWell(
+                                  onTap: () => _logout(),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.logout,
+                                        color: textColor,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        "Logout",
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(100.0),
+                                border: Border.all(
+                                  color: bgColor,
+                                  width: 5,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(100.0),
+                                child: CachedNetworkImage(
+                                  imageUrl: photoUrl + _bio['photo'].toString(),
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                  alignment: Alignment.topCenter,
+                                  placeholder: (context, url) => Container(
+                                    width: 70,
+                                    height: 70,
+                                    color: Colors.grey[300],
+                                    child: Center(
+                                      child: CircularProgressIndicator(
+                                        color: bgColor,
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    width: 80,
+                                    height: 80,
+                                    color: Colors.grey[300],
+                                    child: const Icon(Icons.error),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  height: 50,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  child: Text(
+                                    "Masa Kerja : " +
+                                        duration.years.toString() +
+                                        " th " +
+                                        duration.months.toString() +
+                                        " bln " +
+                                        duration.days.toString() +
+                                        " hr ",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  child: Text(
+                                    "Mulai bergabung " +
+                                        Helper.formatDate3(
+                                            _bio['mulai_kerja'].toString()),
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w400,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      _bio['nik'].toString(),
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      _bio['dpt']['nama'].toString(),
-                      style:
-                          TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 10,
-                  ),
-                  cardBio(),
-                  SizedBox(
-                    height: 70,
-                  )
                 ],
               ),
-            ),
-          );
+              SizedBox(
+                height: 10,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  _bio['nama'].toString(),
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+              SizedBox(
+                height: 5,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  _bio['nik'].toString(),
+                  style:
+                      TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  _bio['dpt']['nama'].toString(),
+                  style:
+                      TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              cardBio(),
+              SizedBox(
+                height: 70,
+              )
+            ],
+          ),
+        ),
+      );
   }
 
   Widget buttonLogout() {
