@@ -38,7 +38,6 @@ class _ProfilePageState extends State<ProfilePage> {
   var alamat = "";
   final _formKey = GlobalKey<FormState>();
 
-
   @override
   void initState() {
     super.initState();
@@ -69,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     var res = await Api().postData({'nik': nik}, '/pegawai/detail');
     var body = json.decode(res.body);
-    
+
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
@@ -108,17 +107,19 @@ class _ProfilePageState extends State<ProfilePage> {
       SharedPreferences.getInstance().then((prefs) {
         prefs.remove('token');
         Msg.success(context, logoutSuccessMsg);
-        Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute( builder: (ctx) => LoginScreen()), (route) => false);
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (ctx) => LoginScreen()),
+            (route) => false);
       });
     }
   }
+
   Future updateProfil() async {
     var data = {
       'nik': nik,
       'email': email,
       'no_telp': no_telp,
       'alamat': alamat,
-
     };
 
     var res = await Api().postData(data, '/pegawai/update-profil');
@@ -140,7 +141,9 @@ class _ProfilePageState extends State<ProfilePage> {
     dataTbl = {
       "No. KTP": detailBio['no_ktp'],
       "Jenis Kelamin": detailBio['jk'],
-      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] + ", " + Helper.formatDate3(detailBio['tgl_lahir']),
+      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] +
+          ", " +
+          Helper.formatDate3(detailBio['tgl_lahir']),
       "Alamat": detailBio['alamat'],
       "Pendidikan": detailBio['pendidikan'],
       "Jabatan": detailBio['jbtn'],
@@ -174,13 +177,14 @@ class _ProfilePageState extends State<ProfilePage> {
                             height: 110 + MediaQuery.of(context).padding.top,
                             decoration: BoxDecoration(
                               image: DecorationImage(
-                                  image: AssetImage(
-                                      "assets/images/depan-rsia.jpg"),
-                                  fit: BoxFit.cover,
-                                  opacity: 0.3),
+                                image: AssetImage("assets/images/depan-rsia.jpg"),
+                                fit: BoxFit.cover,
+                                opacity: 0.3,
+                              ),
                               color: primaryColor.withOpacity(0.4),
                               borderRadius: BorderRadius.only(
-                                  bottomRight: Radius.circular(50)),
+                                bottomRight: Radius.circular(50),
+                              ),
                             ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,8 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   padding: const EdgeInsets.only(right: 5),
                                   child: Image.asset(
                                     'assets/images/logo-rsia-aisyiyah.png',
-                                    height:
-                                        80 + MediaQuery.of(context).padding.top,
+                                    height: 80 + MediaQuery.of(context).padding.top,
                                     width: 85,
                                   ),
                                 ),
@@ -199,8 +202,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   padding: const EdgeInsets.only(right: 20),
                                   child: Image.asset(
                                     'assets/images/logo-larsi.png',
-                                    height:
-                                        80 + MediaQuery.of(context).padding.top,
+                                    height: 80 + MediaQuery.of(context).padding.top,
                                     width: 85,
                                   ),
                                 ),
@@ -261,8 +263,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(100.0),
                                     child: CachedNetworkImage(
-                                      imageUrl:
-                                          photoUrl + _bio['photo'].toString(),
+                                      imageUrl: photoUrl + _bio['photo'].toString(),
                                       width: 100,
                                       height: 100,
                                       fit: BoxFit.cover,
@@ -298,9 +299,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                         horizontal: 10,
                                       ),
                                       child: Text(
-                                        "Masa Kerja : " + duration.years.toString() +
-                                            " th " + duration.months.toString() +
-                                            " bln " + duration.days.toString() + " hr ",
+                                        "Masa Kerja : " +
+                                            duration.years.toString() +
+                                            " th " +
+                                            duration.months.toString() +
+                                            " bln " +
+                                            duration.days.toString() +
+                                            " hr ",
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -312,7 +317,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                         horizontal: 10,
                                       ),
                                       child: Text(
-                                        "Mulai bergabung " + Helper.formatDate3(_bio['mulai_kerja'].toString()),
+                                        "Mulai bergabung " +
+                                            Helper.formatDate3(
+                                                _bio['mulai_kerja'].toString()),
                                         style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.w400,
@@ -371,6 +378,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           );
   }
+
   Widget buttonLogout() {
     return InkWell(
       onTap: () {},
@@ -430,11 +438,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                   clipBehavior: Clip.none,
                                   children: [
                                     Column(
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: <Widget>[
-
                                         Container(
                                           child: SizedBox(
                                             // height: 50,
@@ -442,24 +451,33 @@ class _ProfilePageState extends State<ProfilePage> {
                                               children: [
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue: _bio['rsia_email_pegawai']['email'].toString(),
+                                                    initialValue:
+                                                        _bio['rsia_email_pegawai']
+                                                                ['email']
+                                                            .toString(),
                                                     maxLines: 1,
                                                     decoration: InputDecoration(
-
                                                         contentPadding:
-                                                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                                            EdgeInsets
+                                                                .symmetric(
+                                                                    vertical:
+                                                                        10.0,
+                                                                    horizontal:
+                                                                        10.0),
                                                         border: OutlineInputBorder(
-                                                            borderRadius: BorderRadius.circular(10)
-                                                        ),
-
-                                                        hintText: 'Masukkan email disini',
-
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                        hintText:
+                                                            'Masukkan email disini',
                                                         labelText: 'Email'),
                                                     onSaved: (value) {
                                                       email = value!;
                                                     },
                                                     validator: (value) {
-                                                      if (value == null || value.isEmpty) {
+                                                      if (value == null ||
+                                                          value.isEmpty) {
                                                         return 'Field tidak boleh kosong';
                                                       }
                                                       return null;
@@ -471,24 +489,33 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 ),
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue: _bio['petugas']['no_telp'].toString(),
+                                                    initialValue:
+                                                        _bio['petugas']
+                                                                ['no_telp']
+                                                            .toString(),
                                                     maxLines: 1,
                                                     decoration: InputDecoration(
-
                                                         contentPadding:
-                                                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                                            EdgeInsets
+                                                                .symmetric(
+                                                                    vertical:
+                                                                        10.0,
+                                                                    horizontal:
+                                                                        10.0),
                                                         border: OutlineInputBorder(
-                                                            borderRadius: BorderRadius.circular(10)
-                                                        ),
-
-                                                        hintText: 'Masukkan no. handphone disini',
-
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                        hintText:
+                                                            'Masukkan no. handphone disini',
                                                         labelText: 'No. HP'),
                                                     onSaved: (value) {
                                                       no_telp = value!;
                                                     },
                                                     validator: (value) {
-                                                      if (value == null || value.isEmpty) {
+                                                      if (value == null ||
+                                                          value.isEmpty) {
                                                         return 'Field tidak boleh kosong';
                                                       }
                                                       return null;
@@ -500,24 +527,31 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 ),
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue: _bio['alamat'].toString(),
+                                                    initialValue: _bio['alamat']
+                                                        .toString(),
                                                     maxLines: 5,
                                                     decoration: InputDecoration(
-
                                                         contentPadding:
-                                                        EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+                                                            EdgeInsets
+                                                                .symmetric(
+                                                                    vertical:
+                                                                        10.0,
+                                                                    horizontal:
+                                                                        10.0),
                                                         border: OutlineInputBorder(
-                                                            borderRadius: BorderRadius.circular(10)
-                                                        ),
-
-                                                        hintText: 'Masukkan alamat disini',
-
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10)),
+                                                        hintText:
+                                                            'Masukkan alamat disini',
                                                         labelText: 'Alamat'),
                                                     onSaved: (value) {
                                                       alamat = value!;
                                                     },
                                                     validator: (value) {
-                                                      if (value == null || value.isEmpty) {
+                                                      if (value == null ||
+                                                          value.isEmpty) {
                                                         return 'Field tidak boleh kosong';
                                                       }
                                                       return null;
@@ -534,32 +568,35 @@ class _ProfilePageState extends State<ProfilePage> {
                                         Container(
                                           width: double.infinity,
                                           height: 50,
-                                          padding: const EdgeInsets.symmetric(vertical: 5),
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 5),
                                           decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(25)
-                                          ),
+                                              borderRadius:
+                                                  BorderRadius.circular(25)),
                                           child: ElevatedButton(
                                             onPressed: () {
-                                              if (_formKey.currentState!.validate()) {
+                                              if (_formKey.currentState!
+                                                  .validate()) {
                                                 _formKey.currentState!.save();
-                                                if(EmailValidator.validate(email)){
+                                                if (EmailValidator.validate(
+                                                    email)) {
                                                   updateProfil();
 
-                                                  if(isSuccess){
+                                                  if (isSuccess) {
                                                     Navigator.of(context).pop();
                                                   }
-
                                                 } else {
-                                                  Msg.error(context, 'Format Email tidak sesuai');
+                                                  Msg.error(context,
+                                                      'Format Email tidak sesuai');
                                                 }
                                               }
                                             },
                                             style: ElevatedButton.styleFrom(
                                                 primary: primaryColor,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(15),
-                                                )
-                                            ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
+                                                )),
                                             child: Text(
                                               "Submit",
                                             ),
@@ -567,13 +604,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                         ),
                                       ],
                                     ),
-
                                   ],
                                 ),
                               ),
                             ),
                             // actionsAlignment: MainAxisAlignment.spaceAround,
-
                           ),
                         );
                       },
@@ -639,5 +674,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
-
