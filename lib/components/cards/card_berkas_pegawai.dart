@@ -1,17 +1,11 @@
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-import 'package:rsia_employee_app/screen/menu/berkas_pegawai.dart';
 // import 'package:flutter_downloader/flutter_downloader.dart';
 // import 'package:flutter_file_downloader/flutter_file_downloader.dart';
-import 'package:app_settings/app_settings.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:open_file_plus/open_file_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:rsia_employee_app/utils/msg.dart';

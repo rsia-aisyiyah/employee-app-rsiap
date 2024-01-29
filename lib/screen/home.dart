@@ -6,7 +6,6 @@ import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/config/string.dart';
-import 'package:rsia_employee_app/screen/profile.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -38,8 +37,6 @@ class _HomePageState extends State<HomePage> {
         if (mounted) {
           setState(() {
             isLoading = false;
-
-            // print(_getBio());
           });
         }
       });
@@ -64,12 +61,8 @@ class _HomePageState extends State<HomePage> {
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
-    // print(nik);
-
-    // print(nik);
     var res = await Api().postData({'nik': nik}, '/pegawai/detail');
     var body = json.decode(res.body);
-    print(body);
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
@@ -90,16 +83,12 @@ class _HomePageState extends State<HomePage> {
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
-    // print(nik);
-
-    // print(nik);
     var res = await Api().postData({'nik': nik}, '/pegawai/jadwal/now');
     var body = json.decode(res.body);
-    print(body);
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
-          _jadwal = body['data']['jam_masuk'];
+          _jadwal = body['data']['jam_masuk'] ?? {};
         });
       }
     } else {
@@ -116,12 +105,9 @@ class _HomePageState extends State<HomePage> {
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
-    // print(nik);
 
-    // print(nik);
     var res = await Api().postData({'nik': nik}, '/pegawai/presensi/tmp');
     var body = json.decode(res.body);
-    print(body);
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
@@ -142,12 +128,8 @@ class _HomePageState extends State<HomePage> {
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
-    // print(nik);
-
-    // print(nik);
     var res = await Api().postData({'nik': nik}, '/pegawai/presensi/rekap/now');
     var body = json.decode(res.body);
-    // print(body);
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
@@ -165,8 +147,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // print(_rekapPresensi.isEmpty ? "betul" : "salah");
-    // print(_bio['photo']);
     return isLoading
         ? loadingku()
         : Scaffold(
@@ -205,13 +185,16 @@ class _HomePageState extends State<HomePage> {
                           child: Container(
                             width: double.infinity,
                             height: 200,
-                            decoration:
-                                BoxDecoration(color: primaryColor, boxShadow: [
-                              BoxShadow(
+                            decoration: BoxDecoration(
+                              color: primaryColor,
+                              boxShadow: [
+                                BoxShadow(
                                   color: primaryColor.withOpacity(0.3),
                                   blurRadius: 10,
-                                  offset: const Offset(0, 2))
-                            ]),
+                                  offset: const Offset(0, 2),
+                                )
+                              ],
+                            ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -335,121 +318,93 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     Spacer(),
                                     Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _jadwal['shift'].toString() !=
-                                                        ""
-                                                    ? _jadwal['shift']
-                                                        .toString()
-                                                    : "Libur",
-                                                style: TextStyle(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _jadwal['shift'] != null ? _jadwal['shift'].toString() : "Libur",
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12),
+                                        ),
+                                        _jadwal['shift'] != null
+                                            ? Text(" (" + _jadwal['jam_masuk'].toString().substring(0, _jadwal['jam_masuk'].toString().length -3) 
+                                            + " - " + _jadwal['jam_pulang'] .toString() .substring(0, _jadwal['jam_pulang'].toString().length -3) 
+                                            + ")", style: TextStyle(
                                                     fontWeight: FontWeight.bold,
-                                                    fontSize: 12),
-                                              ),
-                                              _jadwal['shift'].toString() != ""
-                                                  ? Text(
-                                                      " (" +
-                                                          _jadwal['jam_masuk']
-                                                              .toString()
-                                                              .substring(
-                                                                  0,
-                                                                  _jadwal['jam_masuk']
-                                                                          .toString()
-                                                                          .length -
-                                                                      3) +
-                                                          " - " +
-                                                          _jadwal['jam_pulang']
-                                                              .toString()
-                                                              .substring(
-                                                                  0,
-                                                                  _jadwal['jam_pulang']
-                                                                          .toString()
-                                                                          .length -
-                                                                      3) +
-                                                          ")",
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 12),
-                                                    )
-                                                  : Text("-"),
-                                            ],
-                                          ),
+                                                    fontSize: 12,
+                                                  ),
+                                            )
+                                            : Text(" -"),
+                                      ],
+                                    ),
                                     SizedBox(
                                       height: 5,
                                     ),
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       // CrossAxisAlignment.stretch,
                                       children: [
                                         Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               "IN ",
                                               style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                  color: Colors.green),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                                color: Colors.green,
+                                              ),
                                             ),
                                             Text(
-                                              _rekapPresensi.isEmpty &&
-                                                      _tempPresensi.isEmpty
+                                              _rekapPresensi.isEmpty && _tempPresensi.isEmpty
                                                   ? "-"
                                                   : _rekapPresensi.isEmpty
-                                                      ? DateFormat.Hms().format(
-                                                          DateTime.parse(
-                                                              _tempPresensi[
-                                                                  'jam_datang']))
-                                                      : DateFormat.Hms().format(
-                                                          DateTime.parse(
-                                                              _rekapPresensi[
-                                                                  'jam_datang'])),
+                                                    ? DateFormat.Hms().format(
+                                                        DateTime.parse(
+                                                            _tempPresensi['jam_datang'],
+                                                        ),
+                                                      )
+                                                    : DateFormat.Hms().format(
+                                                        DateTime.parse(_rekapPresensi['jam_datang'], 
+                                                      ),
+                                                    ),
                                               style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        SizedBox(
-                                          width: 20,
-                                        ),
+                                        SizedBox(width: 20),
                                         Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               "OUT ",
                                               style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                  color: Colors.red),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                                color: Colors.red,
+                                              ),
                                             ),
                                             Text(
                                               _rekapPresensi.isEmpty
                                                   ? "-"
                                                   : DateFormat.Hms().format(
                                                       DateTime.parse(
-                                                          _rekapPresensi[
-                                                              'jam_pulang'])),
+                                                          _rekapPresensi['jam_pulang'],
+                                                      ),
+                                                    ),
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
-                                                  fontSize: 12),
+                                                  fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
-                                        SizedBox(
-                                          width: 20,
-                                        ),
+                                        SizedBox(width: 20),
                                         Column(
                                           children: [
                                             Text(
@@ -506,24 +461,18 @@ class _HomePageState extends State<HomePage> {
                         return InkWell(
                           onTap: () {
                             if (menuScreenItems[index]['disabled'] == true) {
-                              Msg.warning(
-                                context,
-                                featureNotAvailableMsg,
-                              );
+                              Msg.warning(context, featureNotAvailableMsg);
                             } else {
                               if (menuScreenItems[index]['widget'] == "") {
-                                Msg.warning(
-                                  context,
-                                  featureNotAvailableMsg,
-                                );
+                                Msg.warning(context, featureNotAvailableMsg);
                               } else {
                                 Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          menuScreenItems[index]['widget']
-                                              as Widget,
-                                    ));
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => menuScreenItems[index]
+                                        ['widget'] as Widget,
+                                  ),
+                                );
                               }
                             }
                           },
