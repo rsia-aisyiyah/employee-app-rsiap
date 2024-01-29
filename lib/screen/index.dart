@@ -1,9 +1,10 @@
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:rsia_employee_app/api/firebase_api.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
@@ -26,6 +27,7 @@ class _IndexScreenState extends State<IndexScreen> {
   @override
   void initState() {
     super.initState();
+    validasiToken();
     firebaseInit();
     checkForUpdate();
   }
@@ -92,6 +94,34 @@ class _IndexScreenState extends State<IndexScreen> {
     setState(() {
       _selectedNavbar = index;
     });
+  }
+
+  // function validasi token to api/auth/me
+  void validasiToken() async {
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    var token = localStorage.getString('token');
+    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
+
+    // if token available
+    if (token != null) {
+      // validate token by exp
+      var now = DateTime.now().millisecondsSinceEpoch / 1000;
+      if (decodeToken['exp'] < now) {
+        localStorage.remove('token');
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+
+      // validate token by api 
+      await Api().postRequest('/auth/me').then((val) async {
+        var res = jsonDecode(val.body);
+        if (val.statusCode != 200 || res['success'] == false) {
+          localStorage.remove('token');
+          Navigator.pushReplacementNamed(context, '/login');
+        }
+      });
+    } else {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   @override
