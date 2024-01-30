@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/index.dart';
@@ -12,10 +15,9 @@ import 'package:flutter_downloader/flutter_downloader.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterDownloader.initialize(
-      debug: true, // optional: set to false to disable printing logs to console (default: true)
-      ignoreSsl:
-          true // option: set to false to disable working with http links (default: false)
-      );
+    debug: true, // optional: set to false to disable printing logs to console (default: true)
+    ignoreSsl: true, // option: set to false to disable working with http links (default: false)
+  );
 
   await initializeDateFormatting('id_ID', null).then(
     (_) => runApp(
@@ -60,54 +62,104 @@ class _CheckAuthState extends State<CheckAuth> {
   void initState() {
     super.initState();
 
-    _checkIsLoggedin();
+    // _checkIsLoggedin();
   }
 
-  void _checkIsLoggedin() {
-    SharedPreferences.getInstance().then((prefs) {
-      var token = prefs.getString('token');
-      if (token != null) {
-        if (mounted) {
-          setState(() {
-            isAuth = true;
-          });
-        }
-        // Api().postRequest('/auth/login').then((res) {
-        //   print(res.statusCode);
-        //   if (res.statusCode == 200) {
-        //     if (mounted) {
-        //       setState(() {
-        //         isAuth = true;
-        //       });
-        //     }
-        //   } else {
-        //     if (mounted) {
-        //       Msg.error(context, "Your session has expired");
-        //       setState(() {
-        //         isAuth = false;
-        //       });
-        //     }
-        //   }
-        // });
-      } else {
-        if (mounted) {
-          Msg.error(context, "Your session has expired");
-          setState(() {
-            isAuth = false;
-          });
-        }
+  // void _checkIsLoggedin() {
+  //   SharedPreferences.getInstance().then((prefs) {
+  //     var token = prefs.getString('token');
+  //     if (token != null) {
+  //       if (mounted) {
+  //         setState(() {
+  //           isAuth = true;
+  //         });
+  //       }
+  //       // Api().postRequest('/auth/login').then((res) {
+  //       //   print(res.statusCode);
+  //       //   if (res.statusCode == 200) {
+  //       //     if (mounted) {
+  //       //       setState(() {
+  //       //         isAuth = true;
+  //       //       });
+  //       //     }
+  //       //   } else {
+  //       //     if (mounted) {
+  //       //       Msg.error(context, "Your session has expired");
+  //       //       setState(() {
+  //       //         isAuth = false;
+  //       //       });
+  //       //     }
+  //       //   }
+  //       // });
+  //     } else {
+  //       if (mounted) {
+  //         Msg.error(context, "Your session has expired");
+  //         setState(() {
+  //           isAuth = false;
+  //         });
+  //       }
+  //     }
+  //   });
+  // }
+
+  Future _authCheck() async {
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    var token = localStorage.getString('token');
+    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
+
+    // if token available
+    if (token != null) {
+      // validate token by exp
+      var now = DateTime.now().millisecondsSinceEpoch / 1000;
+      if (decodeToken['exp'] < now) {
+        return false;
       }
-    });
+
+      // validate token by api
+      await Api().postRequest('/auth/me').then((val) async {
+        var res = jsonDecode(val.body);
+        if (val.statusCode != 200 || res['success'] == false) {
+          return false;
+        }
+      });
+
+      return true;
+    } else {
+      return false;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget child;
-    if (isAuth) {
-      child = const IndexScreen();
-    } else {
-      child = const LoginScreen();
-    }
-    return child;
+    return FutureBuilder(
+      future: _authCheck(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        } else {
+          if (snapshot.hasData) {
+            if (snapshot.data == true) {
+              return const IndexScreen();
+            } else {
+              return const LoginScreen();
+            }
+          } else {
+            return const LoginScreen();
+          }
+        }
+      },
+    );
+
+    // Widget child;
+    // if (isAuth) {
+    //   child = const IndexScreen();
+    // } else {
+    //   child = const LoginScreen();
+    // }
+    // return child;
   }
 }
