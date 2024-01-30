@@ -27,7 +27,6 @@ class _IndexScreenState extends State<IndexScreen> {
   @override
   void initState() {
     super.initState();
-    validasiToken();
     firebaseInit();
     checkForUpdate();
   }
@@ -78,50 +77,19 @@ class _IndexScreenState extends State<IndexScreen> {
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     var token = localStorage.getString('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
+
     var nik = decodeToken['sub'];
-    await FirebaseMessaging.instance.subscribeToTopic(nik);
+    var sps = decodeToken['kd_dep'];
 
-    // SharedPreferences.getInstance().then((prefs) async {
-    //   var nik = prefs.getString('sub')!;
-    //   print("NIK : " + nik);
-
-    //   await FirebaseMessaging.instance
-    //       .subscribeToTopic("${nik.replaceAll('"', '')}");
-    // });
+    await FirebaseMessaging.instance.subscribeToTopic('pegawai');
+    await FirebaseMessaging.instance.subscribeToTopic(nik.replaceAll('"', ''));
+    await FirebaseMessaging.instance.subscribeToTopic(sps.replaceAll('"', ''));
   }
 
   void _changeSelectedNavbar(int index) {
     setState(() {
       _selectedNavbar = index;
     });
-  }
-
-  // function validasi token to api/auth/me
-  void validasiToken() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
-
-    // if token available
-    if (token != null) {
-      // validate token by exp
-      var now = DateTime.now().millisecondsSinceEpoch / 1000;
-      if (decodeToken['exp'] < now) {
-        localStorage.remove('token');
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-
-      // validate token by api 
-      await Api().postRequest('/auth/me').then((val) async {
-        var res = jsonDecode(val.body);
-        if (val.statusCode != 200 || res['success'] == false) {
-          localStorage.remove('token');
-          Navigator.pushReplacementNamed(context, '/login');
-        }
-      });
-    } else {
-      Navigator.pushReplacementNamed(context, '/login');
-    }
   }
 
   @override

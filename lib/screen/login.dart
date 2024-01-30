@@ -57,16 +57,18 @@ class _LoginScreenState extends State<LoginScreen> {
     };
 
     await Api().auth(data, '/auth/login').then((res) {
+      print(res);
       if (res.statusCode == 200) {
         var body = jsonDecode(res.body);
         if (body['success']) {
           String token = body['access_token'];
           Map<String, dynamic> decodeToken = JwtDecoder.decode(token);
 
-          SharedPreferences.getInstance().then((prefs) {
+          SharedPreferences.getInstance().then((prefs) async {
             prefs.setString('token', json.encode(body['access_token']));
             prefs.setString('kd_sps', json.encode(decodeToken['sps']));
             prefs.setString('spesialis', json.encode(decodeToken['spss']));
+            prefs.setString('sub', json.encode(decodeToken['sub']));
 
             Navigator.pushReplacement(
               context,
@@ -151,33 +153,35 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 20, horizontal: 20),
-                    child: Container(
-                        alignment: Alignment.center,
-                        child: Column(
-                          children: [
-                            Text(
-                              "Employee Self Service [ESS] ",
-                              style: TextStyle(
-                                  fontSize: 22,
-                                  color: textBlue,
-                                  fontWeight: FontWeight.bold),
-                              // textAlign: TextAlign.center,
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text(
-                              "RSIA Aisyiyah Pekajangan",
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: textBlue,
-                              ),
-                              // textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ))),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Column(
+                      children: [
+                        Text(
+                          "Employee Self Service [ESS] ",
+                          style: TextStyle(
+                              fontSize: 22,
+                              color: textBlue,
+                              fontWeight: FontWeight.bold),
+                          // textAlign: TextAlign.center,
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          "RSIA Aisyiyah Pekajangan",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: textBlue,
+                          ),
+                          // textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
             Padding(
@@ -192,15 +196,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 350,
                         decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryColor.withOpacity(0.3),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              )
-                            ],
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primaryColor.withOpacity(0.3),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,11 +231,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   Center(
                                     child: Container(
                                       decoration: BoxDecoration(
-                                          color: line,
-                                          borderRadius:
-                                              BorderRadius.circular(2)),
-                                      width:
-                                          MediaQuery.of(context).size.width / 6,
+                                        color: line,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                      width: MediaQuery.of(context).size.width / 6,
                                       height: 4,
                                     ),
                                   ),
@@ -269,11 +273,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         maxLines: 1,
                                         decoration: InputDecoration(
                                           hintText: labelUsername,
-                                          contentPadding:
-                                              const EdgeInsets.all(2),
+                                          contentPadding: const EdgeInsets.all(2),
                                           border: InputBorder.none,
-                                          hintStyle:
-                                              TextStyle(color: textColor),
+                                          hintStyle: TextStyle(color: textColor),
                                         ),
                                         style: TextStyle(color: textColor),
                                         onSaved: (value) {
@@ -292,8 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         borderRadius: BorderRadius.circular(10),
                                         boxShadow: [
                                           BoxShadow(
-                                            color:
-                                                primaryColor.withOpacity(0.3),
+                                            color: primaryColor.withOpacity(0.3),
                                             blurRadius: 5,
                                             offset: const Offset(0, 2),
                                           )
