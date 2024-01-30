@@ -4,8 +4,9 @@ import 'package:lottie/lottie.dart';
 
 loadingku() {
   return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: Center(child: LottieBuilder.asset('assets/images/loading2.json',width: 120,)),
-      ));
+    backgroundColor: bgColor,
+    body: SafeArea(
+      child: Center(child: LottieBuilder.asset('assets/images/loading2.json',width: 120,)),
+    ),
+  );
 }

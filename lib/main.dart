@@ -7,6 +7,7 @@ import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/index.dart';
 import 'package:rsia_employee_app/screen/login.dart';
+import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/index': (context) => const IndexScreen(),
         '/profile': (context) => const ProfilePage(),
+        '/logout': (context) => const LogoutScreen(),
       },
     );
   }

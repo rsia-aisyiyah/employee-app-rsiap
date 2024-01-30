@@ -9,6 +9,7 @@ import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/login.dart';
+import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/utils/section_title.dart';
@@ -141,9 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
     dataTbl = {
       "No. KTP": detailBio['no_ktp'],
       "Jenis Kelamin": detailBio['jk'],
-      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] +
-          ", " +
-          Helper.formatDate3(detailBio['tgl_lahir']),
+      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] + ", " + Helper.formatDate3(detailBio['tgl_lahir']),
       "Alamat": detailBio['alamat'],
       "Pendidikan": detailBio['pendidikan'],
       "Jabatan": detailBio['jbtn'],
@@ -227,7 +226,15 @@ class _ProfilePageState extends State<ProfilePage> {
                             items: [
                               PopupMenuItem(
                                 child: InkWell(
-                                  onTap: () => _logout(),
+                                  // onTap: () => _logout(),
+                                  onTap: () {
+                                    // push to logout screen
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => LogoutScreen(),
+                                      ),
+                                    );
+                                  },
                                   child: Row(
                                     children: [
                                       Icon(
@@ -448,27 +455,21 @@ class _ProfilePageState extends State<ProfilePage> {
                                               children: [
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue:
-                                                        _bio['rsia_email_pegawai']
-                                                                ['email']
-                                                            .toString(),
+                                                    initialValue:                                                        _bio['rsia_email_pegawai']['email'].toString(),
                                                     maxLines: 1,
                                                     decoration: InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets
-                                                                .symmetric(
-                                                                    vertical:
-                                                                        10.0,
-                                                                    horizontal:
-                                                                        10.0),
+                                                        contentPadding: EdgeInsets.symmetric(
+                                                          vertical: 10.0,
+                                                          horizontal: 10.0,
+                                                        ),
                                                         border: OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10)),
-                                                        hintText:
-                                                            'Masukkan email disini',
-                                                        labelText: 'Email'),
+                                                            borderRadius: BorderRadius.circular(
+                                                              10,
+                                                            ),
+                                                        ),
+                                                        hintText: 'Masukkan email disini',
+                                                        labelText: 'Email',
+                                                    ),
                                                     onSaved: (value) {
                                                       email = value!;
                                                     },
@@ -486,19 +487,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 ),
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue:
-                                                        _bio['petugas']
-                                                                ['no_telp']
-                                                            .toString(),
+                                                    initialValue: _bio['petugas']['no_telp'].toString(),
                                                     maxLines: 1,
                                                     decoration: InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets
-                                                                .symmetric(
-                                                                    vertical:
-                                                                        10.0,
-                                                                    horizontal:
-                                                                        10.0),
+                                                        contentPadding: EdgeInsets.symmetric(
+                                                          vertical: 10.0,
+                                                          horizontal: 10.0,
+                                                        ),
                                                         border: OutlineInputBorder(
                                                             borderRadius:
                                                                 BorderRadius
