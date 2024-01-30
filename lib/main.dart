@@ -8,7 +8,6 @@ import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/index.dart';
 import 'package:rsia_employee_app/screen/login.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
-import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 

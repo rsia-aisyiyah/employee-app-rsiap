@@ -589,14 +589,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                               }
                                             },
                                             style: ElevatedButton.styleFrom(
-                                                primary: primaryColor,
+                                                backgroundColor: primaryColor,
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(15),
-                                                )),
-                                            child: Text(
-                                              "Submit",
+                                                ),
                                             ),
+                                            child: Text("Submit"),
                                           ),
                                         ),
                                       ],
