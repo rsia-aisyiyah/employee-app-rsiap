@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:rsia_employee_app/screen/menu/cuti.dart';
+import 'package:rsia_employee_app/screen/index.dart';
 import 'package:rsia_employee_app/screen/menu/otp_jasa_medis.dart';
 
 late BuildContext ctx;
@@ -17,19 +17,58 @@ final _androidChannel = AndroidNotificationChannel(
 );
 
 Future<void> handleBackgroundMessage(RemoteMessage message) async {
-  Navigator.of(ctx).push(
-    MaterialPageRoute(
-      builder: (context) => const OtpJasaMedis(),
-    ),
-  );
+  final data = message.data;
+  var route = data['route'];
+
+  print("Handle Background Message : route $route");
+
+  if (route != null) {
+    if (route[0] != '/') {
+      route = '/' + route;
+    }
+
+    print("Rote not null : $route");
+
+    handleNotificationAction(route, data);
+  } else {
+    Navigator.of(ctx).push(
+      MaterialPageRoute(
+        builder: (context) => const IndexScreen()
+      ),
+    );
+  }
+}
+
+// function go to route
+Future<void> handleNotificationAction(String route, Map<String, dynamic> data) async {
+
+  print("Handle Notification Action : route $route");
+
+  Navigator.of(ctx).pushNamed(route, arguments: data);
 }
 
 Future<void> handleMessage(RemoteMessage message) async {
-  Navigator.of(ctx).push(
-    MaterialPageRoute(
-      builder: (context) => const OtpJasaMedis(),
-    ),
-  );
+  final data = message.data;
+  var route = data['route'] ?? data['routes'];
+
+  print("Handle Message : Message Data : $data");
+  print("Handle Message : route $route");
+
+  if (route != null) {
+    if (route[0] != '/') {
+      route = '/' + route;
+    }
+
+    print("Rote not null : $route");
+
+    handleNotificationAction(route, data);
+  } else {
+    Navigator.of(ctx).push(
+      MaterialPageRoute(
+        builder: (context) => const IndexScreen()
+      ),
+    );
+  }
 }
 
 Future initLocalNotification() async {
@@ -76,10 +115,11 @@ Future initPushNotification() async {
       notification.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-            _androidChannel.id, _androidChannel.name,
-            channelDescription: _androidChannel.description,
-            importance: _androidChannel.importance,
-            icon: "@drawable/launcher_icon"),
+          _androidChannel.id, _androidChannel.name,
+          channelDescription: _androidChannel.description,
+          importance: _androidChannel.importance,
+          icon: "@drawable/launcher_icon",
+        ),
       ),
       payload: jsonEncode(message.toMap()),
     );

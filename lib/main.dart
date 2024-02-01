@@ -8,6 +8,7 @@ import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/index.dart';
 import 'package:rsia_employee_app/screen/login.dart';
 import 'package:rsia_employee_app/screen/logout.dart';
+import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/index': (context) => const IndexScreen(),
         '/profile': (context) => const ProfilePage(),
         '/logout': (context) => const LogoutScreen(),
+        '/undangan': (context) => const Undangan()
       },
     );
   }
@@ -66,42 +68,6 @@ class _CheckAuthState extends State<CheckAuth> {
     // _checkIsLoggedin();
   }
 
-  // void _checkIsLoggedin() {
-  //   SharedPreferences.getInstance().then((prefs) {
-  //     var token = prefs.getString('token');
-  //     if (token != null) {
-  //       if (mounted) {
-  //         setState(() {
-  //           isAuth = true;
-  //         });
-  //       }
-  //       // Api().postRequest('/auth/login').then((res) {
-  //       //   print(res.statusCode);
-  //       //   if (res.statusCode == 200) {
-  //       //     if (mounted) {
-  //       //       setState(() {
-  //       //         isAuth = true;
-  //       //       });
-  //       //     }
-  //       //   } else {
-  //       //     if (mounted) {
-  //       //       Msg.error(context, "Your session has expired");
-  //       //       setState(() {
-  //       //         isAuth = false;
-  //       //       });
-  //       //     }
-  //       //   }
-  //       // });
-  //     } else {
-  //       if (mounted) {
-  //         Msg.error(context, "Your session has expired");
-  //         setState(() {
-  //           isAuth = false;
-  //         });
-  //       }
-  //     }
-  //   });
-  // }
 
   Future _authCheck() async {
     SharedPreferences localStorage = await SharedPreferences.getInstance();

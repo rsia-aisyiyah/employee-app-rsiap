@@ -19,7 +19,8 @@ class Undangan extends StatefulWidget {
 }
 
 class _UndanganState extends State<Undangan> {
-  RefreshController _refreshController = RefreshController(initialRefresh: false);
+  RefreshController _refreshController =
+      RefreshController(initialRefresh: false);
 
   String sub = "";
 
@@ -170,6 +171,7 @@ class _UndanganState extends State<Undangan> {
                 var dataUdgn = dataUndangan[i];
                 return InkWell(
                   onTap: () => showModalBottomSheet(
+                    showDragHandle: true,
                     context: context,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.only(
@@ -209,8 +211,12 @@ class _UndanganState extends State<Undangan> {
                           SizedBox(height: 10),
                           GenTable(data: {
                             // format date to indonesia with month name name day asia/jakarta
-                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(dataUdgn['surat']['tanggal'])),
-                            "Waktu": DateFormat('HH:mm').format(DateTime.parse(dataUdgn['surat']['tanggal'])) + " WIB",
+                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
+                                .format(DateTime.parse(
+                                    dataUdgn['surat']['tanggal'])),
+                            "Waktu": DateFormat('HH:mm').format(DateTime.parse(
+                                    dataUdgn['surat']['tanggal'])) +
+                                " WIB",
                             "Tempat": dataUdgn['surat']['tempat'],
                           }),
                         ],
@@ -228,7 +234,8 @@ class _UndanganState extends State<Undangan> {
                       decoration: BoxDecoration(
                         border: Border(
                           left: BorderSide(
-                            color: DateTime.parse(dataUdgn['surat']['tanggal']).isAfter(DateTime.now())
+                            color: DateTime.parse(dataUdgn['surat']['tanggal'])
+                                    .isAfter(DateTime.now())
                                 ? Colors.blue
                                 : Colors.green,
                             width: 5,
@@ -247,7 +254,10 @@ class _UndanganState extends State<Undangan> {
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
-                            DateFormat('EEEE, dd MMMM yyyy', 'id_ID').add_jm().format(DateTime.parse(dataUdgn['surat']['tanggal'])),
+                            DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
+                                .add_jm()
+                                .format(DateTime.parse(
+                                    dataUdgn['surat']['tanggal'])),
                             style: TextStyle(
                               fontSize: 14,
                             ),
@@ -267,170 +277,5 @@ class _UndanganState extends State<Undangan> {
         ),
       );
     }
-    // return Scaffold(
-    //     backgroundColor: bgColor,
-    //     appBar: AppBar(
-    //       title: Text(
-    //         "Undangan",
-    //         style: TextStyle(
-    //           color: textWhite,
-    //           fontSize: 18,
-    //           fontWeight: fontSemiBold,
-    //         ),
-    //       ),
-    //       backgroundColor: primaryColor,
-    //       elevation: 0,
-    //       leading: IconButton(
-    //         onPressed: () {
-    //           Navigator.pop(context);
-    //         },
-    //         icon: Icon(
-    //           Icons.arrow_back_ios,
-    //           color: textWhite,
-    //         ),
-    //       ),
-    //     ),
-    //     body: FutureBuilder(
-    //       // TOOD : make list bellow invinite scroll and use laravel paginatio, example : mobile dokter app
-    //       future: fetchUndangan(),
-    //       builder: (context, AsyncSnapshot snapshot) {
-    //         if (snapshot.hasData) {
-    //           var resp = snapshot.data;
-    //           if (resp['success'] == true) {
-    //             var data = resp['data']['data'];
-    //             return SmartRefresher(
-    //               enablePullDown: true,
-    //               enablePullUp: true,
-    //               header: WaterDropHeader(),
-    //               onRefresh: () async {
-    //                 setState(() {});
-    //                 await Future.delayed(Duration(milliseconds: 1000));
-    //                 _refreshController.refreshCompleted();
-    //               },
-    //               onLoading: () async {
-    //                 // resp['data']['next_page_url'] != null fetch data again by url resp['data']['next_page_url']
-    //                 await Future.delayed(Duration(milliseconds: 1000));
-    //                 _refreshController.loadComplete();
-    //               },
-    //               controller: _refreshController,
-    //               child: ListView.builder(
-    //                 itemCount: resp['data']['total'],
-    //                 padding: EdgeInsets.all(16),
-    //                 itemBuilder: (context, index) {
-    //                   return GestureDetector(
-    //                     onTap: () => showModalBottomSheet(
-    //                       context: context,
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.only(
-    //                           topLeft: Radius.circular(10),
-    //                           topRight: Radius.circular(10),
-    //                         ),
-    //                       ),
-    //                       builder: (context) => Container(
-    //                         height: MediaQuery.of(context).size.height * 0.4,
-    //                         padding: EdgeInsets.all(16),
-    //                         child: Column(
-    //                           crossAxisAlignment: CrossAxisAlignment.start,
-    //                           mainAxisAlignment: MainAxisAlignment.start,
-    //                           children: [
-    //                             // Row to make handle
-    //                             Row(
-    //                               mainAxisAlignment: MainAxisAlignment.center,
-    //                               children: [
-    //                                 Container(
-    //                                   width: 50,
-    //                                   height: 5,
-    //                                   decoration: BoxDecoration(
-    //                                     color: Colors.grey,
-    //                                     borderRadius: BorderRadius.circular(10),
-    //                                   ),
-    //                                 ),
-    //                               ],
-    //                             ),
-    //                             SizedBox(height: 15),
-    //                             Text(
-    //                               data[index]['surat']['perihal'],
-    //                               style: TextStyle(
-    //                                 fontSize: 18,
-    //                                 fontWeight: fontSemiBold,
-    //                               ),
-    //                             ),
-    //                             SizedBox(height: 10),
-    //                             GenTable(data: {
-    //                               // format date to indonesia with month name name day asia/jakarta
-    //                               "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(data[index]['surat']['tanggal'])),
-    //                               "Waktu": DateFormat('HH:mm').format(DateTime.parse(data[index]['surat']['tanggal'])) + " WIB",
-    //                               "Tempat": data[index]['surat']['tempat'],
-    //                             }),
-    //                           ],
-    //                         ),
-    //                       ),
-    //                     ),
-    //                     child: Card(
-    //                       clipBehavior: Clip.antiAlias,
-    //                       shape: RoundedRectangleBorder(
-    //                         borderRadius: BorderRadius.circular(10),
-    //                       ),
-    //                       elevation: 2,
-    //                       semanticContainer: true,
-    //                       child: Container(
-    //                         decoration: BoxDecoration(
-    //                           border: Border(
-    //                             left: BorderSide(
-    //                               color: DateTime.parse(data[index]['surat']['tanggal']).isAfter(DateTime.now())
-    //                                   ? Colors.blue
-    //                                   : Colors.green,
-    //                               width: 5,
-    //                             ),
-    //                           ),
-    //                         ),
-    //                         padding: EdgeInsets.symmetric(vertical: 10),
-    //                         child: ListTile(
-    //                           title: Text(
-    //                             data[index]['surat']['perihal'],
-    //                             style: TextStyle(
-    //                               fontSize: 16,
-    //                               fontWeight: fontSemiBold,
-    //                             ),
-    //                           ),
-    //                           subtitle: Padding(
-    //                             padding: const EdgeInsets.only(top: 10),
-    //                             child: Text(
-    //                               DateFormat('EEEE, dd MMMM yyyy', 'id_ID').add_jm().format(DateTime.parse(data[index]['surat']['tanggal'])),
-    //                               style: TextStyle(
-    //                                 fontSize: 14,
-    //                               ),
-    //                             ),
-    //                           ),
-    //                           trailing: Icon(
-    //                             Icons.arrow_forward_ios,
-    //                             color: primaryColor,
-    //                           ),
-    //                         ),
-    //                       ),
-    //                     ),
-    //                   );
-    //                 },
-    //               ),
-    //             );
-    //           } else {
-    //             return Center(
-    //               child: Text(
-    //                 "Data tidak ditemukan",
-    //                 style: TextStyle(
-    //                   fontSize: 16,
-    //                   fontWeight: fontSemiBold,
-    //                 ),
-    //               ),
-    //             );
-    //           }
-    //         } else {
-    //           return Center(
-    //             child: CircularProgressIndicator(),
-    //           );
-    //         }
-    //       },
-    //     ),
-    // );
   }
 }

@@ -142,7 +142,9 @@ class _ProfilePageState extends State<ProfilePage> {
     dataTbl = {
       "No. KTP": detailBio['no_ktp'],
       "Jenis Kelamin": detailBio['jk'],
-      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] + ", " + Helper.formatDate3(detailBio['tgl_lahir']),
+      "Tempat & Tanggal Lahir": detailBio['tmp_lahir'] +
+          ", " +
+          Helper.formatDate3(detailBio['tgl_lahir']),
       "Alamat": detailBio['alamat'],
       "Pendidikan": detailBio['pendidikan'],
       "Jabatan": detailBio['jbtn'],
@@ -159,230 +161,243 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return isLoading
-    ? loadingku()
-    : Scaffold(
-        backgroundColor: bgColor,
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                clipBehavior: Clip.none,
+        ? loadingku()
+        : Scaffold(
+            backgroundColor: bgColor,
+            body: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
+                  Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      Container(
-                        height: 110 + MediaQuery.of(context).padding.top,
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage("assets/images/depan-rsia.jpg"),
-                            fit: BoxFit.cover,
-                            opacity: 0.3,
-                          ),
-                          color: primaryColor.withOpacity(0.4),
-                          borderRadius: BorderRadius.only(
-                            bottomRight: Radius.circular(50),
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 5),
-                              child: Image.asset(
-                                'assets/images/logo-rsia-aisyiyah.png',
-                                height: 80 + MediaQuery.of(context).padding.top,
-                                width: 85,
+                      Column(
+                        children: [
+                          Container(
+                            height: 110 + MediaQuery.of(context).padding.top,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image:
+                                    AssetImage("assets/images/depan-rsia.jpg"),
+                                fit: BoxFit.cover,
+                                opacity: 0.3,
+                              ),
+                              color: primaryColor.withOpacity(0.4),
+                              borderRadius: BorderRadius.only(
+                                bottomRight: Radius.circular(50),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(right: 20),
-                              child: Image.asset(
-                                'assets/images/logo-larsi.png',
-                                height: 80 + MediaQuery.of(context).padding.top,
-                                width: 85,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 50,
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: InkWell(
-                        onTap: () {
-                          showMenu(
-                            context: context,
-                            position:
-                                RelativeRect.fromLTRB(100, 100, 100, 100),
-                            items: [
-                              PopupMenuItem(
-                                child: InkWell(
-                                  // onTap: () => _logout(),
-                                  onTap: () {
-                                    // push to logout screen
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => LogoutScreen(),
-                                      ),
-                                    );
-                                  },
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.logout,
-                                        color: textColor,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        "Logout",
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w400,
-                                          color: textColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                        child: Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(100.0),
-                                border: Border.all(
-                                  color: bgColor,
-                                  width: 5,
-                                ),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(100.0),
-                                child: CachedNetworkImage(
-                                  imageUrl: photoUrl + _bio['photo'].toString(),
-                                  width: 100,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                  alignment: Alignment.topCenter,
-                                  placeholder: (context, url) => Container(
-                                    width: 70,
-                                    height: 70,
-                                    color: Colors.grey[300],
-                                    child: Center(
-                                      child: CircularProgressIndicator(
-                                        color: bgColor,
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) => Container(
-                                    width: 80,
-                                    height: 80,
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.error),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Column(
+                            child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
-                                SizedBox(
-                                  height: 50,
-                                ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                  child: Text(
-                                    "Masa Kerja : " +
-                                        duration.years.toString() +
-                                        " th " +
-                                        duration.months.toString() +
-                                        " bln " +
-                                        duration.days.toString() +
-                                        " hr ",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  padding: const EdgeInsets.only(right: 5),
+                                  child: Image.asset(
+                                    'assets/images/logo-rsia-aisyiyah.png',
+                                    height:
+                                        80 + MediaQuery.of(context).padding.top,
+                                    width: 85,
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                  ),
-                                  child: Text(
-                                    "Mulai bergabung " +
-                                        Helper.formatDate3(
-                                            _bio['mulai_kerja'].toString()),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w400,
-                                      fontStyle: FontStyle.italic,
-                                    ),
+                                  padding: const EdgeInsets.only(right: 20),
+                                  child: Image.asset(
+                                    'assets/images/logo-larsi.png',
+                                    height:
+                                        80 + MediaQuery.of(context).padding.top,
+                                    width: 85,
                                   ),
                                 ),
                               ],
                             ),
-                          ],
+                          ),
+                          const SizedBox(
+                            height: 50,
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: InkWell(
+                            onTap: () {
+                              showMenu(
+                                context: context,
+                                position:
+                                    RelativeRect.fromLTRB(100, 100, 100, 100),
+                                items: [
+                                  PopupMenuItem(
+                                    child: InkWell(
+                                      // onTap: () => _logout(),
+                                      onTap: () {
+                                        // push to logout screen
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                LogoutScreen(),
+                                          ),
+                                        );
+                                      },
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.logout,
+                                            color: textColor,
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Text(
+                                            "Logout",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w400,
+                                              color: textColor,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                            child: Row(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(100.0),
+                                    border: Border.all(
+                                      color: bgColor,
+                                      width: 5,
+                                    ),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(100.0),
+                                    child: CachedNetworkImage(
+                                      imageUrl:
+                                          photoUrl + _bio['photo'].toString(),
+                                      width: 100,
+                                      height: 100,
+                                      fit: BoxFit.cover,
+                                      alignment: Alignment.topCenter,
+                                      placeholder: (context, url) => Container(
+                                        width: 70,
+                                        height: 70,
+                                        color: Colors.grey[300],
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            color: bgColor,
+                                          ),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                        width: 80,
+                                        height: 80,
+                                        color: Colors.grey[300],
+                                        child: const Icon(Icons.error),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(
+                                      height: 50,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                      ),
+                                      child: Text(
+                                        "Masa Kerja : " +
+                                            duration.years.toString() +
+                                            " th " +
+                                            duration.months.toString() +
+                                            " bln " +
+                                            duration.days.toString() +
+                                            " hr ",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                      ),
+                                      child: Text(
+                                        "Mulai bergabung " +
+                                            Helper.formatDate3(
+                                                _bio['mulai_kerja'].toString()),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w400,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _bio['nama'].toString(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                  SizedBox(
+                    height: 5,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _bio['nik'].toString(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      _bio['dpt']['nama'].toString(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 10,
+                  ),
+                  cardBio(),
+                  SizedBox(
+                    height: 70,
+                  )
                 ],
               ),
-              SizedBox(
-                height: 10,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  _bio['nama'].toString(),
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ),
-              SizedBox(
-                height: 5,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  _bio['nik'].toString(),
-                  style:
-                      TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  _bio['dpt']['nama'].toString(),
-                  style:
-                      TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-                ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              cardBio(),
-              SizedBox(
-                height: 70,
-              )
-            ],
-          ),
-        ),
-      );
+            ),
+          );
   }
 
   Widget buttonLogout() {
@@ -455,27 +470,28 @@ class _ProfilePageState extends State<ProfilePage> {
                                               children: [
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue:                                                        _bio['rsia_email_pegawai']['email'].toString(),
+                                                    initialValue: _bio['rsia_email_pegawai']['email'].toString(),
                                                     maxLines: 1,
                                                     decoration: InputDecoration(
-                                                        contentPadding: EdgeInsets.symmetric(
-                                                          vertical: 10.0,
-                                                          horizontal: 10.0,
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                        vertical: 10.0,
+                                                        horizontal: 10.0,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(
+                                                          10,
                                                         ),
-                                                        border: OutlineInputBorder(
-                                                            borderRadius: BorderRadius.circular(
-                                                              10,
-                                                            ),
-                                                        ),
-                                                        hintText: 'Masukkan email disini',
-                                                        labelText: 'Email',
+                                                      ),
+                                                      hintText:
+                                                          'Masukkan email disini',
+                                                      labelText: 'Email',
                                                     ),
                                                     onSaved: (value) {
                                                       email = value!;
                                                     },
                                                     validator: (value) {
-                                                      if (value == null ||
-                                                          value.isEmpty) {
+                                                      if (value == null || value.isEmpty) {
                                                         return 'Field tidak boleh kosong';
                                                       }
                                                       return null;
@@ -490,24 +506,22 @@ class _ProfilePageState extends State<ProfilePage> {
                                                     initialValue: _bio['petugas']['no_telp'].toString(),
                                                     maxLines: 1,
                                                     decoration: InputDecoration(
-                                                        contentPadding: EdgeInsets.symmetric(
+                                                        contentPadding:EdgeInsets.symmetric(
                                                           vertical: 10.0,
                                                           horizontal: 10.0,
                                                         ),
                                                         border: OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10)),
-                                                        hintText:
-                                                            'Masukkan no. handphone disini',
+                                                            borderRadius: BorderRadius.circular(
+                                                              10,
+                                                            ),
+                                                        ),
+                                                        hintText: 'Masukkan no. handphone disini',
                                                         labelText: 'No. HP'),
                                                     onSaved: (value) {
                                                       no_telp = value!;
                                                     },
                                                     validator: (value) {
-                                                      if (value == null ||
-                                                          value.isEmpty) {
+                                                      if (value == null || value.isEmpty) {
                                                         return 'Field tidak boleh kosong';
                                                       }
                                                       return null;
@@ -519,31 +533,26 @@ class _ProfilePageState extends State<ProfilePage> {
                                                 ),
                                                 Container(
                                                   child: TextFormField(
-                                                    initialValue: _bio['alamat']
-                                                        .toString(),
+                                                    initialValue: _bio['alamat'].toString(),
                                                     maxLines: 5,
                                                     decoration: InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets
-                                                                .symmetric(
-                                                                    vertical:
-                                                                        10.0,
-                                                                    horizontal:
-                                                                        10.0),
-                                                        border: OutlineInputBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10)),
-                                                        hintText:
-                                                            'Masukkan alamat disini',
-                                                        labelText: 'Alamat'),
+                                                      contentPadding: EdgeInsets.symmetric(
+                                                        vertical: 10.0,
+                                                        horizontal: 10.0,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                      ),
+                                                      hintText: 'Masukkan alamat disini',
+                                                      labelText: 'Alamat',
+                                                    ),
                                                     onSaved: (value) {
                                                       alamat = value!;
                                                     },
                                                     validator: (value) {
-                                                      if (value == null ||
-                                                          value.isEmpty) {
+                                                      if (value == null || value.isEmpty) {
                                                         return 'Field tidak boleh kosong';
                                                       }
                                                       return null;
@@ -561,34 +570,34 @@ class _ProfilePageState extends State<ProfilePage> {
                                           width: double.infinity,
                                           height: 50,
                                           padding: const EdgeInsets.symmetric(
-                                              vertical: 5),
+                                            vertical: 5,
+                                          ),
                                           decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(25)),
+                                            borderRadius: BorderRadius.circular(25),
+                                          ),
                                           child: ElevatedButton(
                                             onPressed: () {
-                                              if (_formKey.currentState!
-                                                  .validate()) {
+                                              if (_formKey.currentState!.validate()) {
                                                 _formKey.currentState!.save();
-                                                if (EmailValidator.validate(
-                                                    email)) {
+                                                if (EmailValidator.validate(email)) {
                                                   updateProfil();
 
                                                   if (isSuccess) {
                                                     Navigator.of(context).pop();
                                                   }
                                                 } else {
-                                                  Msg.error(context,
-                                                      'Format Email tidak sesuai');
+                                                  Msg.error(
+                                                    context,
+                                                    'Format Email tidak sesuai',
+                                                  );
                                                 }
                                               }
                                             },
                                             style: ElevatedButton.styleFrom(
-                                                backgroundColor: primaryColor,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(15),
-                                                ),
+                                              backgroundColor: primaryColor,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(15),
+                                              ),
                                             ),
                                             child: Text("Submit"),
                                           ),
