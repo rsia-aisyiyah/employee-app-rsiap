@@ -587,7 +587,8 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                  primary: primaryColor,
+                                  // primary: primaryColor,
+                                  backgroundColor: primaryColor,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
                               ),
                               child: Text(
