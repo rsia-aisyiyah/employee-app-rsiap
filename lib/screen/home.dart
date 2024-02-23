@@ -221,15 +221,13 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
                         Positioned(
-                          top: 100,
+                          top: 80,
                           bottom: -80,
                           left: 0,
                           right: 0,
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Container(
-                              width: double.infinity,
-                              height: 180,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
                                 color: Colors.white,
@@ -243,28 +241,27 @@ class _HomePageState extends State<HomePage> {
                                 child: Column(
                                   children: [
                                     Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Flexible(
                                           child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text("Assalamu'alaikum"),
                                               Text(
                                                 _bio['nama'].toString(),
                                                 style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 18),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18,
+                                                ),
                                               ),
                                               Text(
                                                 _bio['nik'].toString(),
                                                 style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12),
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
                                               ),
                                               SizedBox(
                                                 height: 20,
@@ -285,27 +282,29 @@ class _HomePageState extends State<HomePage> {
                                             borderRadius:
                                                 BorderRadius.circular(100.0),
                                             child: CachedNetworkImage(
-                                              imageUrl: photoUrl +
-                                                  _bio['photo'].toString(),
+                                              imageUrl: photoUrl + _bio['photo'].toString(),
                                               width: 80,
                                               height: 80,
                                               fit: BoxFit.cover,
                                               alignment: Alignment.topCenter,
-                                              placeholder: (context, url) =>
-                                                  Container(
+                                              placeholder: (
+                                                context,
+                                                url,
+                                              ) => Container(
                                                 width: 80,
                                                 height: 80,
                                                 color: Colors.grey[300],
                                                 child: Center(
-                                                  child:
-                                                      CircularProgressIndicator(
+                                                  child: CircularProgressIndicator(
                                                     color: bgColor,
                                                   ),
                                                 ),
                                               ),
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      Container(
+                                              errorWidget: (
+                                                context,
+                                                url,
+                                                error,
+                                              ) => Container(
                                                 width: 80,
                                                 height: 80,
                                                 color: Colors.grey[300],
@@ -320,21 +319,30 @@ class _HomePageState extends State<HomePage> {
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          _jadwal['shift'] != null ? _jadwal['shift'].toString() : "Libur",
+                                        Text( _jadwal['shift'] != null
+                                            ? _jadwal['shift'].toString()
+                                            : "Libur",
                                           style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                         _jadwal['shift'] != null
-                                            ? Text(" (" + _jadwal['jam_masuk'].toString().substring(0, _jadwal['jam_masuk'].toString().length -3) 
-                                            + " - " + _jadwal['jam_pulang'] .toString() .substring(0, _jadwal['jam_pulang'].toString().length -3) 
-                                            + ")", style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                  ),
+                                          ? Text( 
+                                              " (" + _jadwal['jam_masuk'].toString().substring(
+                                                      0,
+                                                      _jadwal['jam_masuk'].toString() .length - 3) +
+                                              " - " + _jadwal['jam_pulang'].toString()
+                                                  .substring(
+                                                      0,
+                                                      _jadwal['jam_pulang'].toString().length -3) +
+                                              ")",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
                                             )
-                                            : Text(" -"),
+                                          : Text(" -"),
                                       ],
                                     ),
                                     SizedBox(
@@ -358,17 +366,20 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             Text(
                                               _rekapPresensi.isEmpty && _tempPresensi.isEmpty
-                                                  ? "-"
-                                                  : _rekapPresensi.isEmpty
+                                                ? "-"
+                                                : _rekapPresensi.isEmpty
                                                     ? DateFormat.Hms().format(
                                                         DateTime.parse(
-                                                            _tempPresensi['jam_datang'],
+                                                          _tempPresensi[
+                                                              'jam_datang'],
                                                         ),
                                                       )
                                                     : DateFormat.Hms().format(
-                                                        DateTime.parse(_rekapPresensi['jam_datang'], 
+                                                        DateTime.parse(
+                                                          _rekapPresensi[
+                                                              'jam_datang'],
+                                                        ),
                                                       ),
-                                                    ),
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 12,
@@ -391,15 +402,16 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             Text(
                                               _rekapPresensi.isEmpty
-                                                  ? "-"
-                                                  : DateFormat.Hms().format(
-                                                      DateTime.parse(
-                                                          _rekapPresensi['jam_pulang'],
-                                                      ),
+                                                ? "-"
+                                                : DateFormat.Hms().format(
+                                                    DateTime.parse(
+                                                      _rekapPresensi[
+                                                          'jam_pulang'],
                                                     ),
+                                                  ),
                                               style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ],
@@ -410,12 +422,12 @@ class _HomePageState extends State<HomePage> {
                                             Text(
                                               "Status ",
                                               style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
                                             ),
                                             Text(
-                                              _rekapPresensi.isEmpty &&
-                                                      _tempPresensi.isEmpty
+                                              _rekapPresensi.isEmpty && _tempPresensi.isEmpty
                                                   ? "-"
                                                   : _rekapPresensi.isEmpty
                                                       ? _tempPresensi['status']
@@ -423,8 +435,9 @@ class _HomePageState extends State<HomePage> {
                                                       : _rekapPresensi['status']
                                                           .toString(),
                                               style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12),
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -469,8 +482,7 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => menuScreenItems[index]
-                                        ['widget'] as Widget,
+                                    builder: (context) => menuScreenItems[index]['widget'] as Widget,
                                   ),
                                 );
                               }
@@ -503,18 +515,14 @@ class _HomePageState extends State<HomePage> {
                                 Padding(
                                   padding: EdgeInsets.all(15),
                                   child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        menuScreenItems[index]['label']
-                                            .toString(),
+                                        menuScreenItems[index]['label'].toString(),
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: menuScreenItems[index]
-                                                      ['disabled'] ==
-                                                  true
+                                          color: menuScreenItems[index]['disabled'] == true
                                               ? bgWhite
                                               : textColor,
                                         ),
@@ -526,19 +534,15 @@ class _HomePageState extends State<HomePage> {
                                   bottom: -8,
                                   right: -15,
                                   child: SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.22,
+                                    width: MediaQuery.of(context).size.width * 0.22,
                                     child: Transform(
                                       transform: Matrix4.rotationZ(0.3),
                                       child: Icon(
-                                        menuScreenItems[index]['icon']
-                                            as IconData,
+                                        menuScreenItems[index]['icon'] as IconData,
                                         size: 80,
-                                        color: menuScreenItems[index]
-                                                    ['disabled'] ==
-                                                true
-                                            ? bgWhite
-                                            : primaryColor.withOpacity(0.3),
+                                        color: menuScreenItems[index]['disabled'] ==true
+                                          ? bgWhite
+                                          : primaryColor.withOpacity(0.3),
                                       ),
                                     ),
                                   ),
@@ -551,251 +555,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     SizedBox(
                       height: 60,
-                    )
-                    // Stack(
-                    //   children: [
-                    //     Transform.translate(
-                    //       offset: Offset(0.0, 140 / 2.0),
-                    //       child: Padding(
-                    //         padding:
-                    //             const EdgeInsets.symmetric(horizontal: 20),
-                    //         child: Row(
-                    //           mainAxisAlignment:
-                    //               MainAxisAlignment.spaceBetween,
-                    //           children: [
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width / 2 -
-                    //                       25,
-                    //               height: 100,
-                    //               decoration: BoxDecoration(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 color: Colors.white,
-                    //               ),
-                    //               child: Stack(
-                    //                 children: [
-                    //                   Padding(
-                    //                     padding: const EdgeInsets.all(15.0),
-                    //                     child: Column(
-                    //                       // mainAxisAlignment:
-                    //                       //     MainAxisAlignment.start,
-                    //                       crossAxisAlignment:
-                    //                           CrossAxisAlignment.start,
-                    //                       children: [
-                    //                         Text(
-                    //                           "Presensi",
-                    //                           style: TextStyle(
-                    //                               fontSize: 18,
-                    //                               fontWeight:
-                    //                                   FontWeight.bold),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ),
-                    //                 ],
-                    //               ),
-                    //             ),
-                    //             SizedBox(
-                    //               width: 10,
-                    //             ),
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width / 2 -
-                    //                       25,
-                    //               height: 100,
-                    //               decoration: BoxDecoration(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 color: Colors.white,
-                    //               ),
-                    //               child: Stack(
-                    //                 children: [
-                    //                   Padding(
-                    //                     padding: const EdgeInsets.all(15.0),
-                    //                     child: Column(
-                    //                       // mainAxisAlignment:
-                    //                       //     MainAxisAlignment.start,
-                    //                       crossAxisAlignment:
-                    //                           CrossAxisAlignment.start,
-                    //                       children: [
-                    //                         Text(
-                    //                           "Cuti",
-                    //                           style: TextStyle(
-                    //                               fontSize: 18,
-                    //                               fontWeight:
-                    //                                   FontWeight.bold),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ),
-                    //                 ],
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     Transform.translate(
-                    //       offset: Offset(0.0, 360 / 2.0),
-                    //       child: Padding(
-                    //         padding:
-                    //             const EdgeInsets.symmetric(horizontal: 20),
-                    //         child: Row(
-                    //           mainAxisAlignment:
-                    //               MainAxisAlignment.spaceBetween,
-                    //           children: [
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width / 2 -
-                    //                       25,
-                    //               height: 100,
-                    //               decoration: BoxDecoration(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 color: Colors.white,
-                    //               ),
-                    //               child: Stack(
-                    //                 children: [
-                    //                   Padding(
-                    //                     padding: const EdgeInsets.all(15.0),
-                    //                     child: Column(
-                    //                       // mainAxisAlignment:
-                    //                       //     MainAxisAlignment.start,
-                    //                       crossAxisAlignment:
-                    //                           CrossAxisAlignment.start,
-                    //                       children: [
-                    //                         Text(
-                    //                           "Slip Jaspel",
-                    //                           style: TextStyle(
-                    //                               fontSize: 18,
-                    //                               fontWeight:
-                    //                                   FontWeight.bold),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ),
-                    //                 ],
-                    //               ),
-                    //             ),
-                    //             SizedBox(
-                    //               width: 10,
-                    //             ),
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width / 2 -
-                    //                       25,
-                    //               height: 100,
-                    //               decoration: BoxDecoration(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 color: Colors.white,
-                    //               ),
-                    //               child: Stack(
-                    //                 children: [
-                    //                   Padding(
-                    //                     padding: const EdgeInsets.all(15.0),
-                    //                     child: Column(
-                    //                       // mainAxisAlignment:
-                    //                       //     MainAxisAlignment.start,
-                    //                       crossAxisAlignment:
-                    //                           CrossAxisAlignment.start,
-                    //                       children: [
-                    //                         Text(
-                    //                           "Slip Gaji",
-                    //                           style: TextStyle(
-                    //                               fontSize: 18,
-                    //                               fontWeight:
-                    //                                   FontWeight.bold),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ),
-                    //                 ],
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     Transform.translate(
-                    //       offset: Offset(0.0, 580 / 2.0),
-                    //       child: Padding(
-                    //         padding:
-                    //             const EdgeInsets.symmetric(horizontal: 20),
-                    //         child: Row(
-                    //           mainAxisAlignment:
-                    //               MainAxisAlignment.spaceBetween,
-                    //           children: [
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width / 2 -
-                    //                       25,
-                    //               height: 100,
-                    //               decoration: BoxDecoration(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 color: Colors.white,
-                    //               ),
-                    //               child: Stack(
-                    //                 children: [
-                    //                   Padding(
-                    //                     padding: const EdgeInsets.all(15.0),
-                    //                     child: Column(
-                    //                       // mainAxisAlignment:
-                    //                       //     MainAxisAlignment.start,
-                    //                       crossAxisAlignment:
-                    //                           CrossAxisAlignment.start,
-                    //                       children: [
-                    //                         Text(
-                    //                           "Dokumen dan Surat",
-                    //                           style: TextStyle(
-                    //                               fontSize: 18,
-                    //                               fontWeight:
-                    //                                   FontWeight.bold),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ),
-                    //                 ],
-                    //               ),
-                    //             ),
-                    //             SizedBox(
-                    //               width: 10,
-                    //             ),
-                    //             Container(
-                    //               width:
-                    //                   MediaQuery.of(context).size.width / 2 -
-                    //                       25,
-                    //               height: 100,
-                    //               decoration: BoxDecoration(
-                    //                 borderRadius: BorderRadius.circular(20),
-                    //                 color: Colors.white,
-                    //               ),
-                    //               child: Stack(
-                    //                 children: [
-                    //                   Padding(
-                    //                     padding: const EdgeInsets.all(15.0),
-                    //                     child: Column(
-                    //                       // mainAxisAlignment:
-                    //                       //     MainAxisAlignment.start,
-                    //                       crossAxisAlignment:
-                    //                           CrossAxisAlignment.start,
-                    //                       children: [
-                    //                         Text(
-                    //                           "Berkas Kepegawaian",
-                    //                           style: TextStyle(
-                    //                               fontSize: 18,
-                    //                               fontWeight:
-                    //                                   FontWeight.bold),
-                    //                         ),
-                    //                       ],
-                    //                     ),
-                    //                   ),
-                    //                 ],
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
+                    ),
                   ],
                 ),
               ),
