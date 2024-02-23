@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/firebase_api.dart';
+import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/config.dart';
+import 'package:rsia_employee_app/screen/login.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -91,15 +93,16 @@ class _IndexScreenState extends State<IndexScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_selectedNavbar != 0) {
-          setState(() {
-            _selectedNavbar = 0;
-          });
-          return false;
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          if (_selectedNavbar != 0) {
+            setState(() {
+              _selectedNavbar = 0;
+            });
+          }
         }
-        return true;
       },
       child: Scaffold(
         extendBody: true,
