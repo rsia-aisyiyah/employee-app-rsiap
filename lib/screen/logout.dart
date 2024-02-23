@@ -35,11 +35,11 @@ class LogoutScreen extends StatelessWidget {
     var firebaseMessaging = await FirebaseMessaging.instance;
     token = (await firebaseMessaging.getToken())!;
 
-    String url = "https://iid.googleapis.com/iid/info/" + token + "?details=true";
+    String url =
+        "https://iid.googleapis.com/iid/info/" + token + "?details=true";
     var res = await http.get(Uri.parse(url), headers: {
       "Authorization": "Bearer ${ApiConfig.fsk}",
     });
-
 
     if (res.statusCode == 200) {
       var body = jsonDecode(res.body);
@@ -70,11 +70,10 @@ class LogoutScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             // show loading 2 second then navigate to login
             Future.delayed(Duration(seconds: 2), () {
-              Navigator.pushReplacement(
+              Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const LoginScreen(),
-                ),
+                MaterialPageRoute(builder: (route) => LoginScreen()),
+                (Route<dynamic> route) => false,
               );
             });
 
