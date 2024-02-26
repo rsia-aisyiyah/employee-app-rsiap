@@ -7,6 +7,7 @@ import 'package:rsia_employee_app/utils/table.dart';
 
 class createCardJasaMedis extends StatefulWidget {
   final Map dataJasaMedis;
+
   const createCardJasaMedis({
     super.key,
     required this.dataJasaMedis,
@@ -20,6 +21,7 @@ class createCardJasaMedis extends StatefulWidget {
 class _createCardJasaMedisState extends State<createCardJasaMedis> {
   // IconData _currentIcon = Icons.star; // Initial icon
   bool showIcon = true;
+
   void _changeIcon() {
     setState(() {
       showIcon = !showIcon;
@@ -28,6 +30,115 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.dataJasaMedis);
+    Map map = {};
+    if (widget.dataJasaMedis['jm_ruang_share'] != 0 &&
+        widget.dataJasaMedis['jm_total_share'] != 0) {
+      map["JasPel"] = showIcon
+          ? '* * * * *'
+          : '(+) ' +
+              Helper.convertToIdr(
+                widget.dataJasaMedis['jm_ruang_share'] +
+                    widget.dataJasaMedis['jm_total_share'],
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['lebih_jam'] != 0) {
+      map["Lebih Jam"] = showIcon
+          ? '* * * * *'
+          : '(+) ' +
+              Helper.convertToIdr(
+                widget.dataJasaMedis['lebih_jam'],
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['jm_asisten_ok'] != 0) {
+      map["Asisten OK"] = showIcon
+          ? '* * * * *'
+          : '(+) ' +
+              Helper.convertToIdr(
+                widget.dataJasaMedis['jm_asisten_ok'],
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['uang_makan'] != 0) {
+      map["Uang Makan"] = showIcon
+          ? '* * * * *'
+          : '(+) ' +
+              Helper.convertToIdr(
+                widget.dataJasaMedis['uang_makan'],
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['oncall_ok'] != 0) {
+      map["Oncall"] = showIcon
+          ? '* * * * *'
+          : '(+) ' +
+              Helper.convertToIdr(
+                widget.dataJasaMedis['oncall_ok'],
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['tambahan'] != 0) {
+      map["Tambahan"] = showIcon
+          ? '* * * * *'
+          : '(+) ' +
+              Helper.convertToIdr(
+                widget.dataJasaMedis['tambahan'],
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['jm_total_share'] != 0) {
+      map["JasPel Bruto"] = showIcon
+          ? '* * * * *'
+          : Helper.convertToIdr(
+              widget.dataJasaMedis['jm_ruang_share'] +
+                  widget.dataJasaMedis['jm_total_share'] +
+                  widget.dataJasaMedis['lebih_jam'] +
+                  widget.dataJasaMedis['jm_asisten_ok'] +
+                  widget.dataJasaMedis['uang_makan'] +
+                  widget.dataJasaMedis['oncall_ok'] +
+                  widget.dataJasaMedis['tambahan'],
+              2,
+            );
+    }
+    if (widget.dataJasaMedis['jm_total_full'] != 0 &&
+        widget.dataJasaMedis['jm_ruang_full'] != 0) {
+      map["Potongan JasPel"] = showIcon
+          ? '* * * * *'
+          : '(-) ' +
+              Helper.convertToIdr(
+                (widget.dataJasaMedis['jm_total_full'] +
+                        widget.dataJasaMedis['jm_ruang_full']) -
+                    (widget.dataJasaMedis['jm_total_share'] +
+                        widget.dataJasaMedis['jm_ruang_share']),
+                2,
+              );
+    }
+    if (widget.dataJasaMedis['jm_asisten_ok'] != 0) {
+      // if (widget.dataJasaMedis['stts_kerja'] == 'Karyawan Mitra') {
+      //   map["Potongan Asisten OK"] = showIcon
+      //       ? '* * * * *'
+      //       : '(-) ' +
+      //           Helper.convertToIdr(
+      //             (widget.dataJasaMedis['jm_asisten_ok'] /
+      //                     widget.dataJasaMedis['jm_ok_mitra']) -
+      //                 widget.dataJasaMedis['jm_asisten_ok'],
+      //             2,
+      //           );
+      // } else {
+      //   map["Potongan Asisten OK"] = showIcon
+      //       ? '* * * * *'
+      //       : '(-) ' +
+      //       Helper.convertToIdr(
+      //         (widget.dataJasaMedis['jm_asisten_ok'] /
+      //             widget.dataJasaMedis['jm_ok_mitra']) -
+      //             widget.dataJasaMedis['jm_asisten_ok'],
+      //         2,
+      //       );
+      // }
+    }
+
     return Column(
       children: [
         Stack(
@@ -87,36 +198,38 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                   ),
                   const SizedBox(height: 8),
                   GenTable(
-                    data: {
-                      "Jasa Pelayanan": showIcon
-                          ? '* * * * *'
-                          : Helper.convertToIdr(
-                              widget.dataJasaMedis['jm_ruang_share'] +
-                                  widget.dataJasaMedis['jm_total_share'],
-                              2,
-                            ),
-                      tambahanText: showIcon
-                          ? '* * * * *'
-                          : '(+) ' +
-                              Helper.convertToIdr(
-                                widget.dataJasaMedis['tambahan'],
-                                2,
-                              ),
-                      potonganText: showIcon
-                          ? '* * * * *'
-                          : '(-) ' +
-                              Helper.convertToIdr(
-                                widget.dataJasaMedis['potongan_lain'] +
-                                    widget.dataJasaMedis['potongan_obat'],
-                                2,
-                              ),
-                      "Jasa Pelayanan Diterima": showIcon
-                          ? '* * * * *'
-                          : Helper.convertToIdr(
-                              widget.dataJasaMedis['jm_bersih_share'],
-                              2,
-                            ),
-                    },
+                    data:
+                        // {
+                        map,
+                    // "Jasa Pelayanan": showIcon
+                    //     ? '* * * * *'
+                    //     : Helper.convertToIdr(
+                    //         widget.dataJasaMedis['jm_ruang_share'] +
+                    //             widget.dataJasaMedis['jm_total_share'],
+                    //         2,
+                    //       ),
+                    // tambahanText: showIcon
+                    //     ? '* * * * *'
+                    //     : '(+) ' +
+                    //         Helper.convertToIdr(
+                    //           widget.dataJasaMedis['tambahan'],
+                    //           2,
+                    //         ),
+                    // potonganText: showIcon
+                    //     ? '* * * * *'
+                    //     : '(-) ' +
+                    //         Helper.convertToIdr(
+                    //           widget.dataJasaMedis['potongan_lain'] +
+                    //               widget.dataJasaMedis['potongan_obat'],
+                    //           2,
+                    //         ),
+                    // "Jasa Pelayanan Diterima": showIcon
+                    //     ? '* * * * *'
+                    //     : Helper.convertToIdr(
+                    //         widget.dataJasaMedis['jm_bersih_share'],
+                    //         2,
+                    //       ),
+                    // },
                     textStyle: TextStyle(
                       fontSize: 14,
                       fontWeight: fontSemiBold,
