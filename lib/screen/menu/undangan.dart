@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
+import 'package:rsia_employee_app/screen/page/scan.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/utils/table.dart';
@@ -19,8 +20,7 @@ class Undangan extends StatefulWidget {
 }
 
 class _UndanganState extends State<Undangan> {
-  RefreshController _refreshController =
-      RefreshController(initialRefresh: false);
+  RefreshController _refreshController = RefreshController(initialRefresh: false);
 
   String sub = "";
 
@@ -186,21 +186,6 @@ class _UndanganState extends State<Undangan> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          // Row to make handle
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 50,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 15),
                           Text(
                             dataUdgn['surat']['perihal'],
                             style: TextStyle(
@@ -211,12 +196,12 @@ class _UndanganState extends State<Undangan> {
                           SizedBox(height: 10),
                           GenTable(data: {
                             // format date to indonesia with month name name day asia/jakarta
-                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
-                                .format(DateTime.parse(
-                                    dataUdgn['surat']['tanggal'])),
-                            "Waktu": DateFormat('HH:mm').format(DateTime.parse(
-                                    dataUdgn['surat']['tanggal'])) +
-                                " WIB",
+                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(
+                              DateTime.parse(dataUdgn['surat']['tanggal']),
+                            ),
+                            "Waktu": DateFormat('HH:mm').format(
+                              DateTime.parse(dataUdgn['surat']['tanggal'])
+                            ) + " WIB",
                             "Tempat": dataUdgn['surat']['tempat'],
                           }),
                         ],
@@ -232,13 +217,15 @@ class _UndanganState extends State<Undangan> {
                     semanticContainer: true,
                     child: Container(
                       decoration: BoxDecoration(
+                        color: Colors.white,
                         border: Border(
                           left: BorderSide(
-                            color: DateTime.parse(dataUdgn['surat']['tanggal'])
-                                    .isAfter(DateTime.now())
-                                ? Colors.blue
-                                : Colors.green,
-                            width: 5,
+                            color: DateTime.parse(
+                              dataUdgn['surat']['tanggal'],
+                            ).isAfter(DateTime.now())
+                              ? Colors.blue
+                              : Colors.green,
+                            width: 6,
                           ),
                         ),
                       ),
@@ -256,8 +243,11 @@ class _UndanganState extends State<Undangan> {
                           child: Text(
                             DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
                                 .add_jm()
-                                .format(DateTime.parse(
-                                    dataUdgn['surat']['tanggal'])),
+                                .format(
+                                  DateTime.parse(
+                                    dataUdgn['surat']['tanggal'],
+                                  ),
+                                ),
                             style: TextStyle(
                               fontSize: 14,
                             ),
@@ -274,6 +264,26 @@ class _UndanganState extends State<Undangan> {
               }
             },
           ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            // push to QRAttendanceScanPage class
+            Navigator.push(
+              context, 
+              MaterialPageRoute(
+                builder: (context) => QRAttendanceScanPage(),
+              ),
+            );
+          },
+          child: Icon(
+            Icons.qr_code_scanner,
+            color: textWhite,
+          ),
+          // rounded circle
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(100),
+          ),
+          backgroundColor: primaryColor,
         ),
       );
     }

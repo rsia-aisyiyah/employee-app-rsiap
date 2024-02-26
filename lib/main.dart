@@ -82,13 +82,16 @@ class _CheckAuthState extends State<CheckAuth> {
         return false;
       }
 
-      // validate token by api
-      await Api().postRequest('/auth/me').then((val) async {
+      var tkns = await Api().postRequest('/auth/me').then((val) async {
         var res = jsonDecode(val.body);
         if (val.statusCode != 200 || res['success'] == false) {
           return false;
         }
       });
+
+      if (tkns == false) {
+        return false;
+      }
 
       return true;
     } else {
@@ -108,6 +111,7 @@ class _CheckAuthState extends State<CheckAuth> {
             ),
           );
         } else {
+          print("snapshot: ${snapshot.data}");
           if (snapshot.hasData) {
             if (snapshot.data == true) {
               return const IndexScreen();

@@ -91,15 +91,16 @@ class _IndexScreenState extends State<IndexScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (_selectedNavbar != 0) {
-          setState(() {
-            _selectedNavbar = 0;
-          });
-          return false;
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) {
+        if (didPop) {
+          if (_selectedNavbar != 0) {
+            setState(() {
+              _selectedNavbar = 0;
+            });
+          }
         }
-        return true;
       },
       child: Scaffold(
         extendBody: true,
@@ -114,9 +115,13 @@ class _IndexScreenState extends State<IndexScreen> {
           },
           backgroundColor: primaryColor,
           elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(100),
+          ),
           child: Icon(
             Icons.add_circle,
             size: 36,
+            color: Colors.white, 
           ),
         ),
         // backgroundColor: bgColor,
@@ -129,19 +134,21 @@ class _IndexScreenState extends State<IndexScreen> {
           child: BottomAppBar(
             clipBehavior: Clip.antiAlias,
             shape: CircularNotchedRectangle(),
-            color: Theme.of(context).primaryColor.withAlpha(255),
+            color: bgColor,
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+            height: MediaQuery.of(context).size.height * 0.08,
             child: BottomNavigationBar(
               selectedItemColor: buttonNavbar,
               unselectedItemColor: textColor.withOpacity(0.5),
               currentIndex: _selectedNavbar,
-              showUnselectedLabels: false,
-              showSelectedLabels: false,
+              showUnselectedLabels: true,
+              showSelectedLabels: true,
               onTap: (index) {
                 _changeSelectedNavbar(index);
               },
               items: navigationItems.map((item) {
                 return BottomNavigationBarItem(
-                  icon: Icon(item['icon'] as IconData),
+                  icon: Icon(item['icon'] as IconData, size: 30),
                   label: item['label'] as String,
                 );
               }).toList(),
