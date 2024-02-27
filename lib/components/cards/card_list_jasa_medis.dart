@@ -4,6 +4,7 @@ import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 import 'package:rsia_employee_app/utils/table.dart';
+import 'package:rsia_employee_app/utils/table_jaspel.dart';
 
 class createCardJasaMedis extends StatefulWidget {
   final Map dataJasaMedis;
@@ -32,74 +33,119 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
   Widget build(BuildContext context) {
     print(widget.dataJasaMedis);
     Map map = {};
+    double asisten_ok = 0;
+    double uang_makan = 0;
+    double pot_asisten_ok = 0;
+    double pot_uang_makan = 0;
+    double jm_bersih = 0;
+    double jm_potong = 0;
+
     if (widget.dataJasaMedis['jm_ruang_share'] != 0 &&
         widget.dataJasaMedis['jm_total_share'] != 0) {
       map["JasPel"] = showIcon
           ? '* * * * *'
-          : '(+) ' +
-              Helper.convertToIdr(
-                widget.dataJasaMedis['jm_ruang_share'] +
-                    widget.dataJasaMedis['jm_total_share'],
-                2,
-              );
+          : Helper.convertToIdr(
+              widget.dataJasaMedis['jm_ruang_share'] +
+                  widget.dataJasaMedis['jm_total_share'],
+              0,
+            );
     }
-    if (widget.dataJasaMedis['lebih_jam'] != 0) {
+    if (widget.dataJasaMedis['jm_asisten_ok'] != 0) {
+      if (widget.dataJasaMedis['stts_kerja'] == 'Karyawan Mitra') {
+        map["Asisten OK"] = showIcon
+            ? '* * * * *'
+            : '(+) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['jm_asisten_ok'] /
+                      widget.dataJasaMedis['jasa_pelayanan_akun']
+                          ['jm_ok_mitra']),
+                  0,
+                );
+        asisten_ok = widget.dataJasaMedis['jm_asisten_ok'] /
+            widget.dataJasaMedis['jasa_pelayanan_akun']['jm_ok_mitra'];
+      } else {
+        map["Asisten OK"] = showIcon
+            ? '* * * * *'
+            : '(+) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['jm_asisten_ok'] /
+                      widget.dataJasaMedis['jasa_pelayanan_akun']['jm_rs']),
+                  0,
+                );
+        asisten_ok = widget.dataJasaMedis['jm_asisten_ok'] /
+            widget.dataJasaMedis['jasa_pelayanan_akun']['jm_rs'];
+      }
+    }
+    if (widget.dataJasaMedis['uang_makan'] != 0) {
+      if (widget.dataJasaMedis['stts_kerja'] == 'Karyawan Mitra') {
+        map["Uang Makan"] = showIcon
+            ? '* * * * *'
+            : '(+) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['uang_makan'] /
+                      widget.dataJasaMedis['jasa_pelayanan_akun']
+                          ['jm_ok_mitra']),
+                  0,
+                );
+        uang_makan = widget.dataJasaMedis['uang_makan'] /
+            widget.dataJasaMedis['jasa_pelayanan_akun']['jm_ok_mitra'];
+      } else {
+        map["Uang Makan"] = showIcon
+            ? '* * * * *'
+            : '(+) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['uang_makan'] /
+                      widget.dataJasaMedis['jasa_pelayanan_akun']['jm_rs']),
+                  0,
+                );
+        uang_makan = widget.dataJasaMedis['uang_makan'] /
+            widget.dataJasaMedis['jasa_pelayanan_akun']['jm_rs'];
+      }
+    }
+
       map["Lebih Jam"] = showIcon
           ? '* * * * *'
           : '(+) ' +
               Helper.convertToIdr(
                 widget.dataJasaMedis['lebih_jam'],
-                2,
+                0,
               );
-    }
-    if (widget.dataJasaMedis['jm_asisten_ok'] != 0) {
-      map["Asisten OK"] = showIcon
-          ? '* * * * *'
-          : '(+) ' +
-              Helper.convertToIdr(
-                widget.dataJasaMedis['jm_asisten_ok'],
-                2,
-              );
-    }
-    if (widget.dataJasaMedis['uang_makan'] != 0) {
-      map["Uang Makan"] = showIcon
-          ? '* * * * *'
-          : '(+) ' +
-              Helper.convertToIdr(
-                widget.dataJasaMedis['uang_makan'],
-                2,
-              );
-    }
+
     if (widget.dataJasaMedis['oncall_ok'] != 0) {
       map["Oncall"] = showIcon
           ? '* * * * *'
           : '(+) ' +
               Helper.convertToIdr(
                 widget.dataJasaMedis['oncall_ok'],
-                2,
+                0,
               );
     }
-    if (widget.dataJasaMedis['tambahan'] != 0) {
-      map["Tambahan"] = showIcon
+
+      map["Tambahan Lain"] = showIcon
           ? '* * * * *'
           : '(+) ' +
               Helper.convertToIdr(
                 widget.dataJasaMedis['tambahan'],
-                2,
+                0,
               );
-    }
+
+    jm_bersih = (widget.dataJasaMedis['jm_total_full'] != 0
+            ? widget.dataJasaMedis['jm_total_full']
+            : widget.dataJasaMedis['jm_total_share']) +
+        (widget.dataJasaMedis['jm_ruang_full'] != 0
+            ? widget.dataJasaMedis['jm_ruang_full']
+            : widget.dataJasaMedis['jm_ruang_share']) +
+        asisten_ok +
+        widget.dataJasaMedis['lebih_jam'] +
+        widget.dataJasaMedis['oncall_ok'] +
+        uang_makan +
+        widget.dataJasaMedis['tambahan'];
     if (widget.dataJasaMedis['jm_total_share'] != 0) {
       map["JasPel Bruto"] = showIcon
           ? '* * * * *'
           : Helper.convertToIdr(
-              widget.dataJasaMedis['jm_ruang_share'] +
-                  widget.dataJasaMedis['jm_total_share'] +
-                  widget.dataJasaMedis['lebih_jam'] +
-                  widget.dataJasaMedis['jm_asisten_ok'] +
-                  widget.dataJasaMedis['uang_makan'] +
-                  widget.dataJasaMedis['oncall_ok'] +
-                  widget.dataJasaMedis['tambahan'],
-              2,
+              jm_bersih,
+              0,
             );
     }
     if (widget.dataJasaMedis['jm_total_full'] != 0 &&
@@ -112,32 +158,115 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                         widget.dataJasaMedis['jm_ruang_full']) -
                     (widget.dataJasaMedis['jm_total_share'] +
                         widget.dataJasaMedis['jm_ruang_share']),
-                2,
+                0,
               );
     }
     if (widget.dataJasaMedis['jm_asisten_ok'] != 0) {
-      // if (widget.dataJasaMedis['stts_kerja'] == 'Karyawan Mitra') {
-      //   map["Potongan Asisten OK"] = showIcon
-      //       ? '* * * * *'
-      //       : '(-) ' +
-      //           Helper.convertToIdr(
-      //             (widget.dataJasaMedis['jm_asisten_ok'] /
-      //                     widget.dataJasaMedis['jm_ok_mitra']) -
-      //                 widget.dataJasaMedis['jm_asisten_ok'],
-      //             2,
-      //           );
-      // } else {
-      //   map["Potongan Asisten OK"] = showIcon
-      //       ? '* * * * *'
-      //       : '(-) ' +
-      //       Helper.convertToIdr(
-      //         (widget.dataJasaMedis['jm_asisten_ok'] /
-      //             widget.dataJasaMedis['jm_ok_mitra']) -
-      //             widget.dataJasaMedis['jm_asisten_ok'],
-      //         2,
-      //       );
-      // }
+      if (widget.dataJasaMedis['stts_kerja'] == 'Karyawan Mitra') {
+        map["Potongan Asisten OK"] = showIcon
+            ? '* * * * *'
+            : '(-) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['jm_asisten_ok'] /
+                          widget.dataJasaMedis['jasa_pelayanan_akun']
+                              ['jm_ok_mitra']) -
+                      (widget.dataJasaMedis['jm_asisten_ok']),
+                  0,
+                );
+        pot_asisten_ok = (widget.dataJasaMedis['jm_asisten_ok'] /
+                widget.dataJasaMedis['jasa_pelayanan_akun']['jm_ok_mitra']) -
+            widget.dataJasaMedis['jm_asisten_ok'];
+      } else {
+        map["Potongan Asisten OK"] = showIcon
+            ? '* * * * *'
+            : '(-) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['jm_asisten_ok'] /
+                          widget.dataJasaMedis['jasa_pelayanan_akun']
+                              ['jm_rs']) -
+                      (widget.dataJasaMedis['jm_asisten_ok']),
+                  0,
+                );
+        pot_asisten_ok = (widget.dataJasaMedis['jm_asisten_ok'] /
+                widget.dataJasaMedis['jasa_pelayanan_akun']['jm_rs']) -
+            widget.dataJasaMedis['jm_asisten_ok'];
+      }
     }
+    if (widget.dataJasaMedis['uang_makan'] != 0) {
+      if (widget.dataJasaMedis['stts_kerja'] == 'Karyawan Mitra') {
+        map["Potongan Uang Makan"] = showIcon
+            ? '* * * * *'
+            : '(-) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['uang_makan'] /
+                          widget.dataJasaMedis['jasa_pelayanan_akun']
+                              ['jm_ok_mitra']) -
+                      (widget.dataJasaMedis['uang_makan']),
+                  0,
+                );
+        pot_uang_makan = (widget.dataJasaMedis['uang_makan'] /
+                widget.dataJasaMedis['jasa_pelayanan_akun']['jm_ok_mitra']) -
+            (widget.dataJasaMedis['uang_makan']);
+      } else {
+        map["Potongan Uang Makan"] = showIcon
+            ? '* * * * *'
+            : '(-) ' +
+                Helper.convertToIdr(
+                  (widget.dataJasaMedis['uang_makan'] /
+                          widget.dataJasaMedis['jasa_pelayanan_akun']
+                              ['jm_rs']) -
+                      (widget.dataJasaMedis['uang_makan']),
+                  0,
+                );
+        pot_uang_makan = (widget.dataJasaMedis['uang_makan'] /
+                widget.dataJasaMedis['jasa_pelayanan_akun']['jm_rs']) -
+            (widget.dataJasaMedis['uang_makan']);
+      }
+    }
+
+      map["Potongan Obat"] = showIcon
+          ? '* * * * *'
+          : '(-) ' +
+              Helper.convertToIdr(
+                (widget.dataJasaMedis['potongan_obat']),
+                0,
+              );
+
+
+      map["Potongan Lain"] = showIcon
+          ? '* * * * *'
+          : '(-) ' +
+              Helper.convertToIdr(
+                (widget.dataJasaMedis['potongan_lain']),
+                0,
+              );
+
+    jm_potong = widget.dataJasaMedis['potongan_lain'] +
+        widget.dataJasaMedis['potongan_obat'] +
+        (((widget.dataJasaMedis['jm_total_full'] != 0
+                    ? widget.dataJasaMedis['jm_total_full']
+                    : widget.dataJasaMedis['jm_total_share']) +
+                (widget.dataJasaMedis['jm_ruang_full'] != 0
+                    ? widget.dataJasaMedis['jm_ruang_full']
+                    : widget.dataJasaMedis['jm_ruang_share'])) -
+            (widget.dataJasaMedis['jm_total_share'] +
+                widget.dataJasaMedis['jm_ruang_share'])) +
+        pot_asisten_ok +
+        pot_uang_makan;
+    if (jm_potong != 0) {
+      map["Total Potongan"] = showIcon
+          ? '* * * * *'
+          : Helper.convertToIdr(
+              jm_potong,
+              0,
+            );
+    }
+    map["Jaspel Diterima"] = showIcon
+        ? '* * * * *'
+        : Helper.convertToIdr(
+            jm_bersih - jm_potong,
+            0,
+          );
 
     return Column(
       children: [
@@ -178,7 +307,7 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                             " " +
                             widget.dataJasaMedis['tahun'],
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: fontSemiBold,
                         ),
                       ),
@@ -197,7 +326,7 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  GenTable(
+                  GenTableJaspel(
                     data:
                         // {
                         map,

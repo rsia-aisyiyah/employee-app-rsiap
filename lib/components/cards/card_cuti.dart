@@ -204,6 +204,7 @@ class _CardCutiState extends State<CardCuti> {
                       ),
                       child: Icon(
                         Icons.dangerous_sharp,
+                        color: Colors.white,
                         size: 16,
                       ),
                     ),

@@ -125,7 +125,10 @@ class _IndexScreenState extends State<IndexScreen> {
           ),
         ),
         // backgroundColor: bgColor,
-        body: navigationItems[_selectedNavbar]['widget'] as Widget,
+        body: Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: navigationItems[_selectedNavbar]['widget'] as Widget,
+        ),
         bottomNavigationBar: ClipRRect(
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(30.0),
@@ -136,7 +139,7 @@ class _IndexScreenState extends State<IndexScreen> {
             shape: CircularNotchedRectangle(),
             color: bgColor,
             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-            height: MediaQuery.of(context).size.height * 0.08,
+            height: MediaQuery.of(context).size.height * 0.09,
             child: BottomNavigationBar(
               selectedItemColor: buttonNavbar,
               unselectedItemColor: textColor.withOpacity(0.5),

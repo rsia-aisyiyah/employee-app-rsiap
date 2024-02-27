@@ -20,7 +20,7 @@ cardPresensi(presensi) {
                       alignment: Alignment.center,
                       height: 55,
                       width: 65,
-                      padding: EdgeInsets.all(10),
+                      padding: EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: bgWhite,
                         boxShadow: [
