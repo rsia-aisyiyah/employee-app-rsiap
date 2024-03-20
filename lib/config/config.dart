@@ -3,7 +3,6 @@ import 'package:rsia_employee_app/screen/home.dart';
 import 'package:rsia_employee_app/screen/menu/berkas_pegawai.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
 import 'package:rsia_employee_app/screen/menu/file_manager.dart';
-import 'package:rsia_employee_app/screen/menu/jasa_medis.dart';
 import 'package:rsia_employee_app/screen/menu/otp_jasa_medis.dart';
 import 'package:rsia_employee_app/screen/menu/presensi.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
@@ -34,7 +33,7 @@ List<Map<String, Object>> menuScreenItems = [
   },
   {
     'label': 'Slip Jaspel',
-    'widget': const JasaMedis(),
+    'widget': const OtpJasaMedis(),
     'disabled': false,
     'icon': Icons.payments_outlined
   },
