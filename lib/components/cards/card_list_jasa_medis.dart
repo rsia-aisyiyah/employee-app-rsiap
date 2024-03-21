@@ -157,7 +157,8 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                 (widget.dataJasaMedis['jm_total_full'] +
                         widget.dataJasaMedis['jm_ruang_full']) -
                     (widget.dataJasaMedis['jm_total_share'] +
-                        widget.dataJasaMedis['jm_ruang_share']),
+                        widget.dataJasaMedis['jm_ruang_share']) + ((widget.dataJasaMedis['jm_total_full'] +
+                    widget.dataJasaMedis['jm_ruang_full']) * widget.dataJasaMedis['potongan_jaspel']),
                 0,
               );
     }
@@ -252,7 +253,8 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
             (widget.dataJasaMedis['jm_total_share'] +
                 widget.dataJasaMedis['jm_ruang_share'])) +
         pot_asisten_ok +
-        pot_uang_makan;
+        pot_uang_makan + ((widget.dataJasaMedis['jm_total_full'] +
+        widget.dataJasaMedis['jm_ruang_full']) * widget.dataJasaMedis['potongan_jaspel']);
     if (jm_potong != 0) {
       map["Total Potongan"] = showIcon
           ? '* * * * *'
