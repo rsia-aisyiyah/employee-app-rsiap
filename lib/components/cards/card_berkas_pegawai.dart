@@ -114,20 +114,23 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
   // }
 
   Future<void> requestPermission(downloadUrl) async {
-    var manExtStorage = await Permission.manageExternalStorage.status;
-    var manStorage = await Permission.storage.status;
+    var storage = await Permission.storage.status;
+    var image = await Permission.mediaLibrary.status;
+    var mediaLocation = await Permission.accessMediaLocation.status;
 
-    if (!manExtStorage.isGranted) {
-      await Permission.manageExternalStorage.request();
-    } else {
-      openFile(downloadUrl);
-    }
-
-    if(!manStorage.isGranted) {
+    if(!storage.isGranted) {
       await Permission.storage.request();
-    } else {
-      openFile(downloadUrl);
     }
+
+    if(!image.isGranted) {
+      await Permission.mediaLibrary.request();
+    }
+
+    if(!mediaLocation.isGranted) {
+      await Permission.accessMediaLocation.request();
+    }
+
+    openFile(downloadUrl);
   }
 
   void checkFile() async {
