@@ -128,6 +128,9 @@ class _ProfilePageState extends State<ProfilePage> {
       var body = json.decode(res.body);
       isSuccess = true;
       Msg.success(context, body['message']);
+      Navigator.pushReplacement(context, MaterialPageRoute(
+          builder: (BuildContext ctx) => super.widget
+      ));
       return body;
     } else {
       var body = json.decode(res.body);
