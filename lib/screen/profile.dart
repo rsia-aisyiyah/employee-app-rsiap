@@ -157,8 +157,10 @@ class _ProfilePageState extends State<ProfilePage> {
     };
     dataTbl2 = {
       "No. HP": detailBio['petugas']['no_telp'] ?? '-',
-      "Email": detailBio['rsia_email_pegawai']['email'] ?? '-',
+      "Email": detailBio['rsia_email_pegawai']!=null ? detailBio['rsia_email_pegawai']['email'] : "-",
     };
+
+
   }
 
   @override
