@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
+import 'package:rsia_employee_app/components/cards/card_notulen.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/screen/page/scan.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
@@ -80,7 +81,6 @@ class _UndanganState extends State<Undangan> {
     } else {
       setState(() {
         isLoading = false;
-
         dataUndangan = value['data']['data'] ?? [];
       });
     }
@@ -204,6 +204,53 @@ class _UndanganState extends State<Undangan> {
                             ) + " WIB",
                             "Tempat": dataUdgn['surat']['tempat'],
                           }),
+                          SizedBox(height: 10),
+                          Flex(
+                            direction: Axis.horizontal,
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: textWhite,
+                                      backgroundColor: primaryColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(100),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 15),
+                                    ),
+                                    onPressed: () {
+                                      // widget.onClearAndCancel();
+                                      Navigator.pop(context);
+                                    },
+                                    child: Text("Daftar Hadir"),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: textWhite,
+                                      backgroundColor: primaryColor,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(100),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 15),
+                                    ),
+                                    onPressed: () {
+                                      // CardNotulen();
+                                      Navigator.push(context,MaterialPageRoute(builder: (context) => CardNotulen(dataUdgn: dataUdgn,),));
+                                    },
+                                    child: Text("Notulen"),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
                         ],
                       ),
                     ),

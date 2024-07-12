@@ -62,6 +62,8 @@ dependencies:
   lottie: ^3.1.0
   email_validator: ^2.1.17
   qr_code_scanner: ^1.0.1
+  flutter_lorem: ^2.0.0
+  flutter_widget_from_html: ^0.15.0
 
 
 
