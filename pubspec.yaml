@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.1.0+111
+version: 1.1.4+114
 
 environment:
   sdk: '>=3.0.5 <4.0.0'
@@ -37,8 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   http: ^1.1.0
   intl: ^0.19.0
-  shared_preferences: ^2.1.2
-  calendar_date_picker2: ^0.5.2
+  calendar_date_picker2: ^1.1.5
   hexcolor: ^3.0.1
   jwt_decoder: ^2.0.1
   google_fonts: ^6.1.0
@@ -50,22 +49,20 @@ dependencies:
   flutter_downloader: 
   path_provider: ^2.1.1
   permission_handler: ^11.0.0
-  dio:
-  open_file_plus:
-  app_settings:
-  flutter_svg:
-  firebase_core: ^2.15.0
-  firebase_messaging: ^14.6.5
-  flutter_local_notifications: ^16.3.2
-  firebase_analytics: ^10.5.0
+  dio: ^5.5.0+1
+  open_file_plus: ^3.4.1+1
+  firebase_core: ^3.2.0
+  firebase_messaging: ^15.0.3
+  flutter_local_notifications: ^17.2.1+1
+  firebase_analytics: ^11.2.0
   in_app_update: ^4.2.2
   lottie: ^3.1.0
-  email_validator: ^2.1.17
+  email_validator: ^3.0.0
   qr_code_scanner: ^1.0.1
   flutter_lorem: ^2.0.0
   flutter_widget_from_html: ^0.15.0
-
-
+  get: ^4.6.6
+  get_storage: ^2.1.1
 
 dev_dependencies:
   flutter_test:
@@ -73,23 +70,6 @@ dev_dependencies:
 
   flutter_launcher_icons: ^0.13.1
 
-flutter_launcher_icons:
-  image_path: "assets/images/logo.png"
-  adaptive_icon_background: "#FFFFFF"
-  android: "launcher_icon"
-  ios: true
-  web:
-    generate: true
-    image_path: "assets/images/logo.png"
-    background_color: "F6D110"
-    theme_color: "#23c799"
-  windows:
-    generate: true
-    image_path: "assets/images/logo.png"
-    icon_size: 48 # min:48, max:256, default: 48
-  macos:
-    generate: true
-    image_path: "assets/images/logo.png"
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -143,3 +123,21 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+
+flutter_launcher_icons:
+  image_path: "assets/images/logo.png"
+  adaptive_icon_background: "#FFFFFF"
+  android: "launcher_icon"
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/images/logo.png"
+    background_color: "F6D110"
+    theme_color: "#23c799"
+  windows:
+    generate: true
+    image_path: "assets/images/logo.png"
+    icon_size: 48 # min:48, max:256, default: 48
+  macos:
+    generate: true
+    image_path: "assets/images/logo.png"

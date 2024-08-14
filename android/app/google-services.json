@@ -1,79 +1,45 @@
 {
   "project_info": {
-    "project_number": "446386510990",
-    "project_id": "mobile-rsia",
-    "storage_bucket": "mobile-rsia.appspot.com"
+    "project_number": "183940707232",
+    "project_id": "rsia-aisyiyah",
+    "storage_bucket": "rsia-aisyiyah.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:446386510990:android:9c36a54dfb2be5aa737ddf",
+        "mobilesdk_app_id": "1:183940707232:android:c13cb984b10e952284eac5",
         "android_client_info": {
-          "package_name": "com.rsiaaisyiyah.dokter"
+          "package_name": "com.rsiaaisyiyah.employee"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "446386510990-foqv4tdub7lntrmh4drrjcupc9pmtofg.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCu_fxanfCOJhQnAiWLH2RzBQlCMo9hP1s"
+          "current_key": "AIzaSyDlUHfzijL0TECAyDyFob0lTZrCq8hmzY4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "446386510990-foqv4tdub7lntrmh4drrjcupc9pmtofg.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "446386510990-5ujr44ef165a5bgr97ae6h9dcibpgr0j.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.rsiaaisyiyah.dokter"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:446386510990:android:5d7cfdd3cca9b722737ddf",
+        "mobilesdk_app_id": "1:183940707232:android:12ba540942dc16ad84eac5",
         "android_client_info": {
-          "package_name": "com.rsiaaisyiyah.employee"
+          "package_name": "com.rsiaaisyiyah.mobile"
         }
       },
-      "oauth_client": [
-        {
-          "client_id": "446386510990-foqv4tdub7lntrmh4drrjcupc9pmtofg.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
+      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCu_fxanfCOJhQnAiWLH2RzBQlCMo9hP1s"
+          "current_key": "AIzaSyDlUHfzijL0TECAyDyFob0lTZrCq8hmzY4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "446386510990-foqv4tdub7lntrmh4drrjcupc9pmtofg.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "446386510990-5ujr44ef165a5bgr97ae6h9dcibpgr0j.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.rsiaaisyiyah.dokter"
-              }
-            }
-          ]
+          "other_platform_oauth_client": []
         }
       }
     }
