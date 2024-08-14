@@ -26,12 +26,36 @@ class _IndexScreenState extends State<IndexScreen> {
     super.initState();
     firebaseInit();
     checkForUpdate();
+    _initializeFirebase();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     checkForUpdate();
+  Future<void> _initializeFirebase() async {
+    await Firebase.initializeApp();
+    await FirebaseApi().initNotif(context);
+    final List<String> topics = ['sub', 'role', 'dep', 'jbtn'];
+    for (var topic in topics) {
+      await FirebaseMessaging.instance.subscribeToTopic(box.read(topic));
+    }
+  }
+
+  Future<void> _checkForUpdate() async {
+    final updateInfo = await InAppUpdate.checkForUpdate();
+    if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
+      if (updateInfo.immediateUpdateAllowed) {
+        await InAppUpdate.performImmediateUpdate();
+      } else if (updateInfo.flexibleUpdateAllowed) {
+        await InAppUpdate.startFlexibleUpdate().then((result) {
+          if (result == AppUpdateResult.success) {
+            InAppUpdate.completeFlexibleUpdate();
+          }
+        });
+      }
+    }
+  }
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
