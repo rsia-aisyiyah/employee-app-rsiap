@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
@@ -11,7 +12,6 @@ import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/utils/table.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Undangan extends StatefulWidget {
   const Undangan({super.key});
@@ -21,83 +21,62 @@ class Undangan extends StatefulWidget {
 }
 
 class _UndanganState extends State<Undangan> {
-  RefreshController _refreshController = RefreshController(initialRefresh: false);
-
-  String sub = "";
-
-  String nextPageUrl = '';
-  String prevPageUrl = '';
-  String currentPage = '';
-  String lastPage = '';
+  final RefreshController _refreshController = RefreshController(initialRefresh: false);
+  final box = GetStorage();
 
   List dataUndangan = [];
+  Map links = {};
+  Map meta = {};
 
   bool isLoading = true;
   bool btnLoading = false;
 
   @override
   void initState() {
-    getSub();
     fetchUndangan().then((value) {
-      _setData(value);
+      _setData(value['data'] ?? []);
+
+      setState(() {
+        meta = value['meta'] ?? [];
+        links = value['links'] ?? [];
+      });
     });
     super.initState();
   }
 
-  // async function get from local storage
-  void getSub() async {
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    setState(() {
-      sub = pref.getString('sub')!.replaceAll('"', '');
-    });
-  }
-
-  // fetch undangan on undangan/me
   Future fetchUndangan() async {
-    var res = await Api().getData('/undangan/me');
+    var res = await Api().postData({
+      "filters": [ { "field": "penerima", "operator": "=", "value": box.read('sub') } ]
+    }, '/undangan/search');
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
       return body;
     } else {
       var body = json.decode(res.body);
       Msg.error(context, body['message']);
-
       return body;
     }
   }
 
   void _setData(value) {
-    if (value['data']['total'] != 0) {
-      setState(() {
-        dataUndangan = value['data']['data'] ?? [];
-
-        nextPageUrl = value['data']['next_page_url'] ?? '';
-        prevPageUrl = value['data']['prev_page_url'] ?? '';
-        currentPage = value['data']['current_page'].toString();
-        lastPage = value['data']['last_page'].toString();
-
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        isLoading = false;
-        dataUndangan = value['data']['data'] ?? [];
-      });
-    }
+    setState(() {
+      dataUndangan = value ?? [];
+      isLoading = false;
+    });
   }
 
   Future<void> loadMore() async {
-    if (nextPageUrl.isNotEmpty) {
-      var res = await Api().getDataUrl(nextPageUrl);
+    if (links['next'] != null) {
+      var res = await Api().postFullUrl({
+        "filters": [ { "field": "penerima", "operator": "=", "value": box.read('sub') } ]
+      }, links['next']);
+
       if (res.statusCode == 200) {
         var body = json.decode(res.body);
         setState(() {
-          dataUndangan.addAll(body['data']['data']);
-
-          nextPageUrl = body['data']['next_page_url'] ?? '';
-          prevPageUrl = body['data']['prev_page_url'] ?? '';
-          currentPage = body['data']['current_page'].toString();
-          lastPage = body['data']['last_page'].toString();
+          dataUndangan.addAll(body['data'] ?? []);
+          meta = body['meta'] ?? [];
+          links = body['links'] ?? [];
         });
       } else {
         var body = json.decode(res.body);
@@ -107,6 +86,7 @@ class _UndanganState extends State<Undangan> {
         });
       }
     }
+
   }
 
   @override
@@ -141,16 +121,14 @@ class _UndanganState extends State<Undangan> {
           enablePullDown: true,
           enablePullUp: true,
           controller: _refreshController,
-          header: WaterDropHeader(),
+          header: const WaterDropHeader(),
           onRefresh: () async {
             setState(() {});
-            print("On Refresh");
-            await Future.delayed(Duration(milliseconds: 1000));
+            await Future.delayed(const Duration(milliseconds: 1000));
             _refreshController.refreshCompleted();
           },
           onLoading: () async {
             await loadMore();
-            print("On Loading");
             _refreshController.loadComplete();
           },
           child: ListView.builder(
@@ -173,7 +151,7 @@ class _UndanganState extends State<Undangan> {
                   onTap: () => showModalBottomSheet(
                     showDragHandle: true,
                     context: context,
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(10),
                         topRight: Radius.circular(10),
@@ -181,30 +159,26 @@ class _UndanganState extends State<Undangan> {
                     ),
                     builder: (context) => Container(
                       height: MediaQuery.of(context).size.height * 0.4,
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text(
-                            dataUdgn['surat']['perihal'],
+                            dataUdgn['undangan']['perihal'],
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: fontSemiBold,
                             ),
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           GenTable(data: {
                             // format date to indonesia with month name name day asia/jakarta
-                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(
-                              DateTime.parse(dataUdgn['surat']['tanggal']),
-                            ),
-                            "Waktu": DateFormat('HH:mm').format(
-                              DateTime.parse(dataUdgn['surat']['tanggal'])
-                            ) + " WIB",
-                            "Tempat": dataUdgn['surat']['tempat'],
+                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(dataUdgn['undangan']['tanggal'])),
+                            "Waktu": "${DateFormat('HH:mm').format(DateTime.parse(dataUdgn['undangan']['tanggal']))} WIB",
+                            "Tempat": dataUdgn['undangan']['tempat'],
                           }),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Flex(
                             direction: Axis.horizontal,
                             children: [
@@ -224,7 +198,7 @@ class _UndanganState extends State<Undangan> {
                                       // widget.onClearAndCancel();
                                       Navigator.pop(context);
                                     },
-                                    child: Text("Daftar Hadir"),
+                                    child: const Text("Daftar Hadir"),
                                   ),
                                 ),
                               ),
@@ -245,7 +219,7 @@ class _UndanganState extends State<Undangan> {
                                       // CardNotulen();
                                       Navigator.push(context,MaterialPageRoute(builder: (context) => CardNotulen(dataUdgn: dataUdgn,),));
                                     },
-                                    child: Text("Notulen"),
+                                    child: const Text("Notulen"),
                                   ),
                                 ),
                               ),
@@ -267,19 +241,17 @@ class _UndanganState extends State<Undangan> {
                         color: Colors.white,
                         border: Border(
                           left: BorderSide(
-                            color: DateTime.parse(
-                              dataUdgn['surat']['tanggal'],
-                            ).isAfter(DateTime.now())
+                            color: DateTime.parse(dataUdgn['undangan']['tanggal']).isAfter(DateTime.now())
                               ? Colors.blue
                               : Colors.green,
                             width: 6,
                           ),
                         ),
                       ),
-                      padding: EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       child: ListTile(
                         title: Text(
-                          dataUdgn['surat']['perihal'],
+                          dataUdgn['undangan']['perihal'],
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: fontSemiBold,
@@ -288,16 +260,8 @@ class _UndanganState extends State<Undangan> {
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
-                            DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
-                                .add_jm()
-                                .format(
-                                  DateTime.parse(
-                                    dataUdgn['surat']['tanggal'],
-                                  ),
-                                ),
-                            style: TextStyle(
-                              fontSize: 14,
-                            ),
+                            DateFormat('EEEE, dd MMMM yyyy', 'id_ID').add_jm().format(DateTime.parse(dataUdgn['undangan']['tanggal'])),
+                            style: const TextStyle( fontSize: 14 ),
                           ),
                         ),
                         trailing: Icon(
@@ -318,19 +282,16 @@ class _UndanganState extends State<Undangan> {
             Navigator.push(
               context, 
               MaterialPageRoute(
-                builder: (context) => QRAttendanceScanPage(),
+                builder: (context) => const QRAttendanceScanPage(),
               ),
             );
           },
-          child: Icon(
-            Icons.qr_code_scanner,
-            color: textWhite,
-          ),
           // rounded circle
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(100),
           ),
           backgroundColor: primaryColor,
+          child: Icon( Icons.qr_code_scanner, color: textWhite ),
         ),
       );
     }

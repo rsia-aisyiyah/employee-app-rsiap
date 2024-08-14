@@ -1,13 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:in_app_update/in_app_update.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/firebase_api.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../config/config.dart';
 
 class IndexScreen extends StatefulWidget {
   const IndexScreen({super.key});
@@ -17,22 +17,24 @@ class IndexScreen extends StatefulWidget {
 }
 
 class _IndexScreenState extends State<IndexScreen> {
-  // String nik = "";
+  final box = GetStorage();
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   int _selectedNavbar = 0;
-  final navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
-    firebaseInit();
-    checkForUpdate();
     _initializeFirebase();
+    _checkForUpdate();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    checkForUpdate();
+    _listenToFirebaseMessages();
+  }
+
   Future<void> _initializeFirebase() async {
     await Firebase.initializeApp();
     await FirebaseApi().initNotif(context);
@@ -56,55 +58,15 @@ class _IndexScreenState extends State<IndexScreen> {
       }
     }
   }
+
+  void _listenToFirebaseMessages() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
-
       if (message.notification != null) {
         print('Message also contained a notification: ${message.notification}');
       }
     });
-  }
-
-  // In App Update
-  Future<void> checkForUpdate() async {
-    InAppUpdate.checkForUpdate().then((updateInfo) {
-      if (updateInfo.updateAvailability == UpdateAvailability.updateAvailable) {
-        if (updateInfo.immediateUpdateAllowed) {
-          // Perform immediate update
-          InAppUpdate.performImmediateUpdate().then((appUpdateResult) {
-            if (appUpdateResult == AppUpdateResult.success) {
-              //App Update successful
-            }
-          });
-        } else if (updateInfo.flexibleUpdateAllowed) {
-          //Perform flexible update
-          InAppUpdate.startFlexibleUpdate().then((appUpdateResult) {
-            if (appUpdateResult == AppUpdateResult.success) {
-              //App Update successful
-              InAppUpdate.completeFlexibleUpdate();
-            }
-          });
-        }
-      }
-    });
-  }
-
-  void firebaseInit() async {
-    await Firebase.initializeApp();
-    await FirebaseApi().initNotif(context);
-    // await FirebaseMessaging.instance.subscribeToTopic('dokter');
-
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
-
-    var nik = decodeToken['sub'];
-    var sps = decodeToken['kd_dep'];
-
-    await FirebaseMessaging.instance.subscribeToTopic('pegawai');
-    await FirebaseMessaging.instance.subscribeToTopic(nik.replaceAll('"', ''));
-    await FirebaseMessaging.instance.subscribeToTopic(sps.replaceAll('"', ''));
   }
 
   void _changeSelectedNavbar(int index) {
@@ -118,12 +80,10 @@ class _IndexScreenState extends State<IndexScreen> {
     return PopScope(
       canPop: true,
       onPopInvoked: (didPop) {
-        if (didPop) {
-          if (_selectedNavbar != 0) {
-            setState(() {
-              _selectedNavbar = 0;
-            });
-          }
+        if (didPop && _selectedNavbar != 0) {
+          setState(() {
+            _selectedNavbar = 0;
+          });
         }
       },
       child: Scaffold(
@@ -132,9 +92,7 @@ class _IndexScreenState extends State<IndexScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => Cuti(),
-              ),
+              MaterialPageRoute(builder: (context) => const Cuti()),
             );
           },
           backgroundColor: primaryColor,
@@ -142,47 +100,48 @@ class _IndexScreenState extends State<IndexScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(100),
           ),
-          child: Icon(
+          child: const Icon(
             Icons.add_circle,
             size: 36,
-            color: Colors.white, 
+            color: Colors.white,
           ),
         ),
-        // backgroundColor: bgColor,
         body: Padding(
           padding: const EdgeInsets.only(bottom: 10),
           child: navigationItems[_selectedNavbar]['widget'] as Widget,
         ),
-        bottomNavigationBar: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30.0),
-            topRight: Radius.circular(30.0),
-          ),
-          child: BottomAppBar(
-            clipBehavior: Clip.antiAlias,
-            shape: CircularNotchedRectangle(),
-            color: bgColor,
-            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-            height: MediaQuery.of(context).size.height * 0.09,
-            child: BottomNavigationBar(
-              selectedItemColor: buttonNavbar,
-              unselectedItemColor: textColor.withOpacity(0.5),
-              currentIndex: _selectedNavbar,
-              showUnselectedLabels: true,
-              showSelectedLabels: true,
-              onTap: (index) {
-                _changeSelectedNavbar(index);
-              },
-              items: navigationItems.map((item) {
-                return BottomNavigationBarItem(
-                  icon: Icon(item['icon'] as IconData, size: 30),
-                  label: item['label'] as String,
-                );
-              }).toList(),
-            ),
-          ),
-        ),
+        bottomNavigationBar: _buildBottomNavigationBar(),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(30.0),
+        topRight: Radius.circular(30.0),
+      ),
+      child: BottomAppBar(
+        clipBehavior: Clip.antiAlias,
+        shape: const CircularNotchedRectangle(),
+        color: bgColor,
+        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        height: MediaQuery.of(context).size.height * 0.09,
+        child: BottomNavigationBar(
+          selectedItemColor: buttonNavbar,
+          unselectedItemColor: textColor.withOpacity(0.5),
+          currentIndex: _selectedNavbar,
+          showUnselectedLabels: true,
+          showSelectedLabels: true,
+          onTap: _changeSelectedNavbar,
+          items: navigationItems.map((item) {
+            return BottomNavigationBarItem(
+              icon: Icon(item['icon'] as IconData, size: 30),
+              label: item['label'] as String,
+            );
+          }).toList(),
+        ),
       ),
     );
   }

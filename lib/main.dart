@@ -10,11 +10,12 @@ import 'package:rsia_employee_app/screen/login.dart';
 import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:get_storage/get_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await GetStorage.init();
   await FlutterDownloader.initialize(
     debug: true, // optional: set to false to disable printing logs to console (default: true)
     ignoreSsl: true, // option: set to false to disable working with http links (default: false)
@@ -73,8 +74,7 @@ class _CheckAuthState extends State<CheckAuth> {
 
 
   Future _authCheck() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
+    var token = await GetStorage().read('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
 
     // if token available
@@ -85,14 +85,8 @@ class _CheckAuthState extends State<CheckAuth> {
         return false;
       }
 
-      var tkns = await Api().postRequest('/auth/me').then((val) async {
-        var res = jsonDecode(val.body);
-        if (val.statusCode != 200 || res['success'] == false) {
-          return false;
-        }
-      });
-
-      if (tkns == false) {
+      var tkns = await Api().getData('/user/auth/detail');
+      if (tkns.statusCode != 200) {
         return false;
       }
 
@@ -127,13 +121,5 @@ class _CheckAuthState extends State<CheckAuth> {
         }
       },
     );
-
-    // Widget child;
-    // if (isAuth) {
-    //   child = const IndexScreen();
-    // } else {
-    //   child = const LoginScreen();
-    // }
-    // return child;
   }
 }

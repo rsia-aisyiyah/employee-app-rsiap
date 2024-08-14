@@ -9,7 +9,6 @@ import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CardNotulen extends StatefulWidget {
   final Map dataUdgn;

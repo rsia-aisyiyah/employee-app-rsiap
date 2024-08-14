@@ -90,6 +90,13 @@ class Helper {
     ).format(DateTime.parse(date));
   }
 
+  static String formatDate4(String date) {
+    return DateFormat(
+      'dd MMM yyyy',
+      'id_ID',
+    ).format(DateTime.parse(date));
+  }
+
   // ====================  //
 
   // static String greeting() {

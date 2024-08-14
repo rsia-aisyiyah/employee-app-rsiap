@@ -1,15 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:rsia_employee_app/config/config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_storage/get_storage.dart';
 
 class Api {
   var token;
 
   _getToken() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var jsonToken = localStorage.getString('token');
-    token = json.decode(jsonToken!);
+    final box = GetStorage();
+    token = await box.read('token');
   }
 
   auth(data, pathUrl) async {

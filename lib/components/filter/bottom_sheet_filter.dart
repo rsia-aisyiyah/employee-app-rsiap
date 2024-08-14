@@ -12,16 +12,13 @@ class BottomSheetFilter extends StatefulWidget {
 
   bool isLoding;
   bool isFilter;
-  bool isRanap;
 
-  Function fetchPasien;
   Function setData;
-  Function doFilter;
+  Function fetchPresensi;
   Function onClearAndCancel;
 
   Map filterData;
 
-  String selectedCategory;
   String tglFilterKey;
 
   BottomSheetFilter({
@@ -30,14 +27,11 @@ class BottomSheetFilter extends StatefulWidget {
     required this.searchController,
     required this.isLoding,
     required this.isFilter,
-    required this.fetchPasien,
     required this.setData,
-    required this.doFilter,
+    required this.fetchPresensi,
     required this.filterData,
-    required this.selectedCategory,
     required this.onClearAndCancel,
     required this.tglFilterKey,
-    this.isRanap = false,
   });
 
   @override
@@ -45,39 +39,8 @@ class BottomSheetFilter extends StatefulWidget {
 }
 
 class _BottomSheetFilterState extends State<BottomSheetFilter> {
-  Widget _customCapsuleFilter(String title, String key, String value) {
-    return Expanded(
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            widget.filterData[key] = value;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-            color: widget.filterData[key] == value
-                ? primaryColor.withOpacity(0.2)
-                : bgWhite,
-            borderRadius: BorderRadius.circular(5),
-            border: Border.all(
-              color: widget.filterData[key] == value ? primaryColor : bgWhite,
-              width: 1.5,
-            ),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: widget.filterData[key] == value ? primaryColor : bgWhite,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  String start = '';
+  String end = '';
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +77,7 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Text(
+                        const Text(
                           "Filter Presensi",
                           style: TextStyle(
                             fontSize: 18,
@@ -137,7 +100,7 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
+              const Text(
                 "Select Date",
                 style: TextStyle(
                   fontSize: 14,
@@ -151,8 +114,7 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                   hintText: "Select Date",
                   suffixIcon: Icon(
                     Icons.calendar_today,
-                    color:
-                        widget.dateinput.text.isNotEmpty ? primaryColor : line,
+                    color: widget.dateinput.text.isNotEmpty ? primaryColor : line,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 10,
@@ -206,10 +168,10 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
 
                     setState(() {
                       widget.dateinput.text = "$startDate - $endDate";
-                      widget.filterData[widget.tglFilterKey] = {
-                        "start": startDate,
-                        "end": endDate
-                      };
+                      setState(() {
+                        start = res.first.toString();
+                        end = res.last.toString();
+                      });
                     });
                   }
                 },
@@ -236,7 +198,7 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                       widget.onClearAndCancel();
                       Navigator.pop(context);
                     },
-                    child: Text("Reset & Close"),
+                    child: const Text("Reset & Close"),
                   ),
                 ),
               ),
@@ -254,10 +216,10 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                       padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
                     onPressed: () {
-                      widget.doFilter();
+                      widget.fetchPresensi(start, end);
                       Navigator.pop(context);
                     },
-                    child: Text("Submit"),
+                    child: const Text("Submit"),
                   ),
                 ),
               ),

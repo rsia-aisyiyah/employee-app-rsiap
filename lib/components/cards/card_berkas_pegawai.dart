@@ -10,28 +10,24 @@ import 'package:open_file_plus/open_file_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
-// cardBerkasPegawai(berkas) {
-//   print(berkas['master_berkas_pegawai']['nama_berkas']);
-//   return cardBerkasPegawai(berkas);
-// }
-
-class cardBerkasPegawai extends StatefulWidget {
+class CardBerkasPegawai extends StatefulWidget {
   final Map dataBerkasPegawai;
-  const cardBerkasPegawai({super.key, required this.dataBerkasPegawai});
+  const CardBerkasPegawai({super.key, required this.dataBerkasPegawai});
 
   @override
-  State<cardBerkasPegawai> createState() => _cardBerkasPegawaiState();
+  State<CardBerkasPegawai> createState() => _CardBerkasPegawaiState();
 }
 
-class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
-  bool isHAveDownloading = false;
-
+class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
   bool downloading = false;
+  bool isHAveDownloading = false;
+  bool isDownloadContainerVisible = false;
+
   var progressString = "0%";
-  String downloadStart = "Mulai Download...";
-  var isDownloadContainerVisible = false;
-  String filePath = '';
   var error = '';
+
+  String downloadStart = "Mulai Download...";
+  String filePath = '';
   double progress = 0;
   String baseUrl = 'https://sim.rsiaaisyiyah.com/webapps/penggajian/';
   String fileExt = '';
@@ -41,78 +37,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
     super.initState();
     checkFile();
   }
-  // Future download2() async {
-  //   FileDownloader.downloadFile(
-  //       url:
-  //           "https://sim.rsiaaisyiyah.com/rsiap/file/berkas/FORMAT_SURAT_PERMOHONAN_IZIN.docx",
-  //       name: "", //THE FILE NAME AFTER DOWNLOADING,
-  //       onProgress: (String? fileName, double? progress) {
-  //         print('FILE fileName HAS PROGRESS $progress');
-  //       },
-  //       onDownloadCompleted: (String path) {
-  //         print('FILE DOWNLOADED TO PATH: $path');
-  //       },
-  //       onDownloadError: (String error) {
-  //         print('DOWNLOAD ERROR: $error');
-  //       });
-  // }
-  //You can download a single file
-
-  // Future download() async {
-  //   FlutterDownloader.registerCallback(downloadCallback);
-  //   final status = await Permission.storage.request();
-
-  //   if (status.isGranted) {
-  //     final downloadsDir = await getExternalStorageDirectory();
-  //     await FlutterDownloader.enqueue(
-  //       url:
-  //           'https://sim.rsiaaisyiyah.com/rsiap/file/berkas/SAMPUL_DOKUMEN_RSIA.docx',
-  //       savedDir: downloadsDir!.path,
-  //       headers: {},
-  //       showNotification:
-  //           true, // show download progress in status bar (for Android)
-  //       openFileFromNotification:
-  //           true, // click on notification to open downloaded file (for Android)
-  //     );
-  //   }
-  // }
-
-  // ReceivePort _port = ReceivePort();
-
-  // @pragma('vm:entry-point')
-  // static void downloadCallback(String id, int status, int progress) {
-  //   final SendPort send =
-  //       IsolateNameServer.lookupPortByName('downloader_send_port')!;
-  //   send.send([id, status, progress]);
-  // }
-
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-
-  //   IsolateNameServer.registerPortWithName(
-  //       _port.sendPort, 'downloader_send_port');
-  //   _port.listen((dynamic data) {
-  //     String id = data[0];
-  //     DownloadTaskStatus status = data[1];
-  //     int progress = data[2];
-
-  //     // if (status == DownloadTaskStatus.complete) {
-  //     //   print("sukses download");
-  //     // }
-  //     setState(() {});
-  //   });
-
-  //   FlutterDownloader.registerCallback(downloadCallback);
-  // }
-
-  // @override
-  // void dispose() {
-  //   IsolateNameServer.removePortNameMapping('downloader_send_port');
-  //   super.dispose();
-  // }
-
+  
   Future<void> requestPermission(downloadUrl) async {
     var storage = await Permission.storage.status;
     var image = await Permission.mediaLibrary.status;
@@ -135,16 +60,16 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
 
   void checkFile() async {
     String url = baseUrl + widget.dataBerkasPegawai['berkas'];
-    var dir;
+    String? dir;
+
     if (Platform.isAndroid) {
       dir = (await getExternalStorageDirectory())?.path;
     } else {
       dir = (await getApplicationDocumentsDirectory()).path;
     }
+
     filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
     fileExt = url.substring(url.lastIndexOf('.') + 1).toUpperCase();
-
-    print("Lokasi File $filePath");
 
     File file = File(filePath);
     var isExist = await file.exists();
@@ -161,26 +86,24 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
   }
 
   void openFile(String url) async {
-    var dir;
+    String? dir;
     if (Platform.isAndroid) {
       dir = (await getExternalStorageDirectory())?.path;
     } else {
       dir = (await getApplicationDocumentsDirectory()).path;
     }
-    filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
-    print("Lokasi File $filePath");
 
+    filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
+    
     File file = File(filePath);
     var isExist = await file.exists();
     if (isExist) {
-      print('File Exist----------');
       await OpenFile.open(filePath);
       setState(() {
         isDownloadContainerVisible = false;
         isHAveDownloading = true;
       });
     } else {
-      print('File Tidak Ada ----------');
       downloadFile(url);
     }
   }
@@ -195,13 +118,9 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
       isDownloadContainerVisible = true;
     });
     try {
-      await dio.download(url, filePath, onReceiveProgress: (
-        rec,
-        total,
-      ) {
-        print("Rec: $rec , Total: $total");
+      await dio.download(url, filePath, onReceiveProgress: ( rec, total ) {
         setState(() {
-          progressString = ((rec / total) * 100).toStringAsFixed(0) + "%";
+          progressString = "${((rec / total) * 100).toStringAsFixed(0)}%";
         });
       });
       setState(() {
@@ -211,17 +130,16 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
         isHAveDownloading = true;
       });
 
-      print("Download Selesai");
       Msg.success(context, "Download selesai");
       openFile(url);
     } catch (e) {
-      print(e);
       setState(() {
         downloading = false;
         progressString = "";
         downloadStart = "";
         isHAveDownloading = false;
       });
+
       Msg.error(context, "Gagal download file");
     }
   }
@@ -259,7 +177,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                           widget.dataBerkasPegawai['master_berkas_pegawai']['nama_berkas'],
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
                           ),
@@ -273,23 +191,11 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                   right: -1,
                   child: Container(
                     decoration: BoxDecoration(
-                      boxShadow: [
-                        // BoxShadow(
-                        //   color: textColor.withOpacity(0.5),
-                        //   blurRadius: 0,
-                        //   offset: const Offset(1, 1),
-                        // )
-                      ],
                       borderRadius: BorderRadius.circular(5),
                       color: primaryColor,
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.only(
-                        left: 4,
-                        right: 4,
-                        top: 1,
-                        bottom: 1,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       child: Text(
                         fileExt,
                         style: TextStyle(
@@ -298,16 +204,11 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                         ),
                       ),
                     ),
-                    // child: Icon(
-                    //   Icons.picture_as_pdf,
-                    //   color: Colors.red,
-                    //   size: 18,
-                    // ),
                   ),
                 ),
               ],
             ),
-            SizedBox(
+            const SizedBox(
               width: 5,
             ),
             Stack(
@@ -333,25 +234,17 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                     children: [
                       InkWell(
                           onTap: () {
-                            print(baseUrl +
-                                widget.dataBerkasPegawai['berkas'].toString());
-                            requestPermission(baseUrl + widget.dataBerkasPegawai['berkas'].toString());
+                            downloadFile(baseUrl + widget.dataBerkasPegawai['berkas'].toString());
                           },
                           child: Stack(
                             alignment: Alignment.center,
                             children: <Widget>[
                               if (!downloading)
-                                isHAveDownloading
-                                    ? Icon(
-                                        Icons.menu_book_rounded,
-                                        color: primaryColor,
-                                        size: 32,
-                                      )
-                                    : Icon(
-                                        Icons.cloud_download_sharp,
-                                        color: primaryColor,
-                                        size: 32,
-                                      ),
+                                Icon(
+                                  isHAveDownloading ? Icons.menu_book_rounded : Icons.cloud_download_rounded,
+                                  color: primaryColor,
+                                  size: 32,
+                                ),
                               downloading
                                   ? Column(
                                     children: [
@@ -360,7 +253,7 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                                           height: 25,
                                           padding: const EdgeInsets.all(8),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.all(
+                                            borderRadius: const BorderRadius.all(
                                                 Radius.circular(10)),
                                             child: LinearProgressIndicator(
                                               backgroundColor: bgColor,
@@ -371,46 +264,17 @@ class _cardBerkasPegawaiState extends State<cardBerkasPegawai> {
                                     ],
                                   )
                                   : Container(),
-                              // ShowOrHideDownloadDialog(),
                             ],
                           )),
-                      // IconButton(
-                      //   onPressed: () {
-                      //     requestPermission();
-                      //   },
-                      //   icon: Icon(
-                      //     Icons.cloud_download_sharp,
-                      //     color: primaryColor,
-                      //     size: 36,
-                      //   ),
-                      // ),
                     ],
                   ),
                 ),
-                // Positioned(
-                //   top: -5,
-                //   right: -5,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       borderRadius: BorderRadius.circular(5),
-                //       border: Border.all(
-                //         width: 0.5,
-                //       ),
-                //       color: bgWhite,
-                //     ),
-                //     child: Icon(
-                //       Icons.picture_as_pdf,
-                //       color: Colors.red,
-                //       size: 18,
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ],
         ),
-        SizedBox(
-          height: 10,
+        const SizedBox(
+          height: 12,
         )
       ],
     );

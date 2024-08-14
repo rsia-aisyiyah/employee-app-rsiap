@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:hexcolor/hexcolor.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/api/request.dart';
@@ -11,7 +10,6 @@ import 'package:rsia_employee_app/components/filter/bottom_sheet_filter.dart';
 import 'package:rsia_employee_app/components/modal/modal_cuti.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 
 class Cuti extends StatefulWidget {
@@ -24,7 +22,6 @@ class Cuti extends StatefulWidget {
 class _CutiState extends State<Cuti> {
   TextEditingController dateinput = TextEditingController();
 
-  SharedPreferences? pref;
   List dataCuti = [];
   Map hitungCuti = {};
 
@@ -46,11 +43,14 @@ class _CutiState extends State<Cuti> {
   bool isLoding = true;
   bool isLodingButton = true;
   bool isFilter = false;
+
   TextEditingController searchController = TextEditingController();
+  Map filterData = {};
+
+  final box = GetStorage();
   final RefreshController _refreshController = RefreshController(
     initialRefresh: false,
   );
-  Map filterData = {};
 
   @override
   void initState() {
@@ -154,10 +154,7 @@ class _CutiState extends State<Cuti> {
   }
 
   Future fetchCuti() async {
-    // SharedPreferences localStorage = await SharedPreferences.getInstance();
-    // var spesialis = localStorage.getString('spesialis');
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
+    var token = box.read('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
 
@@ -222,8 +219,7 @@ class _CutiState extends State<Cuti> {
   }
 
   Future _hitungData() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
+    var token = box.read('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
     var res = await Api().postData({'nik': nik}, '/pegawai/cuti/count');
@@ -653,7 +649,7 @@ class _CutiState extends State<Cuti> {
   }
 
   Widget loadingIcon() {
-    return SizedBox(
+    return const SizedBox(
       child: Center(
           child: CircularProgressIndicator(
         strokeWidth: 1,
@@ -674,12 +670,10 @@ class _CutiState extends State<Cuti> {
           searchController: searchController,
           isLoding: isLoding,
           isFilter: isFilter,
-          fetchPasien: fetchCuti,
           setData: _setData,
-          doFilter: doFilter,
+          fetchPresensi: doFilter,
           onClearAndCancel: _onClearCancel,
           filterData: filterData,
-          selectedCategory: filterData['penjab'] ?? '',
           tglFilterKey: "tanggal",
         );
       },

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/cards/card_list_jasa_medis.dart';
@@ -9,8 +10,6 @@ import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 class JasaMedis extends StatefulWidget {
   final bool ralan;
   final bool ranap;
@@ -26,12 +25,12 @@ class JasaMedis extends StatefulWidget {
 }
 
 class JasaMedisState extends State<JasaMedis> {
-  SharedPreferences? pref;
+  final box = GetStorage();
   Timer? countdownTimer;
   Duration myDuration = Duration(days: 5);
   TextEditingController searchController = TextEditingController();
   TextEditingController dateinput = TextEditingController();
-  RefreshController _refreshController = RefreshController(
+  final RefreshController _refreshController = RefreshController(
     initialRefresh: false,
   );
 
@@ -139,8 +138,7 @@ class JasaMedisState extends State<JasaMedis> {
   }
 
   Future fetchPasien() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var spesialis = localStorage.getString('spesialis');
+    var spesialis = box.read('spesialis');
     var strUrl = url;
 
     if (widget.ranap) {
@@ -422,13 +420,10 @@ class JasaMedisState extends State<JasaMedis> {
           searchController: searchController,
           isLoding: isLoding,
           isFilter: isFilter,
-          isRanap: widget.ranap,
-          fetchPasien: fetchPasien,
           setData: _setData,
-          doFilter: doFilter,
+          fetchPresensi: doFilter,
           onClearAndCancel: _onClearCancel,
           filterData: filterData,
-          selectedCategory: filterData['penjab'] ?? '',
           tglFilterKey: "tgl_registrasi",
         );
       },

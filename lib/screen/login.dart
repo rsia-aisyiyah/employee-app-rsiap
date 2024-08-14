@@ -1,13 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/screen/index.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,79 +17,54 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _isLoading = false;
-  bool _secureText = true;
-  var username = '';
-  var password = '';
-
+  final box = GetStorage();
   final _formKey = GlobalKey<FormState>();
 
-  showHide() {
+  bool _isLoading = false;
+  bool _secureText = true;
+  String username = '';
+  String password = '';
+
+  void _togglePasswordVisibility() {
     setState(() {
       _secureText = !_secureText;
     });
   }
 
   void _login() async {
+    if (!_formKey.currentState!.validate()) return;
     setState(() {
       _isLoading = true;
     });
+    _formKey.currentState!.save();
 
-    if (username.isEmpty) {
-      Msg.error(context, 'error');
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
+    // final data = {'username': username, 'password': password};
+    final data = {'username': '3.928.0623', 'password': '!040601!'};
 
-    if (password.isEmpty) {
-      Msg.error(context, 'error');
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
+    final res = await Api().auth(data, '/user/auth/login');
+    final body = jsonDecode(res.body);
 
-    var data = {
-      'username': username,
-      'password': password,
-    };
-
-    await Api().auth(data, '/auth/login').then((res) {
-      print(res);
-      if (res.statusCode == 200) {
-        var body = jsonDecode(res.body);
-        if (body['success']) {
-          String token = body['access_token'];
-          Map<String, dynamic> decodeToken = JwtDecoder.decode(token);
-
-          SharedPreferences.getInstance().then((prefs) async {
-            prefs.setString('token', json.encode(body['access_token']));
-            prefs.setString('kd_sps', json.encode(decodeToken['sps']));
-            prefs.setString('spesialis', json.encode(decodeToken['spss']));
-            prefs.setString('sub', json.encode(decodeToken['sub']));
-
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const IndexScreen(),
-              ),
-            );
-          });
-        } else {
-          Msg.error(context, body['message']);
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      } else {
-        Msg.error(context, wrongCredentials);
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    setState(() {
+      _isLoading = false;
     });
+
+    if (res.statusCode == 200) {
+      String token = body['access_token'];
+      Map<String, dynamic> decodeToken = JwtDecoder.decode(token);
+
+      box.write('token', token);
+      box.write('sub', decodeToken['sub']);
+      box.write('role', decodeToken['role']);
+      box.write('dep', decodeToken['dep']);
+      box.write('jbtn', decodeToken['jbtn']);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const IndexScreen()),
+      );
+    } else {
+      Msg.error(context, body['message'] ?? wrongCredentials);
+    }
   }
 
   @override
@@ -98,292 +73,202 @@ class _LoginScreenState extends State<LoginScreen> {
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: bgColor,
-        body: SingleChildScrollView(child: SafeArea(child: _buildColumn())),
+        body: SingleChildScrollView(child: SafeArea(child: _buildContent())),
       ),
     );
   }
 
-  Widget _buildColumn() {
+  Widget _buildContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // First blue container
-        _buildTopConatiner(),
-        // Button with offset
+        _buildTopContainer(),
       ],
     );
   }
 
-  Widget _buildTopConatiner() {
-    bool isKeyboard = MediaQuery.of(context).viewInsets.bottom != 0.0;
+  Widget _buildTopContainer() {
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom != 0.0;
 
-    return Container(
-      // alignment: Alignment.center,
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisAlignment: MainAxisAlignment.center,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildLogoRow(),
+          _buildTitle(),
+          _buildLoginForm(isKeyboardVisible),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLogoRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildLogo('assets/images/logo-rsia-aisyiyah.png'),
+        _buildLogo('assets/images/logo-larsi.png'),
+      ],
+    );
+  }
+
+  Widget _buildLogo(String assetPath) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Image.asset(assetPath, height: 100, width: 100),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Text(
+            "Employee Self Service [ESS]",
+            style: TextStyle(fontSize: 22, color: textBlue, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            "RSIA Aisyiyah Pekajangan",
+            style: TextStyle(fontSize: 18, color: textBlue),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoginForm(bool isKeyboardVisible) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+      child: Form(
+        key: _formKey,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Row(
-              // crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                  child: Image.asset(
-                    'assets/images/logo-rsia-aisyiyah.png',
-                    height: 100,
-                    width: 100,
-                  ),
-                ),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                  child: Image.asset(
-                    'assets/images/logo-larsi.png',
-                    height: 100,
-                    width: 100,
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                  child: Container(
-                    alignment: Alignment.center,
-                    child: Column(
-                      children: [
-                        Text(
-                          "Employee Self Service [ESS] ",
-                          style: TextStyle(
-                              fontSize: 22,
-                              color: textBlue,
-                              fontWeight: FontWeight.bold),
-                          // textAlign: TextAlign.center,
-                        ),
-                        SizedBox(
-                          height: 10,
-                        ),
-                        Text(
-                          "RSIA Aisyiyah Pekajangan",
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: textBlue,
-                          ),
-                          // textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.only(left: 25.0, right: 25.0, top: 15.0),
-              child: Stack(
-                clipBehavior: Clip.none,
+            Container(
+              padding: const EdgeInsets.all(20),
+              height: 300,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Column(
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        height: 350,
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(
-                              height: 20,
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 20, right: 20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Center(
-                                    child: Text(
-                                      'Login',
-                                      style: TextStyle(fontSize: 24),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 5,
-                                  ),
-                                  Center(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: line,
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                      width: MediaQuery.of(context).size.width / 6,
-                                      height: 4,
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    height: 30,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Form(
-                              key: _formKey,
-                              child: Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: <Widget>[
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: bgWhite,
-                                        borderRadius: BorderRadius.circular(10),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                primaryColor.withOpacity(0.3),
-                                            blurRadius: 5,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ],
-                                      ),
-                                      child: TextFormField(
-                                        maxLines: 1,
-                                        decoration: InputDecoration(
-                                          hintText: labelUsername,
-                                          contentPadding: const EdgeInsets.all(2),
-                                          border: InputBorder.none,
-                                          hintStyle: TextStyle(color: textColor),
-                                        ),
-                                        style: TextStyle(color: textColor),
-                                        onSaved: (value) {
-                                          username = value!;
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 20,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: bgWhite,
-                                        borderRadius: BorderRadius.circular(10),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: primaryColor.withOpacity(0.3),
-                                            blurRadius: 5,
-                                            offset: const Offset(0, 2),
-                                          )
-                                        ],
-                                      ),
-                                      child: SingleChildScrollView(
-                                        child: TextFormField(
-                                          maxLines: 1,
-                                          obscureText: _secureText,
-                                          style: TextStyle(color: textColor),
-                                          decoration: InputDecoration(
-                                            hintText: labelPassword,
-                                            border: InputBorder.none,
-                                            contentPadding:
-                                                const EdgeInsets.all(2),
-                                            hintStyle:
-                                                TextStyle(color: textColor),
-                                          ),
-                                          onSaved: (value) {
-                                            password = value!;
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                    isKeyboard
-                                        ? const SizedBox(height: 10)
-                                        : Padding(
-                                            padding: EdgeInsets.only(top: 15),
-                                            child: Center(
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  // Msg.info(context, forgotPasswordMsg);
-                                                },
-                                                child: Text(""),
-                                              ),
-                                            ),
-                                          ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 25,
-                      )
-                    ],
-                  ),
-                  Positioned(
-                    right: MediaQuery.of(context).size.width -
-                        (MediaQuery.of(context).size.width - 10),
-                    left: MediaQuery.of(context).size.width -
-                        (MediaQuery.of(context).size.width - 10),
-                    bottom: 0,
-                    child: Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            _login();
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          fixedSize: Size.fromHeight(50),
-                          backgroundColor: primaryColor,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 50,
-                            vertical: 10,
-                          ),
-                        ),
-                        child: Text(
-                          _isLoading ? processingText : loginText,
-                          style: TextStyle(
-                            color: textWhite,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  _buildLoginHeader(),
+                  _buildUsernameField(),
+                  const SizedBox(height: 20),
+                  _buildPasswordField(),
+                  if (!isKeyboardVisible) _buildForgotPassword(),
                 ],
               ),
             ),
+            _buildLoginButton()
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginHeader() {
+    return Column(
+      children: [
+        const Center(child: Text('Login', style: TextStyle(fontSize: 24))),
+        const SizedBox(height: 5),
+        Center(
+          child: Container(
+            decoration: BoxDecoration(color: line, borderRadius: BorderRadius.circular(2)),
+            width: MediaQuery.of(context).size.width / 6,
+            height: 4,
+          ),
+        ),
+        const SizedBox(height: 30),
+      ],
+    );
+  }
+
+  Widget _buildUsernameField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      decoration: BoxDecoration(
+        color: bgWhite,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+      ),
+      child: TextFormField(
+        maxLines: 1,
+        decoration: InputDecoration(hintText: labelUsername, border: InputBorder.none),
+        onSaved: (value) => username = value!,
+      ),
+    );
+  }
+
+  Widget _buildPasswordField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      decoration: BoxDecoration(
+        color: bgWhite,
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+      ),
+      child: TextFormField(
+        maxLines: 1,
+        obscureText: _secureText,
+        decoration: InputDecoration(
+          hintText: labelPassword,
+          border: InputBorder.none,
+          suffixIcon: IconButton(
+            icon: Icon(_secureText ? Icons.visibility : Icons.visibility_off),
+            onPressed: _togglePasswordVisibility,
+          ),
+        ),
+        onSaved: (value) => password = value!,
+      ),
+    );
+  }
+
+  Widget _buildForgotPassword() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 15),
+      child: Center(
+        child: GestureDetector(
+          onTap: () {
+            // Msg.info(context, forgotPasswordMsg);
+          },
+          child: const Text(""),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return Positioned(
+      right: -0,
+      left: 0,
+      bottom: -20,
+      child: Center(
+        child: SizedBox(
+          width: 150,
+          child: ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
+                _login();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              fixedSize: const Size.fromHeight(50),
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            ),
+            child: Text(
+              _isLoading ? processingText : loginText,
+              style: TextStyle(color: textWhite, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:rsia_employee_app/config/config.dart';
@@ -12,7 +13,6 @@ import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
 Color accentPurpleColor = Color(0xFF6A53A1);
@@ -32,20 +32,23 @@ class OtpJasaMedis extends StatefulWidget {
 class _OtpJasaMedisState extends State<OtpJasaMedis> {
   late String nik;
   late Timer? countdownTimer;
+
   Duration myDuration = Duration(seconds: 60);
+
   bool isLoading = true;
   bool isLoadingButton = true;
   bool button = true;
   bool isSuccess = true;
+
   String kode = "";
+
   var email = "";
   var _pegawai = {};
   var _smtp = {};
   var random = Random().nextInt(8000) + 1000;
 
+  final box = GetStorage();
   final _formKey = GlobalKey<FormState>();
-
-
   final TextEditingController _otp = TextEditingController();
 
   void initState() {
@@ -140,8 +143,7 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
   }
 
   Future<void> _getPegawai() async {
-    SharedPreferences localStorage = await SharedPreferences.getInstance();
-    var token = localStorage.getString('token');
+    var token = box.read('token');
     Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
     nik = decodeToken['sub'];
     var res = await Api().postData({'nik': nik}, '/pegawai/detail');

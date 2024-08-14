@@ -42,7 +42,7 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
     });
 
     try {
-      var res = await Api().postData({'no_surat': qrCode}, '/undangan/kegiatan/present');
+      var res = await Api().postData({'no_surat': qrCode}, '/undangan/kehadiran');
       var body = json.decode(res.body);
 
       if (res.statusCode == 200) {
@@ -52,6 +52,7 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
         Msg.error(context, body['message']);
         Navigator.pop(context);
       }
+
     } catch (e) {
       Msg.error(context, 'Failed to connect to server');
     } finally {
@@ -85,14 +86,13 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
 
   @override
   Widget build(BuildContext context) {
-    var scanArea = (MediaQuery.of(context).size.width < 400 ||
-            MediaQuery.of(context).size.height < 400)
+    var scanArea = (MediaQuery.of(context).size.width < 400 ||  MediaQuery.of(context).size.height < 400)
         ? 300.0
         : 600.0;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Scan QR Code'),
+        title: const Text('Scan QR Code'),
         backgroundColor: primaryColor,
       ),
       body: Stack(
@@ -119,7 +119,7 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
           if (isLoading)
             Container(
               color: Colors.black.withOpacity(0.5), // Background transparan
-              child: Center(
+              child: const Center(
                 child: CircularProgressIndicator(), // Indikator loading
               ),
             ),

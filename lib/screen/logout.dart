@@ -1,26 +1,26 @@
 import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/config/api.dart';
 import 'package:rsia_employee_app/screen/login.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LogoutScreen extends StatelessWidget {
   const LogoutScreen({super.key});
 
   Future<bool> doLogout() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = GetStorage();
 
     var res = await Api().postRequest('/auth/logout');
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       if (data['status'] == 'success') {
-        await prefs.clear();
+        box.erase();
         return true;
       } else {
         return false;
