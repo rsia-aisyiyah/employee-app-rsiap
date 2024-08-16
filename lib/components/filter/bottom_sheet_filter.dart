@@ -20,6 +20,7 @@ class BottomSheetFilter extends StatefulWidget {
   Map filterData;
 
   String tglFilterKey;
+  String title;
 
   BottomSheetFilter({
     super.key,
@@ -32,6 +33,7 @@ class BottomSheetFilter extends StatefulWidget {
     required this.filterData,
     required this.onClearAndCancel,
     required this.tglFilterKey,
+    this.title = '',
   });
 
   @override
@@ -77,8 +79,10 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        const Text(
-                          "Filter Presensi",
+                        Text(
+                          widget.title != ''
+                              ? widget.title
+                              : "Filter Data",
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -171,7 +175,13 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                       setState(() {
                         start = res.first.toString();
                         end = res.last.toString();
+
+                        widget.filterData[widget.tglFilterKey] = {
+                          "start": startDate,
+                          "end": endDate,
+                        };
                       });
+
                     });
                   }
                 },
@@ -216,8 +226,15 @@ class _BottomSheetFilterState extends State<BottomSheetFilter> {
                       padding: const EdgeInsets.symmetric(vertical: 15),
                     ),
                     onPressed: () {
-                      widget.fetchPresensi(start, end);
-                      Navigator.pop(context);
+                      setState(() {
+                        widget.filterData[widget.tglFilterKey] = {
+                          "start": start,
+                          "end": end,
+                        };
+                      });
+
+                      widget.fetchPresensi();
+                      // Navigator.pop(context);
                     },
                     child: const Text("Submit"),
                   ),

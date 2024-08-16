@@ -8,11 +8,6 @@ import 'package:open_file_plus/open_file_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
-// cardFileManager(berkas) {
-//   print(berkas['master_berkas_pegawai']['nama_berkas']);
-//   return cardFileManager(berkas);
-// }
-
 class cardFileManager extends StatefulWidget {
   final Map dataFileManager;
   const cardFileManager({super.key, required this.dataFileManager});
@@ -39,77 +34,7 @@ class _cardFileManagerState extends State<cardFileManager> {
     super.initState();
     checkFile();
   }
-  // Future download2() async {
-  //   FileDownloader.downloadFile(
-  //       url:
-  //           "https://sim.rsiaaisyiyah.com/rsiap/file/berkas/FORMAT_SURAT_PERMOHONAN_IZIN.docx",
-  //       name: "", //THE FILE NAME AFTER DOWNLOADING,
-  //       onProgress: (String? fileName, double? progress) {
-  //         print('FILE fileName HAS PROGRESS $progress');
-  //       },
-  //       onDownloadCompleted: (String path) {
-  //         print('FILE DOWNLOADED TO PATH: $path');
-  //       },
-  //       onDownloadError: (String error) {
-  //         print('DOWNLOAD ERROR: $error');
-  //       });
-  // }
-  //You can download a single file
 
-  // Future download() async {
-  //   FlutterDownloader.registerCallback(downloadCallback);
-  //   final status = await Permission.storage.request();
-
-  //   if (status.isGranted) {
-  //     final downloadsDir = await getExternalStorageDirectory();
-  //     await FlutterDownloader.enqueue(
-  //       url:
-  //           'https://sim.rsiaaisyiyah.com/rsiap/file/berkas/SAMPUL_DOKUMEN_RSIA.docx',
-  //       savedDir: downloadsDir!.path,
-  //       headers: {},
-  //       showNotification:
-  //           true, // show download progress in status bar (for Android)
-  //       openFileFromNotification:
-  //           true, // click on notification to open downloaded file (for Android)
-  //     );
-  //   }
-  // }
-
-  // ReceivePort _port = ReceivePort();
-
-  // @pragma('vm:entry-point')
-  // static void downloadCallback(String id, int status, int progress) {
-  //   final SendPort send =
-  //       IsolateNameServer.lookupPortByName('downloader_send_port')!;
-  //   send.send([id, status, progress]);
-  // }
-
-  // @override
-  // void initState() {
-  //   // TODO: implement initState
-  //   super.initState();
-
-  //   IsolateNameServer.registerPortWithName(
-  //       _port.sendPort, 'downloader_send_port');
-  //   _port.listen((dynamic data) {
-  //     String id = data[0];
-  //     DownloadTaskStatus status = data[1];
-  //     int progress = data[2];
-
-  //     // if (status == DownloadTaskStatus.complete) {
-  //     //   print("sukses download");
-  //     // }
-  //     setState(() {});
-  //   });
-
-  //   FlutterDownloader.registerCallback(downloadCallback);
-  // }
-
-  // @override
-  // void dispose() {
-  //   IsolateNameServer.removePortNameMapping('downloader_send_port');
-  //   super.dispose();
-  // }
 
   Future<void> requestPermission(downloadUrl) async {
     var storage = await Permission.storage.status;
@@ -142,9 +67,6 @@ class _cardFileManagerState extends State<cardFileManager> {
     filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
     fileExt = url.substring(url.lastIndexOf('.') + 1).toUpperCase();
 
-    print(fileExt);
-    print("Lokasi File $filePath");
-
     File file = File(filePath);
     var isExist = await file.exists();
     if (isExist) {
@@ -167,19 +89,16 @@ class _cardFileManagerState extends State<cardFileManager> {
       dir = (await getApplicationDocumentsDirectory()).path;
     }
     filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
-    print("Lokasi File $filePath");
 
     File file = File(filePath);
     var isExist = await file.exists();
     if (isExist) {
-      print('File Exist----------');
       await OpenFile.open(filePath);
       setState(() {
         isDownloadContainerVisible = false;
         isHAveDownloading = true;
       });
     } else {
-      print('File Tidak Ada ----------');
       downloadFile(url);
     }
   }
@@ -198,7 +117,6 @@ class _cardFileManagerState extends State<cardFileManager> {
         rec,
         total,
       ) {
-        print("Rec: $rec , Total: $total");
         setState(() {
           progressString = ((rec / total) * 100).toStringAsFixed(0) + "%";
         });
@@ -210,11 +128,9 @@ class _cardFileManagerState extends State<cardFileManager> {
         isHAveDownloading = true;
       });
 
-      print("Download Selesai");
       Msg.success(context, "Download selesai");
       openFile(url);
     } catch (e) {
-      print(e);
       setState(() {
         downloading = false;
         progressString = "";
@@ -258,8 +174,9 @@ class _cardFileManagerState extends State<cardFileManager> {
                           widget.dataFileManager['nama_file'],
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w500,
+                          ),
                         )
                       ],
                     ),
@@ -270,13 +187,6 @@ class _cardFileManagerState extends State<cardFileManager> {
                   right: -1,
                   child: Container(
                     decoration: BoxDecoration(
-                      boxShadow: [
-                        // BoxShadow(
-                        //   color: textColor.withOpacity(0.5),
-                        //   blurRadius: 0,
-                        //   offset: const Offset(1, 1),
-                        // )
-                      ],
                       borderRadius: BorderRadius.circular(5),
                       color: primaryColor,
                     ),
@@ -295,16 +205,11 @@ class _cardFileManagerState extends State<cardFileManager> {
                         ),
                       ),
                     ),
-                    // child: Icon(
-                    //   Icons.picture_as_pdf,
-                    //   color: Colors.red,
-                    //   size: 18,
-                    // ),
                   ),
                 ),
               ],
             ),
-            SizedBox(
+            const SizedBox(
               width: 5,
             ),
             Stack(
@@ -330,10 +235,7 @@ class _cardFileManagerState extends State<cardFileManager> {
                     children: [
                       InkWell(
                           onTap: () {
-                            print(baseUrl +
-                                widget.dataFileManager['file'].toString());
-                            requestPermission(baseUrl +
-                                widget.dataFileManager['file'].toString());
+                            requestPermission(baseUrl + widget.dataFileManager['file'].toString());
                           },
                           child: Stack(
                             alignment: Alignment.center,
@@ -358,63 +260,31 @@ class _cardFileManagerState extends State<cardFileManager> {
                                           height: 25,
                                           padding: const EdgeInsets.all(8),
                                           child: ClipRRect(
-                                            borderRadius: BorderRadius.all(
-                                                Radius.circular(10)),
+                                            borderRadius: const BorderRadius.all(
+                                                Radius.circular(10),
+                                            ),
                                             child: LinearProgressIndicator(
                                               backgroundColor: bgColor,
                                               color: primaryColor,
                                             ),
-                                          )),
+                                          ),
+                                      ),
                                       Text(progressString)
                                     ],
                                   )
                                   : Container(),
                               // ShowOrHideDownloadDialog(),
                             ],
-                          )),
-                      // IconButton(
-                      //   onPressed: () {
-                      //     requestPermission();
-                      //   },
-                      //   icon: Icon(
-                      //     Icons.cloud_download_sharp,
-                      //     color: primaryColor,
-                      //     size: 36,
-                      //   ),
-                      // ),
+                          ),
+                      ),
                     ],
                   ),
                 ),
-                // Positioned(
-                //   top: -5,
-                //   right: -5,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       borderRadius: BorderRadius.circular(5),
-                //       border: Border.all(
-                //         width: 0.5,
-                //       ),
-                //       color: bgWhite,
-                //     ),
-                //     child: Padding(
-                //       padding: const EdgeInsets.all(1.0),
-                //       child: Text(
-                //         fileExt,
-                //         style: TextStyle(fontSize: 10),
-                //       ),
-                //     ),
-                //     // child: Icon(
-                //     //   Icons.picture_as_pdf,
-                //     //   color: Colors.red,
-                //     //   size: 18,
-                //     // ),
-                //   ),
-                // ),
               ],
             ),
           ],
         ),
-        SizedBox(
+        const SizedBox(
           height: 10,
         )
       ],

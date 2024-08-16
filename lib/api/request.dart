@@ -74,6 +74,15 @@ class Api {
     );
   }
 
+  deleteWitoutData(pathUrl) async {
+    var fullUrl = apiUrl + pathUrl;
+    await _getToken();
+    return await http.delete(
+      Uri.parse(fullUrl),
+      headers: _setHeaders(),
+    );
+  }
+
   _setHeaders() => {
     'Content-type': 'application/json',
     'Accept': 'application/json',

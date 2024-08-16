@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
       ),
       title: appName,
       debugShowCheckedModeBanner: false,
-      home: Directionality(
+      home: const Directionality(
         textDirection: TextDirection.ltr,
         child: CheckAuth(),
       ),

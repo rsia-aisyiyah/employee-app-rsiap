@@ -18,7 +18,6 @@ class _FileManagerState extends State<FileManager> {
   bool isLoding = true;
   List dataFileManager = [];
   late String title;
-  late String url;
 
   @override
   void initState() {
@@ -33,37 +32,25 @@ class _FileManagerState extends State<FileManager> {
 
   _initialSet() {
     title = "Dokumen & Surat";
-    url = "/file-manager";
   }
 
   _setData(value) {
-    print(value['data']);
-    if (value['success']) {
-      setState(() {
-        dataFileManager = value['data'] ?? [];
-        isLoding = false;
-      });
-    } else {
-      setState(() {
-        isLoding = false;
-        dataFileManager = [];
-      });
-    }
+    setState(() {
+      dataFileManager = value['data'] ?? [];
+      isLoding = false;
+    });
   }
 
   Future fetchFileManager() async {
-    var strUrl = url;
-    var res = await Api().getData(strUrl);
+    var res = await Api().getData("/rsia/file/manager");
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
-      print(body);
 
       return body;
     } else {
       var body = json.decode(res.body);
       Msg.error(context, body['message']);
 
-      print(body);
       return body;
     }
   }
@@ -91,8 +78,8 @@ class _FileManagerState extends State<FileManager> {
             children: [
               ListView.builder(
                 shrinkWrap: true,
-                physics: ClampingScrollPhysics(),
-                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 15),
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 15),
                 itemCount: dataFileManager.isEmpty ? 1 : dataFileManager.length,
                 itemBuilder: (context, index) {
                   if (dataFileManager.isNotEmpty) {

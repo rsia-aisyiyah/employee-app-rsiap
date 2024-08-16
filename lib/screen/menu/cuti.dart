@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/cards/card_cuti.dart';
@@ -26,20 +25,11 @@ class _CutiState extends State<Cuti> {
   Map hitungCuti = {};
 
   late String title;
-  late String url;
-  late String nik;
-  late String id_pegawai;
-  late String nama;
-  late String dep_id;
   late String jenis;
   late String id_jenis;
   num sisacuti1 = 0;
   num sisacuti2 = 0;
 
-  String nextPageUrl = '';
-  String prevPageUrl = '';
-  String currentPage = '';
-  String lastPage = '';
   bool isLoding = true;
   bool isLodingButton = true;
   bool isFilter = false;
@@ -65,48 +55,14 @@ class _CutiState extends State<Cuti> {
   }
 
   _initialSet() {
-    // var now = DateTime.now();
-    // var bulan = now.month.toString().padLeft(2, '0');
-    // var tahun = now.year.toString();
     title = "Rekap Cuti";
-    url = "/pegawai/cuti";
   }
 
   _setData(value) {
-    if (value['success']) {
-      setState(() {
-        dataCuti = value['data']['cuti'] ?? [];
-        dataCuti.sort((a, b) => b['tanggal_cuti'].compareTo(a['tanggal_cuti']));
-        // id_pegawai = value['data']['id'][0] ?? '';
-        id_pegawai = value['data']['id'].toString();
-        nama = value['data']['nama'].toString();
-        dep_id = value['data']['departemen'].toString();
-
-        // dep_id = value['data']['dep_id'][0] ?? '';
-        // nextPageUrl = value['data']['next_page_url'] ?? '';
-        // prevPageUrl = value['data']['prev_page_url'] ?? '';
-        // currentPage = value['data']['current_page'].toString();
-        // lastPage = value['data']['last_page'].toString();
-
-        isLoding = false;
-      });
-
-      // if (nextPageUrl.isEmpty) {
-      //   _refreshController.loadNoData();
-      // }
-    } else {
-      setState(() {
-        isLoding = false;
-        dataCuti = [];
-
-        // nextPageUrl = '';
-        // prevPageUrl = '';
-        // currentPage = value['data']['current_page'].toString();
-        // lastPage = value['data']['last_page'].toString();
-      });
-
-      // _refreshController.resetNoData();
-    }
+    setState(() {
+      dataCuti = value['data'] ?? [];
+      isLoding = false;
+    });
   }
 
   Future _onClearCancel() async {
@@ -126,7 +82,16 @@ class _CutiState extends State<Cuti> {
   }
 
   Future _fetchSearch(data) async {
-    var res = await Api().postData(data, '/pegawai/cuti');
+    var nik = box.read('sub');
+    var body = {
+      "filters": [
+        { "field": "tanggal_cuti", "operator": ">=", "value": data['tanggal_cuti']['start'] },
+        { "field": "tanggal_cuti", "operator": "<=", "value": data['tanggal_cuti']['end'] },
+      ]
+    };
+
+    var res = await Api().postData(body, "/pegawai/$nik/cuti/search");
+
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
       return body;
@@ -139,7 +104,9 @@ class _CutiState extends State<Cuti> {
   }
 
   Future _postData(data) async {
-    var res = await Api().postData(data, '/pegawai/cuti/post');
+    var nik = box.read('sub');
+    var res = await Api().postData(data, '/pegawai/$nik/cuti');
+
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
       Msg.success(context, body['message']);
@@ -154,28 +121,16 @@ class _CutiState extends State<Cuti> {
   }
 
   Future fetchCuti() async {
-    var token = box.read('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
-    nik = decodeToken['sub'];
-
-    var strUrl = url;
-    // if (widget.ranap) {
-    //   if (spesialis!.toLowerCase().contains('umum')) {
-    //     strUrl = '/pasien/ranap/all';
-    //   }
-    // }
-
-    var res = await Api().postData({'nik': nik}, strUrl);
+    var nik = box.read('sub');
+    var res = await Api().getData("/pegawai/$nik/cuti");
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
-      print(body);
 
       return body;
     } else {
       var body = json.decode(res.body);
       Msg.error(context, body['message']);
 
-      print(body);
       return body;
     }
   }
@@ -185,12 +140,6 @@ class _CutiState extends State<Cuti> {
       isLoding = true;
       isFilter = true;
     });
-    filterData['nik'] = nik;
-
-    // search
-    // if (searchController.text.isNotEmpty) {
-    //   filterData['keywords'] = searchController.text.toString();
-    // }
 
     _fetchSearch(filterData).then((value) {
       _setData(value);
@@ -202,59 +151,40 @@ class _CutiState extends State<Cuti> {
       isLoding = true;
       isFilter = true;
     });
-    filterData['nik'] = nik;
-    filterData['id_pegawai'] = id_pegawai;
-    filterData['nama'] = nama;
-    filterData['dep_id'] = dep_id;
-
-    // search
-    // if (searchController.text.isNotEmpty) {
-    //   filterData['keywords'] = searchController.text.toString();
-    // }
 
     _postData(filterData).then((value) {
       _onClearCancel();
-      // Msg.success(context, "Berhasil simpan data");
+      Msg.success(context, "Berhasil simpan data");
     });
   }
 
   Future _hitungData() async {
-    var token = box.read('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
-    nik = decodeToken['sub'];
-    var res = await Api().postData({'nik': nik}, '/pegawai/cuti/count');
+    var nik = box.read('sub');
+    var res = await Api().getData("/pegawai/$nik/cuti/counter");
     var body = json.decode(res.body);
 
-    if (res.statusCode == 200) {
-      if (mounted) {
-        setState(() {
-          print(body['data']);
-          hitungCuti = body['data'][0];
-          if (hitungCuti['jml1'] >= 6) {
-            // hitungCuti['jml2'] = 12 - hitungCuti['jml1'];
-            sisacuti1 = 0;
-            sisacuti2 = 12 - (hitungCuti['jml1'] + hitungCuti['jml2']);
-          } else {
-            sisacuti1 = 6 - hitungCuti['jml1'];
-            sisacuti2 = 6 - hitungCuti['jml2'];
-          }
-          isLodingButton = false;
+    if (res.statusCode == 200 && mounted) {
+      setState(() {
+        hitungCuti = body['data'];
+        final jml1 = hitungCuti['jml1'] ?? 0;
+        final jml2 = hitungCuti['jml2'] ?? 0;
 
-          ;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          hitungCuti = {};
-          isLodingButton = false;
-        });
-      }
+        sisacuti1 = (jml1 >= 6) ? 0 : 6 - jml1;
+        sisacuti2 = (jml1 >= 6) ? 12 - (jml1 + jml2) : 6 - jml2;
+
+        isLodingButton = false;
+      });
+    } else if (mounted) {
+      setState(() {
+        hitungCuti = {};
+        isLodingButton = false;
+      });
     }
   }
 
   Future _deleteData(data) async {
-    var res = await Api().deleteData({'id_cuti': data}, '/pegawai/cuti/delete');
+    var nik = box.read('sub');
+    var res = await Api().deleteWitoutData("/pegawai/$nik/cuti/$data");
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
       Msg.success(context, body['message']);
@@ -271,12 +201,11 @@ class _CutiState extends State<Cuti> {
   }
 
   void _deleteItem(data) {
-    if (mounted)
+    if (mounted) {
       setState(() {
-        _deleteData(data).then((value) {
-          _onClearCancel();
-        });
+
       });
+    }
   }
 
   @override
@@ -301,7 +230,7 @@ class _CutiState extends State<Cuti> {
               onPressed: () {
                 _onFilterIconClicked(context);
               },
-              icon: Icon(Icons.calendar_month),
+              icon: const Icon(Icons.calendar_month),
             )
           ],
         ),
@@ -322,11 +251,11 @@ class _CutiState extends State<Cuti> {
                       padding: const EdgeInsets.all(10.0),
                       child: Column(
                         children: [
-                          Text(
+                          const Text(
                             "SEMESTER I",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 10,
                           ),
                           Container(
@@ -405,11 +334,11 @@ class _CutiState extends State<Cuti> {
                       padding: const EdgeInsets.all(10.0),
                       child: Column(
                         children: [
-                          Text(
+                          const Text(
                             "SEMESTER II",
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 10,
                           ),
                           Container(
@@ -433,21 +362,19 @@ class _CutiState extends State<Cuti> {
                                   ),
                                   isLodingButton
                                       ? loadingIcon()
-                                      : Text(
-                                          hitungCuti['jml2'].toString(),
+                                      : Text(hitungCuti['jml2'].toString(),
                                           style: TextStyle(color: textWhite),
                                         ),
                                 ],
                               ),
                             ),
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 5,
                           ),
                           Container(
                             height: 25,
-                            width:
-                                MediaQuery.of(context).size.width / 2 - 30 - 10,
+                            width: MediaQuery.of(context).size.width / 2 - 30 - 10,
                             decoration: BoxDecoration(
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(20),
@@ -479,7 +406,7 @@ class _CutiState extends State<Cuti> {
                   )
                 ],
               ),
-              SizedBox(
+              const SizedBox(
                 height: 10,
               ),
               Column(
@@ -489,7 +416,7 @@ class _CutiState extends State<Cuti> {
                 children: [
                   ListView.builder(
                     shrinkWrap: true,
-                    physics: ClampingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     itemCount: dataCuti.isEmpty ? 1 : dataCuti.length,
                     itemBuilder: (context, index) {
                       if (dataCuti.isNotEmpty) {
@@ -497,11 +424,13 @@ class _CutiState extends State<Cuti> {
                             ? slideToDelete(index)
                             : CardCuti(
                                 dataCuti: dataCuti[index],
-                                onDelete: () => _deleteItem(
-                                  dataCuti[index]['id_cuti'],
-                                ),
+                                onDelete: () => _deleteData(dataCuti[index]['id_cuti']).then((value) {
+                                  Navigator.of(context).pop();
+                                  _onClearCancel();
+                                }),
                               );
                       }
+                      return null;
                     },
                   ),
                 ],
@@ -514,7 +443,7 @@ class _CutiState extends State<Cuti> {
             _onAddIconClicked(context);
           },
           backgroundColor: primaryColor,
-          child: Icon(
+          child: const Icon(
             Icons.add_circle,
             size: 36,
           ),
@@ -531,13 +460,13 @@ class _CutiState extends State<Cuti> {
           child: Container(
               height: 60,
               decoration: BoxDecoration(
-                color: primaryColor,
+                color: Colors.red,
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Align(
+              child: const Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
-                    padding: const EdgeInsets.only(right: 20),
+                    padding: EdgeInsets.only(right: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       crossAxisAlignment: CrossAxisAlignment.center,
@@ -564,7 +493,7 @@ class _CutiState extends State<Cuti> {
           key: Key(index.toString()),
           onDismissed: (direction) {
             setState(() {
-              _deleteItem(dataCuti[index]['id_cuti']);
+              _deleteData(dataCuti[index]['id_cuti']);
               dataCuti.removeAt(index);
             });
 
@@ -575,10 +504,9 @@ class _CutiState extends State<Cuti> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  iconPadding: EdgeInsets.only(top: 15,bottom: 10),
-                  icon: Icon(Icons.warning,color: Colors.orangeAccent,size: 32,),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                  iconPadding: const EdgeInsets.only(top: 15,bottom: 10),
+                  icon: const Icon(Icons.warning,color: Colors.orangeAccent,size: 32,),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   title: const Text("Hapus Pengajuan Cuti"),
                   content: const Text(
                     "Apakah anda yakin akan menghapus pengajuan cuti ?",
@@ -600,48 +528,12 @@ class _CutiState extends State<Cuti> {
               },
             );
           },
-          // background: Container(
-          //   decoration: BoxDecoration(
-          //     color: HexColor('#FF6962'),
-          //     borderRadius: BorderRadius.circular(20),
-          //   ),
-          //   child: Row(
-          //     crossAxisAlignment: CrossAxisAlignment.center,
-          //     mainAxisAlignment:
-          //     MainAxisAlignment.spaceBetween,
-          //     children: [
-          //       Padding(
-          //         padding: const EdgeInsets.symmetric(
-          //             horizontal: 20),
-          //         child: Text(
-          //           "Delete",
-          //           style: TextStyle(
-          //             fontWeight: FontWeight.bold,
-          //             color: Colors.white,
-          //             fontSize: 20,
-          //           ),
-          //         ),
-          //       ),
-          //       Padding(
-          //         padding: const EdgeInsets.symmetric(
-          //             horizontal: 20),
-          //         child: Text(
-          //           "Delete",
-          //           style: TextStyle(
-          //             fontWeight: FontWeight.bold,
-          //             color: Colors.white,
-          //             fontSize: 20,
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
           child: CardCuti(
             dataCuti: dataCuti[index],
-            onDelete: () => _deleteItem(
-              dataCuti[index]['id_cuti'],
-            ),
+            onDelete: () => _deleteData(dataCuti[index]['id_cuti']).then((value) {
+              Navigator.of(context).pop();
+              _onClearCancel();
+            }),
           ),
         ),
       ],
@@ -650,13 +542,13 @@ class _CutiState extends State<Cuti> {
 
   Widget loadingIcon() {
     return const SizedBox(
+      width: 8,
+      height: 8,
       child: Center(
           child: CircularProgressIndicator(
         strokeWidth: 1,
         color: Colors.white,
       )),
-      width: 8,
-      height: 8,
     );
   }
 
@@ -674,7 +566,7 @@ class _CutiState extends State<Cuti> {
           fetchPresensi: doFilter,
           onClearAndCancel: _onClearCancel,
           filterData: filterData,
-          tglFilterKey: "tanggal",
+          tglFilterKey: "tanggal_cuti",
         );
       },
     );

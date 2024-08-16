@@ -8,7 +8,7 @@ import 'package:rsia_employee_app/utils/msg.dart';
 
 class CardCuti extends StatefulWidget {
   final Map dataCuti;
-  final VoidCallback onDelete;
+  final Function onDelete;
 
   const CardCuti({
     super.key,
@@ -26,24 +26,6 @@ class _CardCutiState extends State<CardCuti> {
     super.initState();
     setState(() {});
   }
-
-  // Future _deleteData(data) async {
-  //   var res = await Api().deleteData({'id_cuti': data}, '/pegawai/cuti/delete');
-  //   if (res.statusCode == 200) {
-  //     var body = json.decode(res.body);
-  //     Msg.success(context, body['message']);
-  //     widget.getData;
-  //     // setState(() {});
-  //     return body;
-  //   } else {
-  //     var body = json.decode(res.body);
-  //     Msg.error(context, body['message']);
-  //     widget.getData;
-
-  //     // setState(() {});
-  //     return body;
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +47,7 @@ class _CardCutiState extends State<CardCuti> {
                   children: [
                     Container(
                       height: double.infinity,
-                      padding: EdgeInsets.symmetric(horizontal: 15),
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
                       decoration: BoxDecoration(
                         color: primaryColor,
                         borderRadius: BorderRadius.circular(20),
@@ -106,7 +88,7 @@ class _CardCutiState extends State<CardCuti> {
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       width: 10,
                     ),
                     Expanded(
@@ -122,16 +104,16 @@ class _CardCutiState extends State<CardCuti> {
                                   Helper.numtoDayFull(widget
                                       .dataCuti['tanggal_cuti']
                                       .toString()),
-                                  style: TextStyle(fontSize: 18),
+                                  style: const TextStyle(fontSize: 18),
                                 ),
-                                SizedBox(
+                                const SizedBox(
                                   height: 5,
                                 ),
                                 Text(
                                   widget.dataCuti['jenis'].toString(),
-                                  style: TextStyle(fontSize: 12),
+                                  style: const TextStyle(fontSize: 12),
                                 ),
-                                SizedBox(
+                                const SizedBox(
                                   height: 5,
                                 ),
                               ],
@@ -164,8 +146,8 @@ class _CardCutiState extends State<CardCuti> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              iconPadding: EdgeInsets.only(top: 15,bottom: 10),
-                              icon: Icon(Icons.warning,color: Colors.orangeAccent,size: 32,),
+                              iconPadding: const EdgeInsets.only(top: 15,bottom: 10),
+                              icon: const Icon(Icons.warning,color: Colors.orangeAccent,size: 32,),
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10)),
                               title: const Text("Hapus Pengajuan Cuti"),
@@ -181,7 +163,16 @@ class _CardCutiState extends State<CardCuti> {
                                 ElevatedButton(
                                   style:
                                   ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                                  onPressed: () => Navigator.of(context).pop(true),
+                                  onPressed: () => widget.onDelete().then((value) {
+                                    if (value) {
+                                      Navigator.of(context).pop(true);
+                                    } else {
+                                      Msg.error(
+                                        context,
+                                        "Gagal menghapus pengajuan cuti",
+                                      );
+                                    }
+                                  }),
                                   child: const Text("YES"),
                                 ),
                               ],
@@ -191,9 +182,9 @@ class _CardCutiState extends State<CardCuti> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
-                        padding: EdgeInsets.all(5),
-                        minimumSize: Size(25, 25),
-                        shape: RoundedRectangleBorder(
+                        padding: const EdgeInsets.all(5),
+                        minimumSize: const Size(25, 25),
+                        shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.only(
                             topRight: Radius.circular(10),
                             bottomLeft: Radius.circular(10),
@@ -202,7 +193,7 @@ class _CardCutiState extends State<CardCuti> {
                           ),
                         ),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.dangerous_sharp,
                         color: Colors.white,
                         size: 16,
@@ -212,7 +203,7 @@ class _CardCutiState extends State<CardCuti> {
                 : Container()
           ],
         ),
-        SizedBox(
+        const SizedBox(
           height: 10,
         ),
       ],
@@ -221,7 +212,7 @@ class _CardCutiState extends State<CardCuti> {
 }
 
 Widget textDisetujui() {
-  return Row(
+  return const Row(
     children: [
       Text(
         "Disetujui",
@@ -231,6 +222,7 @@ Widget textDisetujui() {
           fontWeight: FontWeight.bold,
         ),
       ),
+      SizedBox(width: 10),
       Icon(
         Icons.check_circle_rounded,
         color: Colors.green,
@@ -241,7 +233,7 @@ Widget textDisetujui() {
 }
 
 Widget textPengajuan() {
-  return Row(
+  return const Row(
     crossAxisAlignment: CrossAxisAlignment.center,
     mainAxisAlignment: MainAxisAlignment.center,
     mainAxisSize: MainAxisSize.min,
@@ -254,7 +246,7 @@ Widget textPengajuan() {
           fontWeight: FontWeight.bold,
         ),
       ),
-      const SizedBox(width: 10),
+      SizedBox(width: 10),
       Icon(
         Icons.send_rounded,
         color: Colors.blue,
@@ -265,7 +257,7 @@ Widget textPengajuan() {
 }
 
 Widget textDitolak() {
-  return Row(
+  return const Row(
     children: [
       Text(
         "Ditolak",
@@ -275,6 +267,7 @@ Widget textDitolak() {
           fontWeight: FontWeight.bold,
         ),
       ),
+      SizedBox(width: 10),
       Icon(
         Icons.dangerous,
         color: Colors.red,
