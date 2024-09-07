@@ -1,5 +1,9 @@
-import 'dart:convert';
 
+import 'dart:async';
+
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -15,17 +19,25 @@ import 'package:get_storage/get_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp();
+  if (!kDebugMode) {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  }
+
   await GetStorage.init();
   await FlutterDownloader.initialize(
-    debug: true, // optional: set to false to disable printing logs to console (default: true)
+    debug: false, // optional: set to false to disable printing logs to console (default: true)
     ignoreSsl: true, // option: set to false to disable working with http links (default: false)
   );
 
-  await initializeDateFormatting('id_ID', null).then(
-    (_) => runApp(
-      const MyApp(),
-    ),
-  );
+  runZonedGuarded<Future<void>>(() async {
+    await initializeDateFormatting('id_ID', null).then((_) => runApp(const MyApp()));
+  }, (error, stackTrace) async {
+    if (!kDebugMode) {
+      await FirebaseCrashlytics.instance.recordError(error, stackTrace);
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {
