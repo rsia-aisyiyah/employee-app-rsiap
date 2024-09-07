@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:rsia_employee_app/config/string.dart';
-import 'package:rsia_employee_app/config/colors.dart';
 
 class Helper {
   static String getAssetName(String name) {

@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/cards/card_cuti.dart';
 import 'package:rsia_employee_app/components/filter/bottom_sheet_filter.dart';
@@ -38,9 +37,6 @@ class _CutiState extends State<Cuti> {
   Map filterData = {};
 
   final box = GetStorage();
-  final RefreshController _refreshController = RefreshController(
-    initialRefresh: false,
-  );
 
   @override
   void initState() {

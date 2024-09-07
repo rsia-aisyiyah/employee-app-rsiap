@@ -4,12 +4,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rsia_employee_app/screen/index.dart';
-import 'package:rsia_employee_app/screen/menu/otp_jasa_medis.dart';
 
 late BuildContext ctx;
 FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 final _localNotification = FlutterLocalNotificationsPlugin();
-final _androidChannel = AndroidNotificationChannel(
+const _androidChannel = AndroidNotificationChannel(
   'high_importance_channel',
   'High Importance Notifications',
   description: 'This channel is used for important notifications',
@@ -24,7 +23,7 @@ Future<void> handleBackgroundMessage(RemoteMessage message) async {
 
   if (route != null) {
     if (route[0] != '/') {
-      route = '/' + route;
+      route = "/$route";
     }
 
     print("Rote not null : $route");
@@ -56,7 +55,7 @@ Future<void> handleMessage(RemoteMessage message) async {
 
   if (route != null) {
     if (route[0] != '/') {
-      route = '/' + route;
+      route = "/$route";
     }
 
     print("Rote not null : $route");

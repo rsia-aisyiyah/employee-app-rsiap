@@ -3,17 +3,14 @@ import 'dart:convert';
 import 'package:age_calculator/age_calculator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:email_validator/email_validator.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/config.dart';
-import 'package:rsia_employee_app/screen/login.dart';
 import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/utils/section_title.dart';
 

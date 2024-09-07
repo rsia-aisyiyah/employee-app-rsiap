@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rsia_employee_app/utils/fonts.dart';
 
 class SectionTitle extends StatelessWidget {
   final String title;

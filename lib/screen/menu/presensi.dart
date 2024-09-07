@@ -4,14 +4,11 @@ import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/cards/card_presensi.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:rsia_employee_app/components/filter/bottom_sheet_filter.dart';
 
 class Presensi extends StatefulWidget {
   const Presensi({super.key});
@@ -25,9 +22,6 @@ class _PresensiState extends State<Presensi> {
   TextEditingController searchController = TextEditingController();
 
   final box = GetStorage();
-  final RefreshController _refreshController = RefreshController(
-    initialRefresh: false,
-  );
 
   List dataPresensi = [];
 

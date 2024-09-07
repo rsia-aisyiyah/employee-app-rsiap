@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:calendar_date_picker2/calendar_date_picker2.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-import 'package:rsia_employee_app/config/config.dart';
 // import 'package:rsia_employee_app/utils/fonts.dart';
 
 //ignore: must_be_immutable

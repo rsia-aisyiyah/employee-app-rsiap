@@ -118,7 +118,7 @@ class _cardFileManagerState extends State<cardFileManager> {
         total,
       ) {
         setState(() {
-          progressString = ((rec / total) * 100).toStringAsFixed(0) + "%";
+          progressString = "${((rec / total) * 100).toStringAsFixed(0)}%";
         });
       });
       setState(() {
