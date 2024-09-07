@@ -10,6 +10,7 @@ Color textColor = Colors.black;
 Color textBlue = HexColor("#3BC8ED");
 Color primaryColor = HexColor("#3BC8ED");
 Color successColor = HexColor("#3BC8ED");
+Color greenColor = HexColor("#34D399");
 Color errorColor = Colors.red;
 Color buttonNavbar = HexColor("#3BC8ED");
 Color buttonNavbarDisable = HexColor("#4E81EA");

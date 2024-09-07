@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
+import 'package:rsia_employee_app/components/cards/card_daftar_hadir.dart';
 import 'package:rsia_employee_app/components/cards/card_notulen.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/screen/page/scan.dart';
@@ -46,8 +47,10 @@ class _UndanganState extends State<Undangan> {
 
   Future fetchUndangan() async {
     var res = await Api().postData({
-      "filters": [ { "field": "penerima", "operator": "=", "value": box.read('sub') } ]
+      "filters": [ { "field": "penerima", "operator": "=", "value": box.read('sub') } ],
+      "sort": [ { "field": "created_at", "direction": "desc" } ]
     }, '/undangan/search');
+
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
       return body;
@@ -195,8 +198,7 @@ class _UndanganState extends State<Undangan> {
                                       padding: const EdgeInsets.symmetric(vertical: 15),
                                     ),
                                     onPressed: () {
-                                      // widget.onClearAndCancel();
-                                      Navigator.pop(context);
+                                      Navigator.push(context,MaterialPageRoute(builder: (context) => CardDaftarHadir(dataUdgn: dataUdgn)));
                                     },
                                     child: const Text("Daftar Hadir"),
                                   ),
@@ -216,8 +218,7 @@ class _UndanganState extends State<Undangan> {
                                       padding: const EdgeInsets.symmetric(vertical: 15),
                                     ),
                                     onPressed: () {
-                                      // CardNotulen();
-                                      Navigator.push(context,MaterialPageRoute(builder: (context) => CardNotulen(dataUdgn: dataUdgn,),));
+                                      Navigator.push(context,MaterialPageRoute(builder: (context) => CardNotulen(dataUdgn: dataUdgn)));
                                     },
                                     child: const Text("Notulen"),
                                   ),
