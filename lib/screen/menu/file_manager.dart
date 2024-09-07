@@ -90,6 +90,17 @@ class _FileManagerState extends State<FileManager> {
                       ),
                     );
                   }
+
+                  return const Center(
+                    child: Text(
+                      "Data tidak ditemukan",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
                 },
               )
             ],

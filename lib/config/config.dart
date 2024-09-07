@@ -8,14 +8,12 @@ import 'package:rsia_employee_app/screen/menu/presensi.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
 
-// const String baseUrl = 'https://sim.rsiaaisyiyah.com/rsiapi';
-const String baseUrl = 'http://172.24.19.22/rsia';
+const String baseUrl = 'https://sim.rsiaaisyiyah.com/rsiapi';
+// const String baseUrl = 'http://172.24.19.22/rsia';
 const String apiUrl = '$baseUrl/api/v2';
 const String photoUrl = 'https://sim.rsiaaisyiyah.com/rsiap/file/pegawai/';
 
-double STRExpMin = 6;
 const String appName = 'RSIAP Portal Karyawan';
-const String appVersion = '1.0.0';
 
 const int snackBarDuration = 5;
 

@@ -180,6 +180,17 @@ class _PresensiState extends State<Presensi> {
                     return InkWell(
                         onTap: () {}, child: cardPresensi(dataPresensi[index]));
                   }
+
+                  return const Center(
+                    child: Text(
+                      "Data tidak ditemukan",
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
                 },
               ),
             ],

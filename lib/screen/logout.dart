@@ -32,11 +32,10 @@ class LogoutScreen extends StatelessWidget {
 
   Future unsubscribeFromTopic() async {
     String token;
-    var firebaseMessaging = await FirebaseMessaging.instance;
+    var firebaseMessaging = FirebaseMessaging.instance;
     token = (await firebaseMessaging.getToken())!;
 
-    String url =
-        "https://iid.googleapis.com/iid/info/" + token + "?details=true";
+    String url = "https://iid.googleapis.com/iid/info/$token?details=true";
     var res = await http.get(Uri.parse(url), headers: {
       "Authorization": "Bearer ${ApiConfig.fsk}",
     });

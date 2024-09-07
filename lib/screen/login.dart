@@ -38,8 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     _formKey.currentState!.save();
 
-    // final data = {'username': username, 'password': password};
-    final data = {'username': '3.928.0623', 'password': '!040601!'};
+    final data = {'username': username, 'password': password};
 
     final res = await Api().auth(data, '/user/auth/login');
     final body = jsonDecode(res.body);
