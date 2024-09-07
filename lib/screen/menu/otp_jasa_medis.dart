@@ -1,26 +1,12 @@
-import 'dart:math';
-import 'dart:convert';
 import 'dart:async';
-import 'package:email_validator/email_validator.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server.dart';
-import 'package:rsia_employee_app/config/config.dart';
-import 'package:rsia_employee_app/config/colors.dart';
-import 'package:rsia_employee_app/screen/menu/jasa_medis.dart';
-import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
-import 'package:rsia_employee_app/api/request.dart';
-import 'package:rsia_employee_app/components/loadingku.dart';
-import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:pinput/pinput.dart';
 
-Color accentPurpleColor = Color(0xFF6A53A1);
-// Color primaryColor = Color(0xFF121212);
-Color accentPinkColor = Color(0xFFF99BBD);
-Color accentDarkGreenColor = Color(0xFF115C49);
-Color accentYellowColor = Color(0xFFFFB612);
-Color accentOrangeColor = Color(0xFFEA7A3B);
+import '../../config/config.dart';
+import 'jasa_medis.dart';
 
 class OtpJasaMedis extends StatefulWidget {
   const OtpJasaMedis({super.key});
@@ -30,604 +16,332 @@ class OtpJasaMedis extends StatefulWidget {
 }
 
 class _OtpJasaMedisState extends State<OtpJasaMedis> {
-  late String nik;
-  late Timer? countdownTimer;
-
-  Duration myDuration = Duration(seconds: 60);
-
-  bool isLoading = true;
-  bool isLoadingButton = true;
-  bool button = true;
-  bool isSuccess = true;
-
-  String kode = "";
-
-  var email = "";
-  var _pegawai = {};
-  var _smtp = {};
-  var random = Random().nextInt(8000) + 1000;
-
   final box = GetStorage();
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _otp = TextEditingController();
+  late final TextEditingController pinController;
+  late final FocusNode focusNode;
+  late final GlobalKey<FormState> formKey;
+  late Timer countdownTimer;
 
+  bool terkirim = false; // Declare 'terkirim' as an instance variable
+  int remainingTime = 0; // Time left in seconds
+
+  @override
   void initState() {
     super.initState();
-    fetchAllData().then((value) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    });
-  }
+    formKey = GlobalKey<FormState>();
+    pinController = TextEditingController();
+    focusNode = FocusNode();
 
-  Future updateEmail() async {
-    var data = {
-      'nik': nik,
-      'email': email,
-    };
-
-    // print(data);
-    var res = await Api().postData(data, '/pegawai/update-email');
-    if (res.statusCode == 200) {
-      var body = json.decode(res.body);
-      isSuccess = true;
-      Msg.success(context, body['message']);
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(
-            builder: (BuildContext ctx) => super.widget
-          )
-      );
-      return body;
-    } else {
-      var body = json.decode(res.body);
-      isSuccess = false;
-      Msg.error(context, body['message']);
-      return body;
-    }
-  }
-
-
-  void _activeButton() {
-    setState(() {
-      button = !button;
-    });
-  }
-
-  void startTimer() {
-    countdownTimer = Timer.periodic(Duration(seconds: 1), (_) {
-      setCountDown();
-    });
-  }
-
-  void stopTimer() {
-    setState(() {
-      countdownTimer!.cancel();
-    });
-  }
-
-  void resetTimer() {
-    stopTimer();
-    setState(() {
-      myDuration = Duration(seconds: 60);
-    });
-  }
-
-  void setCountDown() {
-    final reduceSecondsBy = 1;
-    if (mounted) {
-      setState(() {
-        final seconds = myDuration.inSeconds - reduceSecondsBy;
-        print(seconds);
-        if (seconds < 0) {
-          countdownTimer!.cancel();
-          resetTimer();
-          _activeButton();
-        } else {
-          myDuration = Duration(seconds: seconds);
-        }
-      });
-    }
-  }
-
-  // final TextEditingController _mailMessageController = TextEditingController();
-  Future<void> fetchAllData() async {
-    List<Future> futures = [
-      _getPegawai(),
-      _getSmtp(),
-      // _getJadwalOperasiNow(),
-    ];
-
-    await Future.wait(futures);
-  }
-
-  Future<void> _getPegawai() async {
-    var token = box.read('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
-    nik = decodeToken['sub'];
-    var res = await Api().postData({'nik': nik}, '/pegawai/detail');
-    if (res.statusCode == 200) {
-      var body = json.decode(res.body);
-      // print(body);
-      setState(() {
-        _pegawai = body;
-        // print(_pegawai);
-      });
-    } else {
-      var body = json.decode(res.body);
-      Msg.error(context, body['message']);
-
-      setState(() {
-        _pegawai = {};
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _getSmtp() async {
-    var res = await Api().getData('/smtp');
-    if (res.statusCode == 200) {
-      var body = json.decode(res.body);
-      // print(body);
-      setState(() {
-        _smtp = body;
-        // print(_smtp['data']['email']);
-      });
-    } else {
-      var body = json.decode(res.body);
-      Msg.error(context, body['message']);
-
-      setState(() {
-        _smtp = {};
-        isLoading = false;
-      });
-    }
-  }
-
-  // Send Mail function
-  void cekOtp({
-    required String otp,
-    // required String mailMessage,
-  }) async {
-    if (otp == random.toString()) {
-      print("OTP SESUAI");
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => JasaMedis(),
-        ),
-      );
-    } else {
-      showSnackbar('Kode verifikasi salah / tidak berlaku', 'fail');
-    }
-  }
-
-  void sendMail({
-    required String recipientEmail,
-    required String mailMessage,
-  }) async {
-    print(random);
-    setState(() {
-      isLoadingButton = false;
-      // random = Random().nextInt(8000) + 1000;
-    });
-    // change your email here
-    String username = _smtp['data']['email'].toString();
-    // change your password here
-    String password = _smtp['data']['password'].toString();
-    final smtpServer = gmail(username, password);
-    final message = Message()
-      ..from = Address(username, 'Employee Self Service RSIAP')
-      ..recipients.add(recipientEmail)
-      ..subject = 'Kode Verifikasi Jasa Medis'
-      ..text = 'Kode Verifikasi untuk akses ke menu Jasa Pelayanan anda : '
-      ..html =
-          '<p>Kode Verifikasi untuk akses menu Jasa Pelayanan Anda : </p><h1>$mailMessage<h1>';
-
-    try {
-      await send(message, smtpServer);
-      showSnackbar('Kode verifikasi terkirim ', 'success');
-      setState(() {
-        isLoadingButton = true;
-      });
-      _activeButton();
-      // resetTimer();
-      startTimer();
-    } on MailerException catch (e) {
-      isLoadingButton = true;
-      print('Message not sent.');
-      showSnackbar('Format email tidak sesuai ', 'alert');
-      for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
+    final expirationTime = box.read<int>('expirationTime');
+    if (expirationTime != null) {
+      final currentTime = DateTime.now().millisecondsSinceEpoch;
+      final timeLeft = expirationTime - currentTime;
+      if (timeLeft > 0) {
+        terkirim = true;
+        remainingTime = timeLeft ~/ 1000; // Convert milliseconds to seconds
+        startCountdown();
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    String strDigits(int n) => n.toString().padLeft(2, '0');
-    final seconds = strDigits(myDuration.inSeconds.remainder(60));
-    // stopTimer();
-    TextStyle? createStyle(Color color) {
-      ThemeData theme = Theme.of(context);
-      return theme.textTheme.displaySmall?.copyWith(color: color);
-    }
+  void dispose() {
+    pinController.dispose();
+    focusNode.dispose();
+    countdownTimer.cancel(); // Cancel the timer if it's running
+    super.dispose();
+  }
 
-    var otpTextStyles = [
-      createStyle(accentPurpleColor),
-      createStyle(accentYellowColor),
-      createStyle(accentDarkGreenColor),
-      createStyle(accentOrangeColor),
-    ];
-    if (isLoading) {
-      return loadingku();
-    } else {
-      if (random != "") {
-        // print(_pegawai['data']['pegawai']['npwp']);
-        // sendMail(
-        //     recipientEmail: _pegawai['data']['pegawai']['npwp'].toString(),
-        //     mailMessage: random.toString());
-        return Scaffold(
-          backgroundColor: bgColor,
-          appBar: AppBar(
-            backgroundColor: primaryColor,
-            title: const Text('Validasi Data'),
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Container(
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20), color: bgWhite),
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      button
-                          ? "Dibutuhkan kode verifikasi untuk akses menu Slip Jaspel. \nSilahkan klik tombol Kirim Kode Verifikasi dibawah"
-                          : "Cek email anda dan masukkan kode verifikasi pada kolom berikut : ",
-                      textAlign: TextAlign.justify,
-                      style: TextStyle(height: 1.5),
-                    ),
-                    SizedBox(
-                      height: button ? 0 : 10,
-                    ),
-                    button
-                        ? Text('')
-                        : OtpTextField(
-                            numberOfFields: 4,
-                            borderColor: primaryColor,
-                            disabledBorderColor: primaryColor,
-                            focusedBorderColor: textColor,
-                            styles: otpTextStyles,
-                            showFieldAsBox: true,
-                            borderWidth: 2.0,
-                            enabledBorderColor: primaryColor,
-                            fieldWidth: 55,
-                            //runs when a code is typed in
-                            onCodeChanged: (String code) {
-                              //handle validation or checks here if necessary
-                            },
-                            //runs when every textfield is filled
-                            onSubmit: (String verificationCode) {
-                              kode = verificationCode;
-                            },
-                          ),
-                    SizedBox(
-                      height: button ? 0 : 10,
-                    ),
-                    button
-                        ? Text('')
-                        : RichText(
-                            text: TextSpan(
-                                style: TextStyle(color: textColor),
-                                children: [
-                                  TextSpan(
-                                      text:
-                                          'Kirim ulang Kode Verifikasi pada : '),
-                                  TextSpan(
-                                      text: '00:$seconds',
-                                      style: TextStyle(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.bold)),
-                                ]),
-                          ),
+  void startCountdown() {
+    setState(() {
+      terkirim = true;
+    });
 
-                    // const SizedBox(height: 20),
-                    // const SizedBox(height: 30),
-                    Flex(
-                      direction: Axis.horizontal,
-                      children: [
-                        !button
-                            ? buttonSubmit()
-                            : Expanded(
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    label: Text(!isLoadingButton
-                                        ? ' Mengirim Kode Verifikasi'
-                                        : 'Kirim Kode Verifikasi'),
-                                    icon: !isLoadingButton
-                                        ? SizedBox(
-                                            child: Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                              color: textWhite,
-                                              strokeWidth: 3,
-                                            )),
-                                            width: 25,
-                                            height: 25,
-                                          )
-                                        : Icon(Icons.send),
-                                    style: ElevatedButton.styleFrom(
-                                      foregroundColor: textWhite,
-                                      backgroundColor: primaryColor,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(15),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10),
-                                    ),
-                                    onPressed: () {
-                                      print(_pegawai['data']['rsia_email_pegawai']['email'].toString());
-                                      if(_pegawai['data']['rsia_email_pegawai']['email'].toString()=='null'){
-                                        showDataAlert();
-                                      } else {
-                                        sendMail(
-                                          recipientEmail: _pegawai['data']
-                                                  ['rsia_email_pegawai']['email']
-                                              .toString(),
-                                          mailMessage: random.toString(),
-                                        );
-                                      }
-                                      // _pegawai['data']['rsia_email_pegawai']['email'].toString() ==  ? showDataAlert() :
+    final expirationTime = box.read<int>('expirationTime')!;
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+    remainingTime = (expirationTime - currentTime) ~/ 1000; // Convert milliseconds to seconds
 
-                                    },
-                                    // child: const Text('Kirim Kode Verifikasi'),
-                                  ),
-                                ),
-                              ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+    countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (remainingTime <= 0) {
+        timer.cancel();
+        setState(() {
+          terkirim = false;
+        });
+        box.remove('expirationTime'); // Clear expiration time after countdown ends
+      } else {
+        setState(() {
+          remainingTime--;
+        });
+      }
+    });
+  }
+
+  void sendOtp() async {
+    const url = "$baseUrl/api/v2/otp/create";
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer ${box.read('token')}'},
+        body: jsonEncode({ 'app_id': 5 }),
+      );
+
+      if (response.statusCode >= 200) {
+        final expirationTime = DateTime.now().add(const Duration(minutes: 5)).millisecondsSinceEpoch;
+        box.write('expirationTime', expirationTime);
+
+        startCountdown();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color.fromRGBO(57, 144, 236, 1.0),
+            content: Text(
+              'Kode verifikasi telah dikirim ke nomor telepon Anda yang terdaftar via WhatsApp, cek berkala pesan masuk Anda!',
             ),
           ),
         );
       } else {
-        return Scaffold();
+        // Handle error response from the API
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text('Gagal mengirim OTP, coba lagi nanti.'),
+          ),
+        );
       }
+    } catch (e) {
+      // Handle any exceptions during the API call
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text('Terjadi kesalahan jaringan, coba lagi nanti.'),
+        ),
+      );
     }
   }
 
-  Widget buttonVerif() {
-    return Expanded(
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          label: Text(!isLoadingButton
-              ? ' Mengirim Kode Verifikasi'
-              : 'Kirim Kode Verifikasi'),
-          icon: !isLoadingButton
-              ? SizedBox(
-                  child: Center(child: CircularProgressIndicator()),
-                  width: 20,
-                  height: 20,
-                )
-              : Icon(Icons.send),
-          style: ElevatedButton.styleFrom(
-            foregroundColor: textWhite,
-            backgroundColor: primaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(100),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 15),
+  Future<void> validateOtp(String pin) async {
+    const url = "${baseUrl}/api/v2/otp/verify";
+
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json', 'Accept': 'application/json', 'Authorization': 'Bearer ${box.read('token')}'},
+        body: jsonEncode({"otp": pin, "app_id": 5,}),
+      );
+
+      if (response.statusCode == 200) {
+        // OTP is valid
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.green,
+            content: Text('OTP valid!'),
+          ),
+        );
+
+        // clear the countdown timer
+        countdownTimer.cancel();
+        box.remove('expirationTime');
+
+        // Navigate to the next screen with class JasaMedis
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const JasaMedis()));
+      } else {
+        // OTP is invalid
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.redAccent,
+            content: Text('OTP tidak valid'),
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle any exceptions
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text('Terjadi kesalahan jaringan'),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const focusedBorderColor = Color.fromRGBO(82, 162, 246, 1.0);
+    const fillColor = Color.fromRGBO(243, 246, 249, 0);
+    const borderColor = Color.fromRGBO(75, 147, 255, 1.0);
+
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 56,
+      textStyle: const TextStyle(
+        fontSize: 22,
+        color: Color.fromRGBO(30, 60, 87, 1),
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(19),
+        border: Border.all(color: borderColor),
+      ),
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black87,
           ),
           onPressed: () {
-            sendMail(
-                recipientEmail: _pegawai['data']['pegawai']
-                        ['rsia_email_pegawai']['email']
-                    .toString(),
-                mailMessage: random.toString());
+            Navigator.pop(context);
           },
-          // child: const Text('Kirim Kode Verifikasi'),
         ),
       ),
-    );
-  }
 
-  Widget buttonSubmit() {
-    return Expanded(
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            foregroundColor: textWhite,
-            backgroundColor: primaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 15),
-          ),
-          onPressed: button
-              ? null
-              : () {
-                  print(kode);
-                  cekOtp(
-                    otp: kode,
-                    // mailMessage: _mailMessageController.text.toString(),
-                  );
-                },
-          // onPressed: () {
-          //   print(kode);
-          //   cekOtp(
-          //     otp: kode,
-          //     // mailMessage: _mailMessageController.text.toString(),
-          //   );
-          // },
-          child: const Text('Submit'),
-        ),
-      ),
-    );
-  }
-
-  void showSnackbar(String message, String alert) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.info_outline_rounded, color: textWhite),
-            const SizedBox(width: 10),
-            Text(message, style: TextStyle(color: textWhite)),
-          ],
-        ),
-        duration: const Duration(seconds: snackBarDuration),
-        backgroundColor: alert == "success" ? primaryColor : errorColor,
-      ),
-    );
-  }
-  void main() {
-    var rng = Random();
-    // for (var i = 0; i < 10; i++) {
-    print(rng.nextInt(8000) + 1000);
-    // }
-  }
-
-  showDataAlert() {
-    final OtpJasaMedis otp= new OtpJasaMedis();
-
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) {
-          return Form(
-            key: _formKey,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(
-                  Radius.circular(
-                    15,
+      body: SafeArea(
+        child: FractionallySizedBox(
+          widthFactor: 1,
+          child: Form(
+            key: formKey,
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+                const Text(
+                  'Verifikasi Akses',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              contentPadding: EdgeInsets.only(
-                top: 5.0,
-              ),
-              // title: Text(
-              //   "Tambah Email",
-              //   style: TextStyle(fontSize: 24.0),
-              // ),
-              content: Container(
-                // height: 400,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              "Data email belum ada",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w500
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(5),
-                            child: SizedBox(
-                              // height: 50,
-                              child: TextFormField(
-                                maxLines: 1,
-                                decoration: InputDecoration(
-                                    helperText: "Silahkan masukkan email anda",
-                                    contentPadding:
-                                    EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
-                                    border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10)
-                                    ),
-
-                                    hintText: 'Masukkan email disini',
-
-                                    labelText: 'Email'),
-                                onSaved: (value) {
-                                  email = value!;
-                                },
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Field tidak boleh kosong';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ),
-                          Container(
-                            width: double.infinity,
-                            height: 50,
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(25)
-                            ),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  _formKey.currentState!.save();
-                                  if(EmailValidator.validate(email)){
-                                    updateEmail();
-                                    print(isSuccess);
-                                      if(isSuccess){
-                                        Navigator.of(context).pop();
-                                      }
-                                  } else {
-                                    Msg.error(context, 'Format Email tidak sesuai');
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                  // primary: primaryColor,
-                                  backgroundColor: primaryColor,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))
-                              ),
-                              child: Text(
-                                "Submit",
-                              ),
-                            ),
+                const SizedBox(height: 16),
+                const FractionallySizedBox(
+                  widthFactor: 0.8,
+                  child: Text(
+                    'Dibutuhkan kode verifikasi untuk mengakses menu slip jada pelayanan,',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color.fromRGBO(30, 60, 87, 1),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Pinput(
+                    controller: pinController,
+                    focusNode: focusNode,
+                    defaultPinTheme: defaultPinTheme,
+                    separatorBuilder: (index) => const SizedBox(width: 8),
+                    hapticFeedbackType: HapticFeedbackType.lightImpact,
+                    onCompleted: (pin) async {
+                      await validateOtp(pin); // Call the API validation method
+                    },
+                    focusedPinTheme: defaultPinTheme.copyWith(
+                      decoration: defaultPinTheme.decoration!.copyWith(
+                        borderRadius: BorderRadius.circular(17),
+                        border: Border.all(color: focusedBorderColor),
+                        color: Colors.white,
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black12,
+                            offset: Offset(0, 3),
+                            blurRadius: 8,
                           ),
                         ],
                       ),
-                      Positioned(
-                        top: -10,
-                        right: -5,
-                        child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.red,
-                                borderRadius: BorderRadius.circular(20)
-                            ),
-                            child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Icon(Icons.close_rounded,color: bgWhite,))),),
-                    ],
+                    ),
+                    submittedPinTheme: defaultPinTheme.copyWith(
+                      decoration: defaultPinTheme.decoration!.copyWith(
+                        color: fillColor,
+                        borderRadius: BorderRadius.circular(19),
+                        border: Border.all(color: focusedBorderColor),
+                      ),
+                    ),
+                    errorPinTheme: defaultPinTheme.copyBorderWith(
+                      border: Border.all(color: Colors.redAccent),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 20),
+                buildButtonKirimKode(),
+                if (terkirim) ...[
+                  Text(
+                    formatDuration(Duration(seconds: remainingTime)),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color.fromRGBO(30, 60, 87, 1),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget buildButtonKirimKode() {
+    if (terkirim) {
+      return Column(
+        children: [
+          const Text(
+            'Tidak menerima kode?',
+            style: TextStyle(
+              fontSize: 16,
+              color: Color.fromRGBO(30, 60, 87, 1),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              if (remainingTime > 0) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    backgroundColor: Colors.redAccent,
+                    content: Text(
+                      'Anda harus menunggu hingga waktu habis untuk mengirim ulang kode',
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              sendOtp();
+            },
+            child: const Text(
+              'Kirim ulang kode',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color.fromRGBO(57, 144, 236, 1.0),
               ),
             ),
-          );
-        });
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          TextButton(
+            onPressed: () {
+              sendOtp();
+            },
+            child: const Text(
+              'Kirim kode',
+              style: TextStyle(
+                fontSize: 16,
+                color: Color.fromRGBO(57, 144, 236, 1.0),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  String formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
-
-
-
-
