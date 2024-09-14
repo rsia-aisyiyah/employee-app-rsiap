@@ -12,7 +12,6 @@ class createCardJasaMedis extends StatefulWidget {
   const createCardJasaMedis({
     super.key,
     required this.jp,
-    // required this.dataJasaMedis,
   });
 
   @override
@@ -31,182 +30,112 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
 
   @override
   Widget build(BuildContext context) {
-    print(widget.jp);
     Map map = {};
-    double asisten_ok = 0;
-    double uang_makan = 0;
-    double pot_asisten_ok = 0;
-    double pot_uang_makan = 0;
-    double jm_bersih = 0;
-    double jm_potong = 0;
+    num asistenOk = 0;
+    num uangMakan = 0;
+    num potAsistenOk = 0;
+    num potUangMakan = 0;
+    num jmBersih = 0;
+    num jmPotong = 0;
 
     if (widget.jp.jmRuangShare != 0 && widget.jp.jmTotalShare != 0) {
-      map["JasPel"] = showIcon
-          ? '* * * * *'
-          : Helper.convertToIdr(
-              widget.jp.jmRuangShare! + widget.jp.jmTotalShare!,
-              0,
-            );
+      map["JasPel"] = showIcon ? '* * * * *' : Helper.convertToIdr(widget.jp.jmRuangShare! + widget.jp.jmTotalShare!, 0);
     }
 
     if (widget.jp.jmAsistenOk != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(+) ${Helper.convertToIdr(
-                  (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!),
-                  0,
-                )}';
-        asisten_ok = widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!;
+            : '(+) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!), 0)}';
+        asistenOk = widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!;
       } else {
         map["Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(+) ${Helper.convertToIdr(
-                  (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!),
-                  0,
-                )}';
-        asisten_ok = widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!;
+            : '(+) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!), 0)}';
+        asistenOk = widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!;
       }
     }
     if (widget.jp.uangMakan != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Uang Makan"] = showIcon
             ? '* * * * *'
-            : '(+) ${Helper.convertToIdr(
-                  (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!),
-                  0,
-                )}';
-        uang_makan = widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!;
+            : '(+) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!), 0)}';
+        uangMakan = widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!;
       } else {
-        map["Uang Makan"] = showIcon
-            ? '* * * * *'
-            : '(+) ${Helper.convertToIdr(
-                  (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!),
-                  0,
-                )}';
-        uang_makan = widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!;
+        map["Uang Makan"] =
+            showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!), 0)}';
+        uangMakan = widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!;
       }
     }
 
-      map["Lebih Jam"] = showIcon
-          ? '* * * * *'
-          : '(+) ${Helper.convertToIdr(
-                widget.jp.lebihJam,
-                0,
-              )}';
+    map["Lebih Jam"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.lebihJam, 0)}';
 
     if (widget.jp.oncallOk != 0) {
-      map["Oncall"] = showIcon
-          ? '* * * * *'
-          : '(+) ${Helper.convertToIdr(
-                widget.jp.oncallOk,
-                0,
-              )}';
+      map["Oncall"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.oncallOk, 0)}';
     }
 
-      map["Tambahan Lain"] = showIcon
-          ? '* * * * *'
-          : '(+) ${Helper.convertToIdr(
-                widget.jp.tambahan,
-                0,
-              )}';
+    map["Tambahan Lain"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.tambahan, 0)}';
 
-    jm_bersih = (widget.jp.jmTotalFull != 0 ? widget.jp.jmTotalFull : widget.jp.jmTotalShare)! +
+    jmBersih = (widget.jp.jmTotalFull != 0 ? widget.jp.jmTotalFull : widget.jp.jmTotalShare)! +
         (widget.jp.jmRuangFull != 0 ? widget.jp.jmRuangFull : widget.jp.jmRuangShare)! +
-        asisten_ok + widget.jp.lebihJam! + widget.jp.oncallOk! + uang_makan + widget.jp.tambahan!;
+        asistenOk +
+        widget.jp.lebihJam! +
+        widget.jp.oncallOk! +
+        uangMakan +
+        widget.jp.tambahan!;
+
     if (widget.jp.jmTotalShare != 0) {
-      map["JasPel Bruto"] = showIcon
-          ? '* * * * *'
-          : Helper.convertToIdr(
-              jm_bersih,
-              0,
-            );
+      map["JasPel Bruto"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih, 0);
     }
-    if (widget.jp.jmTotalFull != 0 &&
-        widget.jp.jmRuangFull != 0) {
+    if (widget.jp.jmTotalFull != 0 && widget.jp.jmRuangFull != 0) {
       map["Potongan JasPel"] = showIcon
           ? '* * * * *'
-          : '(-) ${Helper.convertToIdr(
-                (widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) -
-                    (widget.jp.jmTotalShare! + widget.jp.jmRuangShare!) +
-                    ((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) * widget.jp.potonganJaspel!),
-                0,
-              )}';
+          : '(-) ${Helper.convertToIdr((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) - (widget.jp.jmTotalShare! + widget.jp.jmRuangShare!) + ((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) * widget.jp.potonganJaspel!), 0)}';
     }
     if (widget.jp.jmAsistenOk != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Potongan Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr(
-                  (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.jmAsistenOk!),
-                  0,
-                )}';
-        pot_asisten_ok = (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - widget.jp.jmAsistenOk!;
+            : '(-) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.jmAsistenOk!), 0)}';
+        potAsistenOk = (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - widget.jp.jmAsistenOk!;
       } else {
         map["Potongan Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr(
-                  (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.jmAsistenOk!),
-                  0,
-                )}';
-        pot_asisten_ok = (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!) - widget.jp.jmAsistenOk!;
+            : '(-) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.jmAsistenOk!), 0)}';
+        potAsistenOk = (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!) - widget.jp.jmAsistenOk!;
       }
     }
     if (widget.jp.uangMakan != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Potongan Uang Makan"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr(
-                  (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.uangMakan!),
-                  0,
-                )}';
-        pot_uang_makan = (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.uangMakan!);
+            : '(-) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.uangMakan!), 0)}';
+        potUangMakan = (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.uangMakan!);
       } else {
         map["Potongan Uang Makan"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr(
-                  (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.uangMakan!),
-                  0,
-                )}';
-        pot_uang_makan = (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.uangMakan!);
+            : '(-) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.uangMakan!), 0)}';
+        potUangMakan = (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.uangMakan!);
       }
     }
 
-      map["Potongan Obat"] = showIcon
-          ? '* * * * *'
-          : '(-) ${Helper.convertToIdr(
-                (widget.jp.potonganObat),
-                0,
-              )}';
+    map["Potongan Obat"] = showIcon ? '* * * * *' : '(-) ${Helper.convertToIdr((widget.jp.potonganObat), 0)}';
 
+    map["Potongan Lain"] = showIcon ? '* * * * *' : '(-) ${Helper.convertToIdr((widget.jp.potonganLain), 0)}';
 
-      map["Potongan Lain"] = showIcon
-          ? '* * * * *'
-          : '(-) ${Helper.convertToIdr(
-                (widget.jp.potonganLain),
-                0,
-              )}';
-
-    jm_potong = widget.jp.potonganLain! + widget.jp.potonganObat! +
+    jmPotong = widget.jp.potonganLain! +
+        widget.jp.potonganObat! +
         (((widget.jp.jmTotalFull != 0 ? widget.jp.jmTotalFull : widget.jp.jmTotalShare)! +
                 (widget.jp.jmRuangFull != 0 ? widget.jp.jmRuangFull : widget.jp.jmRuangShare)!) -
             (widget.jp.jmTotalShare! + widget.jp.jmRuangShare!)) +
-        pot_asisten_ok +
-        pot_uang_makan + ((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) * widget.jp.potonganJaspel!);
-    if (jm_potong != 0) {
-      map["Total Potongan"] = showIcon
-          ? '* * * * *'
-          : Helper.convertToIdr(
-              jm_potong,
-              0,
-            );
+        potAsistenOk +
+        potUangMakan +
+        ((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) * widget.jp.potonganJaspel!);
+
+    if (jmPotong != 0) {
+      map["Total Potongan"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmPotong, 0);
     }
-    map["Jaspel Diterima"] = showIcon
-        ? '* * * * *'
-        : Helper.convertToIdr(
-            jm_bersih - jm_potong,
-            0,
-          );
+    map["Jaspel Diterima"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih - jmPotong, 0);
 
     return Column(
       children: [
@@ -255,47 +184,14 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                               onPressed: () {
                                 _changeIcon();
                               },
-                              icon: Icon(showIcon
-                                  ? Icons.visibility_off
-                                  : Icons.visibility),
+                              icon: Icon(showIcon ? Icons.visibility_off : Icons.visibility),
                             )),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   GenTableJaspel(
-                    data:
-                        // {
-                        map,
-                    // "Jasa Pelayanan": showIcon
-                    //     ? '* * * * *'
-                    //     : Helper.convertToIdr(
-                    //         widget.dataJasaMedis['jm_ruang_share'] +
-                    //             widget.dataJasaMedis['jm_total_share'],
-                    //         2,
-                    //       ),
-                    // tambahanText: showIcon
-                    //     ? '* * * * *'
-                    //     : '(+) ' +
-                    //         Helper.convertToIdr(
-                    //           widget.dataJasaMedis['tambahan'],
-                    //           2,
-                    //         ),
-                    // potonganText: showIcon
-                    //     ? '* * * * *'
-                    //     : '(-) ' +
-                    //         Helper.convertToIdr(
-                    //           widget.dataJasaMedis.potonganLain +
-                    //               widget.dataJasaMedis.potonganObat,
-                    //           2,
-                    //         ),
-                    // "Jasa Pelayanan Diterima": showIcon
-                    //     ? '* * * * *'
-                    //     : Helper.convertToIdr(
-                    //         widget.dataJasaMedis['jm_bersih_share'],
-                    //         2,
-                    //       ),
-                    // },
+                    data: map,
                     textStyle: TextStyle(
                       fontSize: 14,
                       fontWeight: fontSemiBold,

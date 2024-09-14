@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
@@ -120,7 +121,7 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
   }
 
   Future<void> validateOtp(String pin) async {
-    const url = "${baseUrl}/api/v2/otp/verify";
+    const url = "$baseUrl/api/v2/otp/verify";
 
     try {
       final response = await http.post(
@@ -295,6 +296,11 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
           ),
           TextButton(
             onPressed: () {
+              if(kDebugMode) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const JasaMedis()));
+                return;
+              }
+
               if (remainingTime > 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -324,6 +330,10 @@ class _OtpJasaMedisState extends State<OtpJasaMedis> {
         children: [
           TextButton(
             onPressed: () {
+              if(kDebugMode) {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const JasaMedis()));
+                return;
+              }
               sendOtp();
             },
             child: const Text(

@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -20,23 +19,21 @@ import 'package:get_storage/get_storage.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
-  if (!kDebugMode) {
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  }
-
-  await GetStorage.init();
-  await FlutterDownloader.initialize(
-    debug: false, // optional: set to false to disable printing logs to console (default: true)
-    ignoreSsl: true, // option: set to false to disable working with http links (default: false)
-  );
-
+  // Use runZonedGuarded for everything, including Firebase and other async initialization
   runZonedGuarded<Future<void>>(() async {
-    await initializeDateFormatting('id_ID', null).then((_) => runApp(const MyApp()));
+    await Firebase.initializeApp();
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+
+    await initializeDateFormatting('id_ID', null);
+    await GetStorage.init();
+    await FlutterDownloader.initialize(
+      debug: false, // optional: set to false to disable printing logs to console (default: true)
+      ignoreSsl: true, // option: set to false to disable working with http links (default: false)
+    );
+
+    runApp(const MyApp());
   }, (error, stackTrace) async {
-    if (!kDebugMode) {
-      await FirebaseCrashlytics.instance.recordError(error, stackTrace);
-    }
+    await FirebaseCrashlytics.instance.recordError(error, stackTrace);
   });
 }
 
@@ -84,44 +81,48 @@ class _CheckAuthState extends State<CheckAuth> {
     // _checkIsLoggedin();
   }
 
-
   Future _authCheck() async {
     var token = await GetStorage().read('token');
-    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
 
-    // if token available
-    if (token != null) {
-      // validate token by exp
-      var now = DateTime.now().millisecondsSinceEpoch / 1000;
-      if (decodeToken['exp'] < now) {
-        return false;
-      }
-
-      var tkns = await Api().getData('/user/auth/detail');
-      if (tkns.statusCode != 200) {
-        return false;
-      }
-
-      return true;
-    } else {
+    // Null check before decoding
+    if (token == null) {
       return false;
     }
+
+    Map<String, dynamic> decodeToken = JwtDecoder.decode(token.toString());
+
+    // Check token expiry
+    var now = DateTime.now().millisecondsSinceEpoch / 1000;
+    if (decodeToken['exp'] < now) {
+      return false;
+    }
+
+    var tkns = await Api().getData('/user/auth/detail');
+    if (tkns.statusCode != 200) {
+      return false;
+    }
+
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
       future: _authCheck(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        } else {
-          print("snapshot: ${snapshot.data}");
-          if (snapshot.hasData) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Something went wrong!'),
+              ),
+            );
+          } else if (snapshot.hasData) {
             if (snapshot.data == true) {
               return const IndexScreen();
             } else {
@@ -131,7 +132,6 @@ class _CheckAuthState extends State<CheckAuth> {
             return const LoginScreen();
           }
         }
-      },
     );
   }
 }

@@ -71,7 +71,8 @@ class _UndanganState extends State<Undangan> {
   Future<void> loadMore() async {
     if (links['next'] != null) {
       var res = await Api().postFullUrl({
-        "filters": [ { "field": "penerima", "operator": "=", "value": box.read('sub') } ]
+        "filters": [ { "field": "penerima", "operator": "=", "value": box.read('sub') } ],
+        "sort": [ { "field": "created_at", "direction": "desc" } ]
       }, links['next']);
 
       if (res.statusCode == 200) {
@@ -132,7 +133,12 @@ class _UndanganState extends State<Undangan> {
           },
           onLoading: () async {
             await loadMore();
-            _refreshController.loadComplete();
+
+            if (links['next'] == null) {
+              _refreshController.loadNoData();
+            } else {
+              _refreshController.loadComplete();
+            }
           },
           child: ListView.builder(
             padding: const EdgeInsets.only(top: 15, left: 10, right: 10),
@@ -242,9 +248,11 @@ class _UndanganState extends State<Undangan> {
                         color: Colors.white,
                         border: Border(
                           left: BorderSide(
-                            color: DateTime.parse(dataUdgn['undangan']['tanggal']).isAfter(DateTime.now())
-                              ? Colors.blue
-                              : Colors.green,
+                            color: (dataUdgn['undangan'] != null && dataUdgn['undangan']['tanggal'] != null)
+                                ? DateTime.parse(dataUdgn['undangan']['tanggal']).isAfter(DateTime.now())
+                                  ? Colors.blue
+                                  : Colors.green
+                                : Colors.grey, // fallback color if undangan or tanggal is null
                             width: 6,
                           ),
                         ),
@@ -261,8 +269,12 @@ class _UndanganState extends State<Undangan> {
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 10),
                           child: Text(
-                            DateFormat('EEEE, dd MMMM yyyy', 'id_ID').add_jm().format(DateTime.parse(dataUdgn['undangan']['tanggal'])),
-                            style: const TextStyle( fontSize: 14 ),
+                            dataUdgn['undangan'] != null && dataUdgn['undangan']['tanggal'] != null
+                                ? DateFormat('EEEE, dd MMMM yyyy', 'id_ID')
+                                .add_jm()
+                                .format(DateTime.parse(dataUdgn['undangan']['tanggal']))
+                                : 'Tanggal tidak tersedia',  // Fallback text if undangan or tanggal is null
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                         trailing: Icon(
