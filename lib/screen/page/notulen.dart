@@ -8,18 +8,16 @@ import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 
-import '../../config/config.dart';
-
-class CardNotulen extends StatefulWidget {
+class NotulenPage extends StatefulWidget {
   final Map dataUdgn;
 
-  const CardNotulen({super.key, required this.dataUdgn});
+  const NotulenPage({super.key, required this.dataUdgn});
 
   @override
-  State<CardNotulen> createState() => _CardNotulenState();
+  State<NotulenPage> createState() => _NotulenPageState();
 }
 
-class _CardNotulenState extends State<CardNotulen> {
+class _NotulenPageState extends State<NotulenPage> {
     @override
   void initState() {
     super.initState();
@@ -33,7 +31,7 @@ class _CardNotulenState extends State<CardNotulen> {
       var body = json.decode(res.body);
       return body;
     } else {
-      return null;
+      throw Exception('Failed to load data');
     }
   }
 
@@ -255,7 +253,7 @@ class _CardNotulenState extends State<CardNotulen> {
           }
 
           if (snapshot.hasError) {
-            return Text(snapshot.error.toString());
+            return Center(child: Text(snapshot.error.toString()));
           }
 
           return loadingku();

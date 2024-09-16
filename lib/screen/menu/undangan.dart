@@ -4,8 +4,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
-import 'package:rsia_employee_app/components/cards/card_daftar_hadir.dart';
-import 'package:rsia_employee_app/components/cards/card_notulen.dart';
+import 'package:rsia_employee_app/screen/page/daftar_hadir.dart';
+import 'package:rsia_employee_app/screen/page/notulen.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/screen/page/scan.dart';
 import 'package:rsia_employee_app/utils/fonts.dart';
@@ -182,10 +182,19 @@ class _UndanganState extends State<Undangan> {
                           ),
                           const SizedBox(height: 10),
                           GenTable(data: {
-                            // format date to indonesia with month name name day asia/jakarta
-                            "Tanggal": DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.parse(dataUdgn['undangan']['tanggal'])),
-                            "Waktu": "${DateFormat('HH:mm').format(DateTime.parse(dataUdgn['undangan']['tanggal']))} WIB",
-                            "Tempat": dataUdgn['undangan']['tempat'],
+                            "Tanggal": dataUdgn['undangan']?['tanggal'] != null
+                                ? DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(
+                                DateTime.tryParse(dataUdgn['undangan']['tanggal']) ?? DateTime.now()
+                            )
+                                : 'Tanggal tidak tersedia',
+
+                            "Waktu": dataUdgn['undangan']?['tanggal'] != null
+                                ? "${DateFormat('HH:mm').format(
+                                DateTime.tryParse(dataUdgn['undangan']['tanggal']) ?? DateTime.now()
+                            )} WIB"
+                                : 'Waktu tidak tersedia',
+
+                            "Tempat": dataUdgn['undangan']?['tempat'] ?? 'Tempat tidak tersedia',
                           }),
                           const SizedBox(height: 10),
                           Flex(
@@ -204,7 +213,7 @@ class _UndanganState extends State<Undangan> {
                                       padding: const EdgeInsets.symmetric(vertical: 15),
                                     ),
                                     onPressed: () {
-                                      Navigator.push(context,MaterialPageRoute(builder: (context) => CardDaftarHadir(dataUdgn: dataUdgn)));
+                                      Navigator.push(context,MaterialPageRoute(builder: (context) => DaftarHadirPage(dataUdgn: dataUdgn)));
                                     },
                                     child: const Text("Daftar Hadir"),
                                   ),
@@ -224,7 +233,7 @@ class _UndanganState extends State<Undangan> {
                                       padding: const EdgeInsets.symmetric(vertical: 15),
                                     ),
                                     onPressed: () {
-                                      Navigator.push(context,MaterialPageRoute(builder: (context) => CardNotulen(dataUdgn: dataUdgn)));
+                                      Navigator.push(context,MaterialPageRoute(builder: (context) => NotulenPage(dataUdgn: dataUdgn)));
                                     },
                                     child: const Text("Notulen"),
                                   ),

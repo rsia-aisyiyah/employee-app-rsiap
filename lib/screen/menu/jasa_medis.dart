@@ -59,7 +59,7 @@ class JasaMedisState extends State<JasaMedis> {
               padding: const EdgeInsets.all(15),
               itemCount: data!.length,
               itemBuilder: (context, index) {
-                return createCardJasaMedis(jp: data[index]);
+                return CreateCardJasaMedis(jp: data[index]);
               },
             );
           }

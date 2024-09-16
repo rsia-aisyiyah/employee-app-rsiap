@@ -5,18 +5,18 @@ import 'package:flutter/material.dart';
 import '../../api/request.dart';
 import '../../config/colors.dart';
 import '../../utils/fonts.dart';
-import '../loadingku.dart';
+import '../../components/loadingku.dart';
 
-class CardDaftarHadir extends StatefulWidget {
+class DaftarHadirPage extends StatefulWidget {
   final Map dataUdgn;
 
-  const CardDaftarHadir({super.key, required this.dataUdgn});
+  const DaftarHadirPage({super.key, required this.dataUdgn});
 
   @override
-  State<CardDaftarHadir> createState() => _CardDaftarHadirState();
+  State<DaftarHadirPage> createState() => _DaftarHadirPageState();
 }
 
-class _CardDaftarHadirState extends State<CardDaftarHadir> {
+class _DaftarHadirPageState extends State<DaftarHadirPage> {
   Future fetchUndangan() async {
     final String url = "/undangan/${base64Encode(utf8.encode(widget.dataUdgn['no_surat'].toString()))}";
     var res = await Api().getData(url);
@@ -25,7 +25,7 @@ class _CardDaftarHadirState extends State<CardDaftarHadir> {
       var body = json.decode(res.body);
       return body;
     } else {
-      return null;
+      throw Exception('Failed to load data');
     }
   }
 
