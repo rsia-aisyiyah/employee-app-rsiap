@@ -8,7 +8,7 @@ cardPresensi(presensi) {
       Stack(
         children: [
           Container(
-            padding: EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 10),
+            padding: const EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 10),
             width: double.infinity,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -20,7 +20,7 @@ cardPresensi(presensi) {
                       alignment: Alignment.center,
                       height: 55,
                       width: 65,
-                      padding: EdgeInsets.all(5),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: bgWhite,
                         boxShadow: [
@@ -30,7 +30,7 @@ cardPresensi(presensi) {
                             offset: const Offset(0, 2),
                           )
                         ],
-                        borderRadius: BorderRadius.all(
+                        borderRadius: const BorderRadius.all(
                           Radius.circular(10),
                         ),
                       ),
@@ -55,16 +55,16 @@ cardPresensi(presensi) {
                       alignment: Alignment.topCenter,
                       height: 55,
                       width: 70,
-                      padding: EdgeInsets.all(10),
+                      padding: const EdgeInsets.all(10),
                       child: Text(
                         Helper.dateToMonthYear(presensi['jam_datang']),
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 10, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   width: 5,
                 ),
                 Expanded(
@@ -73,7 +73,7 @@ cardPresensi(presensi) {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: bgWhite,
                           boxShadow: [
@@ -83,7 +83,7 @@ cardPresensi(presensi) {
                               offset: const Offset(0, 2),
                             )
                           ],
-                          borderRadius: BorderRadius.all(
+                          borderRadius: const BorderRadius.all(
                             Radius.circular(10),
                           ),
                         ),
@@ -107,18 +107,18 @@ cardPresensi(presensi) {
                                 ),
                               ],
                             ),
-                            Icon(
+                            const Icon(
                               Icons.timer_outlined,
                               color: Colors.green,
                             )
                           ],
                         ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 5,
                       ),
                       Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: bgWhite,
                           boxShadow: [
@@ -128,7 +128,7 @@ cardPresensi(presensi) {
                               offset: const Offset(0, 2),
                             )
                           ],
-                          borderRadius: BorderRadius.all(
+                          borderRadius: const BorderRadius.all(
                             Radius.circular(10),
                           ),
                         ),
@@ -152,20 +152,20 @@ cardPresensi(presensi) {
                                 ),
                               ],
                             ),
-                            Icon(
+                            const Icon(
                               Icons.timer_off_outlined,
                               color: Colors.red,
                             )
                           ],
                         ),
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 5,
                       ),
                       Container(
                         // alignment: Alignment.center,
                         height: 40,
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: bgWhite,
                           boxShadow: [
@@ -175,7 +175,7 @@ cardPresensi(presensi) {
                               offset: const Offset(0, 2),
                             )
                           ],
-                          borderRadius: BorderRadius.all(
+                          borderRadius: const BorderRadius.all(
                             Radius.circular(10),
                           ),
                         ),
@@ -196,7 +196,7 @@ cardPresensi(presensi) {
                               ],
                             ),
                             presensi['status'] == "Tepat Waktu"
-                                ? Icon(
+                                ? const Icon(
                                     Icons.info_rounded,
                                     color: Colors.greenAccent,
                                   )
@@ -205,7 +205,7 @@ cardPresensi(presensi) {
                                         Icons.info_rounded,
                                         color: Colors.amber[300],
                                       )
-                                    : Icon(
+                                    : const Icon(
                                         Icons.info_rounded,
                                         color: Colors.red,
                                       )

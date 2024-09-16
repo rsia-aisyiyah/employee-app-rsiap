@@ -73,7 +73,7 @@ Future<void> handleMessage(RemoteMessage message) async {
 Future initLocalNotification() async {
   const iOS = DarwinInitializationSettings();
   const android = AndroidInitializationSettings('@drawable/launcher_icon');
-  final settings = InitializationSettings(iOS: iOS, android: android);
+  const settings = InitializationSettings(iOS: iOS, android: android);
 
   await _localNotification.initialize(
     settings,
@@ -83,8 +83,7 @@ Future initLocalNotification() async {
     },
   );
 
-  final platform = _localNotification.resolvePlatformSpecificImplementation<
-      AndroidFlutterLocalNotificationsPlugin>()!;
+  final platform = _localNotification.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()!;
   platform.createNotificationChannel(_androidChannel);
 }
 
