@@ -85,7 +85,7 @@ class _FileManagerState extends State<FileManager> {
                   if (dataFileManager.isNotEmpty) {
                     return InkWell(
                       onTap: () {},
-                      child: cardFileManager(
+                      child: CardFileManager(
                           dataFileManager: dataFileManager[index],
                       ),
                     );

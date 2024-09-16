@@ -8,15 +8,15 @@ import 'package:open_file_plus/open_file_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
-class cardFileManager extends StatefulWidget {
+class CardFileManager extends StatefulWidget {
   final Map dataFileManager;
-  const cardFileManager({super.key, required this.dataFileManager});
+  const CardFileManager({super.key, required this.dataFileManager});
 
   @override
-  State<cardFileManager> createState() => _cardFileManagerState();
+  State<CardFileManager> createState() => _CardFileManagerState();
 }
 
-class _cardFileManagerState extends State<cardFileManager> {
+class _CardFileManagerState extends State<CardFileManager> {
   bool isHAveDownloading = false;
 
   bool downloading = false;

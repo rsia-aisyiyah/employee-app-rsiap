@@ -6,19 +6,19 @@ import 'package:rsia_employee_app/utils/table_jaspel.dart';
 
 import '../../models/JasaPelayanan.dart';
 
-class createCardJasaMedis extends StatefulWidget {
+class CreateCardJasaMedis extends StatefulWidget {
   final JPData jp;
 
-  const createCardJasaMedis({
+  const CreateCardJasaMedis({
     super.key,
     required this.jp,
   });
 
   @override
-  State<createCardJasaMedis> createState() => _createCardJasaMedisState();
+  State<CreateCardJasaMedis> createState() => _CreateCardJasaMedisState();
 }
 
-class _createCardJasaMedisState extends State<createCardJasaMedis> {
+class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
   // IconData _currentIcon = Icons.star; // Initial icon
   bool showIcon = true;
 
@@ -39,32 +39,32 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
     num jmPotong = 0;
 
     if (widget.jp.jmRuangShare != 0 && widget.jp.jmTotalShare != 0) {
-      map["JasPel"] = showIcon ? '* * * * *' : Helper.convertToIdr(widget.jp.jmRuangShare! + widget.jp.jmTotalShare!, 0);
+      map["JasPel"] = showIcon ? '* * * * *' : Helper.convertToIdr((widget.jp.jmRuangShare ?? 0) + (widget.jp.jmTotalShare ?? 0), 0);
     }
 
     if (widget.jp.jmAsistenOk != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(+) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!), 0)}';
-        asistenOk = widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!;
+            : '(+) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)), 0)}';
+        asistenOk = (widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0);
       } else {
         map["Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(+) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!), 0)}';
-        asistenOk = widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!;
+            : '(+) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)), 0)}';
+        asistenOk = (widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0);
       }
     }
     if (widget.jp.uangMakan != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Uang Makan"] = showIcon
             ? '* * * * *'
-            : '(+) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!), 0)}';
-        uangMakan = widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!;
+            : '(+) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)), 0)}';
+        uangMakan = (widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0);
       } else {
         map["Uang Makan"] =
-            showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!), 0)}';
-        uangMakan = widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!;
+            showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)), 0)}';
+        uangMakan = (widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0);
       }
     }
 
@@ -76,13 +76,13 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
 
     map["Tambahan Lain"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.tambahan, 0)}';
 
-    jmBersih = (widget.jp.jmTotalFull != 0 ? widget.jp.jmTotalFull : widget.jp.jmTotalShare)! +
-        (widget.jp.jmRuangFull != 0 ? widget.jp.jmRuangFull : widget.jp.jmRuangShare)! +
+    jmBersih = (widget.jp.jmTotalFull ?? widget.jp.jmTotalShare ?? 0) +
+        (widget.jp.jmRuangFull ?? widget.jp.jmRuangShare ?? 0) +
         asistenOk +
-        widget.jp.lebihJam! +
-        widget.jp.oncallOk! +
+        (widget.jp.lebihJam ?? 0) +
+        (widget.jp.oncallOk ?? 0) +
         uangMakan +
-        widget.jp.tambahan!;
+        (widget.jp.tambahan ?? 0);
 
     if (widget.jp.jmTotalShare != 0) {
       map["JasPel Bruto"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih, 0);
@@ -90,32 +90,32 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
     if (widget.jp.jmTotalFull != 0 && widget.jp.jmRuangFull != 0) {
       map["Potongan JasPel"] = showIcon
           ? '* * * * *'
-          : '(-) ${Helper.convertToIdr((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) - (widget.jp.jmTotalShare! + widget.jp.jmRuangShare!) + ((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) * widget.jp.potonganJaspel!), 0)}';
+          : '(-) ${Helper.convertToIdr(((widget.jp.jmTotalFull ?? 0) + (widget.jp.jmRuangFull ?? 0)) - ((widget.jp.jmTotalShare ?? 0) + (widget.jp.jmRuangShare ?? 0)) + (((widget.jp.jmTotalFull ?? 0) + (widget.jp.jmRuangFull ?? 0)) * (widget.jp.potonganJaspel ?? 0)), 0)}';
     }
     if (widget.jp.jmAsistenOk != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Potongan Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.jmAsistenOk!), 0)}';
-        potAsistenOk = (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - widget.jp.jmAsistenOk!;
+            : '(-) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - ((widget.jp.jmAsistenOk ?? 0)), 0)}';
+        potAsistenOk = ((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - (widget.jp.jmAsistenOk ?? 0);
       } else {
         map["Potongan Asisten OK"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr((widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.jmAsistenOk!), 0)}';
-        potAsistenOk = (widget.jp.jmAsistenOk! / widget.jp.jasaPelayananAkun!.jmRs!) - widget.jp.jmAsistenOk!;
+            : '(-) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - ((widget.jp.jmAsistenOk ?? 0)), 0)}';
+        potAsistenOk = ((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - (widget.jp.jmAsistenOk ?? 0);
       }
     }
     if (widget.jp.uangMakan != 0) {
       if (widget.jp.sttsKerja == 'Karyawan Mitra') {
         map["Potongan Uang Makan"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.uangMakan!), 0)}';
-        potUangMakan = (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmOkMitra!) - (widget.jp.uangMakan!);
+            : '(-) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - ((widget.jp.uangMakan ?? 0)), 0)}';
+        potUangMakan = ((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - ((widget.jp.uangMakan ?? 0));
       } else {
         map["Potongan Uang Makan"] = showIcon
             ? '* * * * *'
-            : '(-) ${Helper.convertToIdr((widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.uangMakan!), 0)}';
-        potUangMakan = (widget.jp.uangMakan! / widget.jp.jasaPelayananAkun!.jmRs!) - (widget.jp.uangMakan!);
+            : '(-) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - ((widget.jp.uangMakan ?? 0)), 0)}';
+        potUangMakan = ((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - ((widget.jp.uangMakan ?? 0));
       }
     }
 
@@ -123,14 +123,17 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
 
     map["Potongan Lain"] = showIcon ? '* * * * *' : '(-) ${Helper.convertToIdr((widget.jp.potonganLain), 0)}';
 
-    jmPotong = widget.jp.potonganLain! +
-        widget.jp.potonganObat! +
-        (((widget.jp.jmTotalFull != 0 ? widget.jp.jmTotalFull : widget.jp.jmTotalShare)! +
-                (widget.jp.jmRuangFull != 0 ? widget.jp.jmRuangFull : widget.jp.jmRuangShare)!) -
-            (widget.jp.jmTotalShare! + widget.jp.jmRuangShare!)) +
+    jmPotong = (widget.jp.potonganLain ?? 0) + (widget.jp.potonganObat ?? 0) +
+        (
+            (
+                (widget.jp.jmTotalFull ?? widget.jp.jmTotalShare ?? 0) +
+                (widget.jp.jmRuangFull ?? widget.jp.jmRuangShare ?? 0)
+            ) -
+            ((widget.jp.jmTotalShare ?? 0) + (widget.jp.jmRuangShare ?? 0))
+        ) +
         potAsistenOk +
         potUangMakan +
-        ((widget.jp.jmTotalFull! + widget.jp.jmRuangFull!) * widget.jp.potonganJaspel!);
+        (((widget.jp.jmTotalFull ?? 0) + (widget.jp.jmRuangFull ?? 0)) * (widget.jp.potonganJaspel ?? 0));
 
     if (jmPotong != 0) {
       map["Total Potongan"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmPotong, 0);
@@ -171,7 +174,7 @@ class _createCardJasaMedisState extends State<createCardJasaMedis> {
                   Row(
                     children: [
                       Text(
-                        "${Helper.numToMonth(int.parse(widget.jp.bulan!))} ${widget.jp.tahun!}",
+                        "${Helper.numToMonth(int.tryParse(widget.jp.bulan ?? '') ?? 1)} ${widget.jp.tahun ?? ''}",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: fontSemiBold,
