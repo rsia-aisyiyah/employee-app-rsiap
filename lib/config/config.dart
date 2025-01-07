@@ -8,6 +8,8 @@ import 'package:rsia_employee_app/screen/menu/presensi.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
 
+import '../screen/menu/jasa_medis.dart';
+
 const String baseUrl = 'https://sim.rsiaaisyiyah.com/rsiapi';
 // const String baseUrl = 'http://172.24.19.22/rsia';
 const String apiUrl = '$baseUrl/api/v2';
@@ -32,7 +34,7 @@ List<Map<String, Object>> menuScreenItems = [
   },
   {
     'label': 'Slip Jaspel',
-    'widget': const OtpJasaMedis(),
+    'widget': const JasaMedis(),
     'disabled': false,
     'icon': Icons.payments_outlined
   },
