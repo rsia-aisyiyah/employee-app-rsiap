@@ -1,16 +1,28 @@
-# rsia_employee_app
+# Employee App RSIAP 👨‍⚕️👩‍⚕️
 
-A new Flutter project.
+**Employee App RSIAP** adalah aplikasi mobile berbasis **Flutter** yang digunakan oleh pegawai **RSIA Aisyiyah Pekajangan** untuk mengelola data kepegawaian, absensi, cuti, serta informasi terkait gaji dan jasa pelayanan.  
+Aplikasi ini terintegrasi dengan sistem API backend untuk mendukung manajemen data pegawai secara real-time.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## ✨ Fitur Utama
+- 📋 **Detail Pegawai** → Melihat informasi pribadi dan data kepegawaian.  
+- 📂 **Berkas Pegawai** → Akses dokumen/berkas yang terkait dengan pegawai.  
+- ⏱ **Log Absensi** → Melihat catatan kehadiran dan absensi.  
+- 📝 **Pengajuan & ACC Cuti** → Mengajukan cuti serta mendapatkan persetujuan dari atasan.  
+- ✏️ **Update Data Pegawai** → Memperbarui data pegawai jika ada perubahan.  
+- 📩 **Undangan & Kehadiran** → Menerima undangan internal dan mencatat kehadiran acara.  
+- 💰 **Slip Jasa Medis / Jasa Pelayanan** → Melihat slip jasa medis atau pelayanan.  
+- 💵 **Slip Gaji** → Melihat slip gaji bulanan pegawai.  
 
-A few resources to get you started if this is your first Flutter project:
+---
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🛠 Teknologi yang Digunakan
+- [Flutter](https://flutter.dev/) → Framework utama untuk pengembangan aplikasi mobile.  
+- [Dart](https://dart.dev/) → Bahasa pemrograman utama.  
+- **API Backend** → Terintegrasi dengan sistem API untuk pengelolaan data pegawai.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+
+## 🙌 Credits
+Proyek **Employee App RSIAP** dikembangkan oleh **Tim IT RSIA Aisyiyah Pekajangan**:
