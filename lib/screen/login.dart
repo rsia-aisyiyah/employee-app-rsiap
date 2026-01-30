@@ -8,6 +8,9 @@ import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/screen/index.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:animations/animations.dart';
+import 'package:rsia_employee_app/utils/biometric_helper.dart';
+import 'package:rsia_employee_app/utils/secure_storage_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,8 +25,146 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _isLoading = false;
   bool _secureText = true;
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
+  bool _showBiometricPrompt = true;
   String username = '';
   String password = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBiometricAvailability();
+  }
+
+  /// Check if biometric is available and enabled
+  Future<void> _checkBiometricAvailability() async {
+    final isAvailable = await BiometricHelper.isBiometricAvailable();
+    final isEnabled = await SecureStorageHelper.isBiometricEnabled();
+
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = isAvailable;
+        _biometricEnabled = isEnabled;
+      });
+
+      // Auto-trigger biometric if enabled
+      if (isEnabled && isAvailable && _showBiometricPrompt) {
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) _authenticateWithBiometric();
+        });
+      }
+    }
+  }
+
+  /// Authenticate with biometric
+  Future<void> _authenticateWithBiometric() async {
+    setState(() => _showBiometricPrompt = false);
+
+    final result = await BiometricHelper.authenticate(
+      localizedReason: 'Login dengan fingerprint Anda',
+    );
+
+    if (result.success) {
+      // Get saved credentials
+      final credentials = await SecureStorageHelper.getCredentials();
+      if (credentials != null) {
+        setState(() {
+          username = credentials.nik;
+          password = credentials.password;
+        });
+        _performLogin(credentials.nik, credentials.password);
+      } else {
+        if (mounted) {
+          Msg.error(
+              context, 'Credentials tidak ditemukan. Silakan login manual');
+        }
+      }
+    } else {
+      // Show error if not user canceled
+      if (result.errorCode != BiometricErrorCode.userCanceled && mounted) {
+        Msg.warning(context, result.errorMessage ?? 'Autentikasi gagal');
+      }
+    }
+  }
+
+  /// Check if we should show biometric enrollment dialog
+  Future<bool> _shouldShowBiometricDialog() async {
+    final isAvailable = await BiometricHelper.isBiometricAvailable();
+    if (!isAvailable) return false;
+
+    final isEnabled = await SecureStorageHelper.isBiometricEnabled();
+    if (isEnabled) return false; // Already enabled
+
+    return true;
+  }
+
+  /// Show biometric enrollment dialog after successful login
+  Future<void> _showBiometricEnrollmentDialog() async {
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.fingerprint, color: primaryColor, size: 28),
+            const SizedBox(width: 10),
+            const Flexible(
+              child: Text(
+                'Aktifkan Login Fingerprint?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Login lebih cepat dan aman dengan fingerprint di lain waktu.',
+          style: TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Nanti Saja'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // Trigger biometric scan for verification
+              final result = await BiometricHelper.authenticate(
+                localizedReason:
+                    'Verifikasi fingerprint untuk mengaktifkan login otomatis',
+              );
+
+              if (result.success) {
+                if (context.mounted) Navigator.pop(context);
+                final saved = await SecureStorageHelper.saveCredentials(
+                  nik: username,
+                  password: password,
+                );
+                if (saved && mounted) {
+                  Msg.success(context, 'Fingerprint berhasil diaktifkan!');
+                }
+              } else if (result.errorCode != BiometricErrorCode.userCanceled) {
+                if (mounted) {
+                  Msg.error(context, result.errorMessage ?? 'Verifikasi gagal');
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child:
+                const Text('Aktifkan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _togglePasswordVisibility() {
     setState(() {
@@ -33,36 +174,70 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _login() async {
     if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+    _performLogin(username, password);
+  }
+
+  void _performLogin(String uname, String pass) async {
     setState(() {
       _isLoading = true;
     });
-    _formKey.currentState!.save();
 
-    final data = {'username': username, 'password': password};
+    final data = {'username': uname, 'password': pass};
 
-    final res = await Api().auth(data, '/user/auth/login');
-    final body = jsonDecode(res.body);
+    try {
+      final res = await Api().auth(data, '/user/auth/login');
+      final body = jsonDecode(res.body);
 
-    setState(() {
-      _isLoading = false;
-    });
+      if (res.statusCode == 200) {
+        String token = body['access_token'];
+        Map<String, dynamic> decodeToken = JwtDecoder.decode(token);
 
-    if (res.statusCode == 200) {
-      String token = body['access_token'];
-      Map<String, dynamic> decodeToken = JwtDecoder.decode(token);
+        box.write('token', token);
+        box.write('sub', decodeToken['sub']);
+        box.write('role', decodeToken['role']);
+        box.write('dep', decodeToken['dep']);
+        box.write('jbtn', decodeToken['jbtn']);
 
-      box.write('token', token);
-      box.write('sub', decodeToken['sub']);
-      box.write('role', decodeToken['role']);
-      box.write('dep', decodeToken['dep']);
-      box.write('jbtn', decodeToken['jbtn']);
+        // Check and show biometric enrollment dialog BEFORE navigation
+        final shouldShowDialog = await _shouldShowBiometricDialog();
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const IndexScreen()),
-      );
-    } else {
-      Msg.error(context, body['message'] ?? wrongCredentials);
+        if (shouldShowDialog && mounted) {
+          await _showBiometricEnrollmentDialog();
+        }
+
+        // Then navigate
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  const IndexScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return FadeThroughTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  child: child,
+                );
+              },
+              transitionDuration: const Duration(milliseconds: 600),
+            ),
+          );
+        }
+      } else {
+        Msg.error(context, body['message'] ?? wrongCredentials);
+      }
+    } catch (e) {
+      debugPrint("Login error: $e");
+      Msg.error(context,
+          "Koneksi gagal: Silahkan periksa koneksi internet Anda atau hubungi IT.");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -71,135 +246,208 @@ class _LoginScreenState extends State<LoginScreen> {
     return GestureDetector(
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
-        backgroundColor: bgColor,
-        body: SingleChildScrollView(child: SafeArea(child: _buildContent())),
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildTopContainer(),
-      ],
-    );
-  }
-
-  Widget _buildTopContainer() {
-    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom != 0.0;
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildLogoRow(),
-          _buildTitle(),
-          _buildLoginForm(isKeyboardVisible),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogoRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildLogo('assets/images/logo-rsia-aisyiyah.png'),
-        _buildLogo('assets/images/logo-larsi.png'),
-      ],
-    );
-  }
-
-  Widget _buildLogo(String assetPath) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Image.asset(assetPath, height: 100, width: 100),
-    );
-  }
-
-  Widget _buildTitle() {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Text(
-            "Employee Self Service [ESS]",
-            style: TextStyle(fontSize: 22, color: textBlue, fontWeight: FontWeight.bold),
+        backgroundColor: Colors.grey[50], // Slightly off-white for contrast
+        body: SingleChildScrollView(
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height,
+            child: Stack(
+              children: [
+                _buildHeader(),
+                _buildLoginForm(),
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            "RSIA Aisyiyah Pekajangan",
-            style: TextStyle(fontSize: 18, color: textBlue),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.45,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: primaryColor,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(50),
+          bottomRight: Radius.circular(50),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.5),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLoginForm(bool isKeyboardVisible) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 25.0),
-      child: Form(
-        key: _formKey,
+      child: SafeArea(
         child: Stack(
-          clipBehavior: Clip.none,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              height: 300,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+            // Larsi Logo - Top Right & Smaller
+            Positioned(
+              top: 10,
+              right: 20,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
+                child: Image.asset('assets/images/logo-larsi.png',
+                    height: 40, width: 40),
               ),
+            ),
+
+            // Main Content - Center
+            Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildLoginHeader(),
-                  _buildUsernameField(),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        )
+                      ],
+                    ),
+                    child: Image.asset('assets/images/logo-rsia-aisyiyah.png',
+                        height: 90, width: 90),
+                  ),
                   const SizedBox(height: 20),
-                  _buildPasswordField(),
-                  if (!isKeyboardVisible) _buildForgotPassword(),
+                  const Text(
+                    "Employee Self Service",
+                    style: TextStyle(
+                      fontSize: 26,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "RSIA Aisyiyah Pekajangan",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 50), // Space for the card overlap
                 ],
               ),
             ),
-            _buildLoginButton()
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLoginHeader() {
-    return Column(
-      children: [
-        const Center(child: Text('Login', style: TextStyle(fontSize: 24))),
-        const SizedBox(height: 5),
-        Center(
-          child: Container(
-            decoration: BoxDecoration(color: line, borderRadius: BorderRadius.circular(2)),
-            width: MediaQuery.of(context).size.width / 6,
-            height: 4,
+  Widget _buildLoginForm() {
+    return Positioned(
+      top: MediaQuery.of(context).size.height * 0.35,
+      left: 20,
+      right: 20,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    "Welcome Back!",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    "Silahkan login untuk melanjutkan",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  _buildUsernameField(),
+                  const SizedBox(height: 20),
+                  _buildPasswordField(),
+                  const SizedBox(height: 30),
+                  _buildLoginButton(),
+                ],
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 30),
-      ],
+          const SizedBox(height: 30),
+          Center(
+            child: Text(
+              "© 2024 IT RSIA Aisyiyah Pekajangan",
+              style: TextStyle(color: Colors.grey[400], fontSize: 12),
+            ),
+          )
+        ],
+      ),
     );
   }
 
   Widget _buildUsernameField() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       decoration: BoxDecoration(
-        color: bgWhite,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: TextFormField(
-        maxLines: 1,
-        decoration: InputDecoration(hintText: labelUsername, border: InputBorder.none),
+        style: const TextStyle(fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          hintText: "Username",
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          prefixIcon: Icon(Icons.person_outline, color: primaryColor),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          filled: true,
+          fillColor: Colors.transparent,
+        ),
         onSaved: (value) => username = value!,
       ),
     );
@@ -207,68 +455,107 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildPasswordField() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       decoration: BoxDecoration(
-        color: bgWhite,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: primaryColor.withOpacity(0.3), blurRadius: 5, offset: const Offset(0, 2))],
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: TextFormField(
-        maxLines: 1,
         obscureText: _secureText,
+        style: const TextStyle(fontWeight: FontWeight.w600),
         decoration: InputDecoration(
-          hintText: labelPassword,
-          border: InputBorder.none,
+          hintText: "Password",
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          prefixIcon: Icon(Icons.lock_outline, color: primaryColor),
           suffixIcon: IconButton(
-            icon: Icon(_secureText ? Icons.visibility : Icons.visibility_off),
+            icon: Icon(
+              _secureText
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
+              color: Colors.grey[400],
+            ),
             onPressed: _togglePasswordVisibility,
           ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          filled: true,
+          fillColor: Colors.transparent,
         ),
         onSaved: (value) => password = value!,
       ),
     );
   }
 
-  Widget _buildForgotPassword() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15),
-      child: Center(
-        child: GestureDetector(
-          onTap: () {
-            // Msg.info(context, forgotPasswordMsg);
-          },
-          child: const Text(""),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLoginButton() {
-    return Positioned(
-      right: -0,
-      left: 0,
-      bottom: -20,
-      child: Center(
-        child: SizedBox(
-          width: 150,
-          child: ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                _formKey.currentState!.save();
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 55,
+            child: ElevatedButton(
+              onPressed: () {
                 _login();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              fixedSize: const Size.fromHeight(50),
-              backgroundColor: primaryColor,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            ),
-            child: Text(
-              _isLoading ? processingText : loginText,
-              style: TextStyle(color: textWhite, fontSize: 18, fontWeight: FontWeight.bold),
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                elevation: 5,
+                shadowColor: primaryColor.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 25,
+                      width: 25,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    )
+                  : const Text(
+                      "LOGIN",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
+                    ),
             ),
           ),
         ),
+        if (_biometricEnabled && _biometricAvailable) ...[
+          const SizedBox(width: 12),
+          _buildBiometricIconButton(),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBiometricIconButton() {
+    return InkWell(
+      onTap: _authenticateWithBiometric,
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        height: 55,
+        width: 60,
+        decoration: BoxDecoration(
+          color: primaryColor.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: primaryColor, width: 2),
+        ),
+        child: Icon(Icons.fingerprint, color: primaryColor, size: 30),
       ),
     );
   }

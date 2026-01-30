@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:rsia_employee_app/screen/index.dart';
 
-late BuildContext ctx;
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
 final _localNotification = FlutterLocalNotificationsPlugin();
 const _androidChannel = AndroidNotificationChannel(
@@ -26,24 +25,20 @@ Future<void> handleBackgroundMessage(RemoteMessage message) async {
       route = "/$route";
     }
 
-    print("Rote not null : $route");
+    print("Route not null (background) : $route");
 
     handleNotificationAction(route, data);
   } else {
-    Navigator.of(ctx).push(
-      MaterialPageRoute(
-        builder: (context) => const IndexScreen()
-      ),
-    );
+    navigatorKey.currentState?.pushReplacementNamed('/index');
   }
 }
 
 // function go to route
-Future<void> handleNotificationAction(String route, Map<String, dynamic> data) async {
+Future<void> handleNotificationAction(
+    String route, Map<String, dynamic> data) async {
+  print("Handle Notification Action : jumping to route $route");
 
-  print("Handle Notification Action : route $route");
-
-  Navigator.of(ctx).pushNamed(route, arguments: data);
+  navigatorKey.currentState?.pushNamed(route, arguments: data);
 }
 
 Future<void> handleMessage(RemoteMessage message) async {
@@ -58,15 +53,11 @@ Future<void> handleMessage(RemoteMessage message) async {
       route = "/$route";
     }
 
-    print("Rote not null : $route");
+    print("Route not null : $route");
 
     handleNotificationAction(route, data);
   } else {
-    Navigator.of(ctx).push(
-      MaterialPageRoute(
-        builder: (context) => const IndexScreen()
-      ),
-    );
+    navigatorKey.currentState?.pushReplacementNamed('/index');
   }
 }
 
@@ -83,8 +74,9 @@ Future initLocalNotification() async {
     },
   );
 
-  final platform = _localNotification.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()!;
-  platform.createNotificationChannel(_androidChannel);
+  final platform = _localNotification.resolvePlatformSpecificImplementation<
+      AndroidFlutterLocalNotificationsPlugin>();
+  await platform?.createNotificationChannel(_androidChannel);
 }
 
 Future initPushNotification() async {
@@ -113,7 +105,8 @@ Future initPushNotification() async {
       notification.body,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          _androidChannel.id, _androidChannel.name,
+          _androidChannel.id,
+          _androidChannel.name,
           channelDescription: _androidChannel.description,
           importance: _androidChannel.importance,
           icon: "@drawable/launcher_icon",
@@ -126,7 +119,6 @@ Future initPushNotification() async {
 
 class FirebaseApi {
   Future<void> initNotif(BuildContext context) async {
-    ctx = context;
     await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -138,7 +130,6 @@ class FirebaseApi {
     );
     final fCMToken = await _firebaseMessaging.getToken();
     print('FCM Token: $fCMToken');
-    print(ctx);
     initPushNotification();
     initLocalNotification();
   }

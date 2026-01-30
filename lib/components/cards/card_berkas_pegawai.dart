@@ -6,7 +6,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 // import 'package:flutter_downloader/flutter_downloader.dart';
 // import 'package:flutter_file_downloader/flutter_file_downloader.dart';
-import 'package:open_file_plus/open_file_plus.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:dio/dio.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
@@ -37,21 +37,21 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
     super.initState();
     checkFile();
   }
-  
+
   Future<void> requestPermission(downloadUrl) async {
     var storage = await Permission.storage.status;
     var image = await Permission.mediaLibrary.status;
     var mediaLocation = await Permission.accessMediaLocation.status;
 
-    if(!storage.isGranted) {
+    if (!storage.isGranted) {
       await Permission.storage.request();
     }
 
-    if(!image.isGranted) {
+    if (!image.isGranted) {
       await Permission.mediaLibrary.request();
     }
 
-    if(!mediaLocation.isGranted) {
+    if (!mediaLocation.isGranted) {
       await Permission.accessMediaLocation.request();
     }
 
@@ -94,11 +94,11 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
     }
 
     filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
-    
+
     File file = File(filePath);
     var isExist = await file.exists();
     if (isExist) {
-      await OpenFile.open(filePath);
+      await OpenFilex.open(filePath);
       setState(() {
         isDownloadContainerVisible = false;
         isHAveDownloading = true;
@@ -118,7 +118,7 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
       isDownloadContainerVisible = true;
     });
     try {
-      await dio.download(url, filePath, onReceiveProgress: ( rec, total ) {
+      await dio.download(url, filePath, onReceiveProgress: (rec, total) {
         setState(() {
           progressString = "${((rec / total) * 100).toStringAsFixed(0)}%";
         });
@@ -146,137 +146,126 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Stack(
-              clipBehavior: Clip.none,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // File Icon
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              fileExt == 'PDF' ? Icons.picture_as_pdf : Icons.image,
+              color: primaryColor,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 15),
+
+          // File Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  height: 70,
-                  width: (MediaQuery.of(context).size.width - 35) * 0.8,
-                  decoration: BoxDecoration(
-                    color: bgWhite,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withOpacity(0.3),
-                        blurRadius: 3,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
+                Text(
+                  widget.dataBerkasPegawai['master_berkas_pegawai']
+                      ['nama_berkas'],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.dataBerkasPegawai['master_berkas_pegawai']['nama_berkas'],
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        )
-                      ],
-                    ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  fileExt,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                Positioned(
-                  top: -3,
-                  right: -1,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(5),
-                      color: primaryColor,
+              ],
+            ),
+          ),
+
+          // Action Button
+          const SizedBox(width: 10),
+          if (downloading)
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                CircularProgressIndicator(
+                  value: double.tryParse(progressString.replaceAll('%', '')) !=
+                          null
+                      ? (double.parse(progressString.replaceAll('%', '')) / 100)
+                      : null,
+                  color: primaryColor,
+                  strokeWidth: 3,
+                ),
+                Text(
+                  progressString,
+                  style: const TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ],
+            )
+          else
+            InkWell(
+              onTap: () {
+                downloadFile(
+                    baseUrl + widget.dataBerkasPegawai['berkas'].toString());
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isHAveDownloading
+                      ? Colors.green.withOpacity(0.1)
+                      : primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      isHAveDownloading
+                          ? Icons.check_circle
+                          : Icons.download_rounded,
+                      color: isHAveDownloading ? Colors.green : primaryColor,
+                      size: 20,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      child: Text(
-                        fileExt,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: textWhite,
-                        ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isHAveDownloading ? "Buka" : "Unduh",
+                      style: TextStyle(
+                        color: isHAveDownloading ? Colors.green : primaryColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                  ),
+                    )
+                  ],
                 ),
-              ],
+              ),
             ),
-            const SizedBox(
-              width: 5,
-            ),
-            Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  height: 70,
-                  width: (MediaQuery.of(context).size.width - 35) * 0.2,
-                  decoration: BoxDecoration(
-                    color: bgWhite,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withOpacity(0.3),
-                        blurRadius: 3,
-                        offset: const Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      InkWell(
-                          onTap: () {
-                            downloadFile(baseUrl + widget.dataBerkasPegawai['berkas'].toString());
-                          },
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: <Widget>[
-                              if (!downloading)
-                                Icon(
-                                  isHAveDownloading ? Icons.menu_book_rounded : Icons.cloud_download_rounded,
-                                  color: primaryColor,
-                                  size: 32,
-                                ),
-                              downloading
-                                  ? Column(
-                                    children: [
-                                      Container(
-                                          width: 50,
-                                          height: 25,
-                                          padding: const EdgeInsets.all(8),
-                                          child: ClipRRect(
-                                            borderRadius: const BorderRadius.all(
-                                                Radius.circular(10)),
-                                            child: LinearProgressIndicator(
-                                              backgroundColor: bgColor,
-                                              color: primaryColor,
-                                            ),
-                                          )),
-                                      Text(progressString),
-                                    ],
-                                  )
-                                  : Container(),
-                            ],
-                          )),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(
-          height: 12,
-        )
-      ],
+        ],
+      ),
     );
   }
 }

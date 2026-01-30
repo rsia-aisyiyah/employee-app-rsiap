@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 import 'package:rsia_employee_app/utils/table_jaspel.dart';
 
@@ -39,7 +38,10 @@ class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
     num jmPotong = 0;
 
     if (widget.jp.jmRuangShare != 0 && widget.jp.jmTotalShare != 0) {
-      map["JasPel"] = showIcon ? '* * * * *' : Helper.convertToIdr((widget.jp.jmRuangShare ?? 0) + (widget.jp.jmTotalShare ?? 0), 0);
+      map["JasPel"] = showIcon
+          ? '* * * * *'
+          : Helper.convertToIdr(
+              (widget.jp.jmRuangShare ?? 0) + (widget.jp.jmTotalShare ?? 0), 0);
     }
 
     if (widget.jp.jmAsistenOk != 0) {
@@ -47,12 +49,14 @@ class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
         map["Asisten OK"] = showIcon
             ? '* * * * *'
             : '(+) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)), 0)}';
-        asistenOk = (widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0);
+        asistenOk = (widget.jp.jmAsistenOk ?? 0) /
+            (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0);
       } else {
         map["Asisten OK"] = showIcon
             ? '* * * * *'
             : '(+) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)), 0)}';
-        asistenOk = (widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0);
+        asistenOk = (widget.jp.jmAsistenOk ?? 0) /
+            (widget.jp.jasaPelayananAkun?.jmRs ?? 0);
       }
     }
     if (widget.jp.uangMakan != 0) {
@@ -60,21 +64,30 @@ class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
         map["Uang Makan"] = showIcon
             ? '* * * * *'
             : '(+) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)), 0)}';
-        uangMakan = (widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0);
+        uangMakan = (widget.jp.uangMakan ?? 0) /
+            (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0);
       } else {
-        map["Uang Makan"] =
-            showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)), 0)}';
-        uangMakan = (widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0);
+        map["Uang Makan"] = showIcon
+            ? '* * * * *'
+            : '(+) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)), 0)}';
+        uangMakan = (widget.jp.uangMakan ?? 0) /
+            (widget.jp.jasaPelayananAkun?.jmRs ?? 0);
       }
     }
 
-    map["Lebih Jam"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.lebihJam, 0)}';
+    map["Lebih Jam"] = showIcon
+        ? '* * * * *'
+        : '(+) ${Helper.convertToIdr(widget.jp.lebihJam, 0)}';
 
     if (widget.jp.oncallOk != 0) {
-      map["Oncall"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.oncallOk, 0)}';
+      map["Oncall"] = showIcon
+          ? '* * * * *'
+          : '(+) ${Helper.convertToIdr(widget.jp.oncallOk, 0)}';
     }
 
-    map["Tambahan Lain"] = showIcon ? '* * * * *' : '(+) ${Helper.convertToIdr(widget.jp.tambahan, 0)}';
+    map["Tambahan Lain"] = showIcon
+        ? '* * * * *'
+        : '(+) ${Helper.convertToIdr(widget.jp.tambahan, 0)}';
 
     jmBersih = (widget.jp.jmTotalFull ?? widget.jp.jmTotalShare ?? 0) +
         (widget.jp.jmRuangFull ?? widget.jp.jmRuangShare ?? 0) +
@@ -85,7 +98,8 @@ class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
         (widget.jp.tambahan ?? 0);
 
     if (widget.jp.jmTotalShare != 0) {
-      map["JasPel Bruto"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih, 0);
+      map["JasPel Bruto"] =
+          showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih, 0);
     }
     if (widget.jp.jmTotalFull != 0 && widget.jp.jmRuangFull != 0) {
       map["Potongan JasPel"] = showIcon
@@ -97,12 +111,16 @@ class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
         map["Potongan Asisten OK"] = showIcon
             ? '* * * * *'
             : '(-) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - ((widget.jp.jmAsistenOk ?? 0)), 0)}';
-        potAsistenOk = ((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - (widget.jp.jmAsistenOk ?? 0);
+        potAsistenOk = ((widget.jp.jmAsistenOk ?? 0) /
+                (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) -
+            (widget.jp.jmAsistenOk ?? 0);
       } else {
         map["Potongan Asisten OK"] = showIcon
             ? '* * * * *'
             : '(-) ${Helper.convertToIdr(((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - ((widget.jp.jmAsistenOk ?? 0)), 0)}';
-        potAsistenOk = ((widget.jp.jmAsistenOk ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - (widget.jp.jmAsistenOk ?? 0);
+        potAsistenOk = ((widget.jp.jmAsistenOk ?? 0) /
+                (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) -
+            (widget.jp.jmAsistenOk ?? 0);
       }
     }
     if (widget.jp.uangMakan != 0) {
@@ -110,104 +128,145 @@ class _CreateCardJasaMedisState extends State<CreateCardJasaMedis> {
         map["Potongan Uang Makan"] = showIcon
             ? '* * * * *'
             : '(-) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - ((widget.jp.uangMakan ?? 0)), 0)}';
-        potUangMakan = ((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) - ((widget.jp.uangMakan ?? 0));
+        potUangMakan = ((widget.jp.uangMakan ?? 0) /
+                (widget.jp.jasaPelayananAkun?.jmOkMitra ?? 0)) -
+            ((widget.jp.uangMakan ?? 0));
       } else {
         map["Potongan Uang Makan"] = showIcon
             ? '* * * * *'
             : '(-) ${Helper.convertToIdr(((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - ((widget.jp.uangMakan ?? 0)), 0)}';
-        potUangMakan = ((widget.jp.uangMakan ?? 0) / (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) - ((widget.jp.uangMakan ?? 0));
+        potUangMakan = ((widget.jp.uangMakan ?? 0) /
+                (widget.jp.jasaPelayananAkun?.jmRs ?? 0)) -
+            ((widget.jp.uangMakan ?? 0));
       }
     }
 
-    map["Potongan Obat"] = showIcon ? '* * * * *' : '(-) ${Helper.convertToIdr((widget.jp.potonganObat), 0)}';
+    map["Potongan Obat"] = showIcon
+        ? '* * * * *'
+        : '(-) ${Helper.convertToIdr((widget.jp.potonganObat), 0)}';
 
-    map["Potongan Lain"] = showIcon ? '* * * * *' : '(-) ${Helper.convertToIdr((widget.jp.potonganLain), 0)}';
+    map["Potongan Lain"] = showIcon
+        ? '* * * * *'
+        : '(-) ${Helper.convertToIdr((widget.jp.potonganLain), 0)}';
 
-    jmPotong = (widget.jp.potonganLain ?? 0) + (widget.jp.potonganObat ?? 0) +
-        (
-            (
-                (widget.jp.jmTotalFull ?? widget.jp.jmTotalShare ?? 0) +
-                (widget.jp.jmRuangFull ?? widget.jp.jmRuangShare ?? 0)
-            ) -
-            ((widget.jp.jmTotalShare ?? 0) + (widget.jp.jmRuangShare ?? 0))
-        ) +
+    jmPotong = (widget.jp.potonganLain ?? 0) +
+        (widget.jp.potonganObat ?? 0) +
+        (((widget.jp.jmTotalFull ?? widget.jp.jmTotalShare ?? 0) +
+                (widget.jp.jmRuangFull ?? widget.jp.jmRuangShare ?? 0)) -
+            ((widget.jp.jmTotalShare ?? 0) + (widget.jp.jmRuangShare ?? 0))) +
         potAsistenOk +
         potUangMakan +
-        (((widget.jp.jmTotalFull ?? 0) + (widget.jp.jmRuangFull ?? 0)) * (widget.jp.potonganJaspel ?? 0));
+        (((widget.jp.jmTotalFull ?? 0) + (widget.jp.jmRuangFull ?? 0)) *
+            (widget.jp.potonganJaspel ?? 0));
 
     if (jmPotong != 0) {
-      map["Total Potongan"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmPotong, 0);
+      map["Total Potongan"] =
+          showIcon ? '* * * * *' : Helper.convertToIdr(jmPotong, 0);
     }
-    map["Jaspel Diterima"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih - jmPotong, 0);
+    // Removed Jaspel Diterima from map to display separately
+    // map["Jaspel Diterima"] = showIcon ? '* * * * *' : Helper.convertToIdr(jmBersih - jmPotong, 0);
 
-    return Column(
-      children: [
-        Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.only(
-                top: 0,
-                left: 15,
-                right: 15,
-                bottom: 10,
-              ),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: bgWhite,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: primaryColor,
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor,
-                    blurRadius: 3,
-                    offset: const Offset(2, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        "${Helper.numToMonth(int.tryParse(widget.jp.bulan ?? '') ?? 1)} ${widget.jp.tahun ?? ''}",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: fontSemiBold,
-                        ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      Helper.numToMonth(
+                          int.tryParse(widget.jp.bulan ?? '') ?? 1),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
                       ),
-                      Expanded(
-                        child: Align(
-                            alignment: Alignment.centerRight,
-                            child: IconButton(
-                              onPressed: () {
-                                _changeIcon();
-                              },
-                              icon: Icon(showIcon ? Icons.visibility_off : Icons.visibility),
-                            )),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  GenTableJaspel(
-                    data: map,
-                    textStyle: TextStyle(
-                      fontSize: 14,
-                      fontWeight: fontSemiBold,
                     ),
-                    textAlign: TextAlign.right,
+                    Text(
+                      widget.jp.tahun ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: _changeIcon,
+                  icon: Icon(
+                    showIcon ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-        const SizedBox(height: 15),
-      ],
+          ),
+
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F0F0)),
+
+          // Body (Table)
+          Padding(
+            padding: const EdgeInsets.all(15),
+            child: GenTableJaspel(
+              data: map,
+              textStyle: const TextStyle(
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.right,
+            ),
+          ),
+
+          // Footer (Total)
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.05),
+              border:
+                  Border(top: BorderSide(color: primaryColor.withOpacity(0.1))),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Jaspel Diterima",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  showIcon
+                      ? '* * * * *'
+                      : Helper.convertToIdr(jmBersih - jmPotong, 0),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

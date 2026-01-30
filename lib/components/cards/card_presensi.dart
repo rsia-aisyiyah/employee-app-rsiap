@@ -2,224 +2,147 @@ import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 
-cardPresensi(presensi) {
-  return Column(
-    children: [
-      Stack(
-        children: [
-          Container(
-            padding: const EdgeInsets.only(left: 10, right: 10, top: 5, bottom: 10),
-            width: double.infinity,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  children: [
-                    Container(
-                      alignment: Alignment.center,
-                      height: 55,
-                      width: 65,
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: bgWhite,
-                        boxShadow: [
-                          BoxShadow(
-                            color: primaryColor.withOpacity(0.3),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
-                          )
-                        ],
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(10),
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            Helper.dayToNum(presensi['jam_datang']),
-                            style: TextStyle(
-                                color: textColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            Helper.numtoDay(presensi['jam_datang']),
-                            style: TextStyle(color: textColor, fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      alignment: Alignment.topCenter,
-                      height: 55,
-                      width: 70,
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        Helper.dateToMonthYear(presensi['jam_datang']),
-                        style: const TextStyle(
-                            fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+Widget cardPresensi(presensi) {
+  Color statusColor = Colors.red;
+  if (presensi['status'] == "Tepat Waktu") {
+    statusColor = Colors.green;
+  } else if (presensi['status'] == "Terlambat Toleransi") {
+    statusColor = Colors.orange;
+  }
+
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.05),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        // Date Box
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Text(
+                Helper.dayToNum(presensi['jam_datang']),
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(
-                  width: 5,
+              ),
+              Text(
+                Helper.dateToMonthYear(presensi['jam_datang']),
+                style: TextStyle(
+                  color: primaryColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: bgWhite,
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Masuk",
-                                  style: TextStyle(color: textColor),
-                                ),
-                                Text(
-                                  Helper.dateTimeToDate(presensi['jam_datang']),
-                                  style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.timer_outlined,
-                              color: Colors.green,
-                            )
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: bgWhite,
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "Pulang",
-                                  style: TextStyle(color: textColor),
-                                ),
-                                Text(
-                                  Helper.dateTimeToDate(presensi['jam_pulang']),
-                                  style: TextStyle(
-                                      color: textColor,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.timer_off_outlined,
-                              color: Colors.red,
-                            )
-                          ],
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 5,
-                      ),
-                      Container(
-                        // alignment: Alignment.center,
-                        height: 40,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: bgWhite,
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryColor.withOpacity(0.3),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            )
-                          ],
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(10),
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(
-                                  presensi['status'],
-                                  style: TextStyle(
-                                      color: textColor,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            presensi['status'] == "Tepat Waktu"
-                                ? const Icon(
-                                    Icons.info_rounded,
-                                    color: Colors.greenAccent,
-                                  )
-                                : presensi['status'] == "Terlambat Toleransi"
-                                    ? Icon(
-                                        Icons.info_rounded,
-                                        color: Colors.amber[300],
-                                      )
-                                    : const Icon(
-                                        Icons.info_rounded,
-                                        color: Colors.red,
-                                      )
-                          ],
-                        ),
-                      ),
-                    ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 15),
+
+        // Time Details
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.login, size: 16, color: Colors.green),
+                  const SizedBox(width: 5),
+                  Text(
+                    "Masuk: ",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                  Text(
+                    Helper.dateTimeToDate(presensi['jam_datang']),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Row(
+                children: [
+                  Icon(Icons.logout, size: 16, color: Colors.red),
+                  const SizedBox(width: 5),
+                  Text(
+                    "Pulang: ",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                  Text(
+                    Helper.dateTimeToDate(presensi['jam_pulang']),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Status Pill (Now inside Column to prevent collision)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  presensi['status'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: statusColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+        ),
+
+        // Duration Column (Right Side)
+        Container(
+          height: 50,
+          width: 1,
+          color: Colors.grey[100],
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            const Text(
+              "Total Kerja",
+              style: TextStyle(fontSize: 10, color: Colors.grey),
             ),
-          )
-        ],
-      )
-    ],
+            const SizedBox(height: 2),
+            Text(
+              Helper.getDuration(
+                  presensi['jam_datang'], presensi['jam_pulang']),
+              style: TextStyle(
+                color: primaryColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
   );
 }

@@ -6,7 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/cards/card_presensi.dart';
-import 'package:rsia_employee_app/components/loadingku.dart';
+import 'package:rsia_employee_app/components/skeletons/skeleton_list.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
@@ -84,7 +84,8 @@ class _PresensiState extends State<Presensi> {
     // If end is not provided, default to the last day of the current month
     DateTime firstDayOfNextMonth;
     if (now.month == 12) {
-      firstDayOfNextMonth = DateTime(now.year + 1, 1, 1); // January of the next year
+      firstDayOfNextMonth =
+          DateTime(now.year + 1, 1, 1); // January of the next year
     } else {
       firstDayOfNextMonth = DateTime(now.year, now.month + 1, 1);
     }
@@ -92,10 +93,13 @@ class _PresensiState extends State<Presensi> {
 
     var res = await Api().postData({
       "scopes": [
-        { "name" : "withRange", "parameters" : [dateFormat.format(start), dateFormat.format(end)] }
+        {
+          "name": "withRange",
+          "parameters": [dateFormat.format(start), dateFormat.format(end)]
+        }
       ],
-      "sort" : [
-        {"field" : "jam_datang", "direction" : "desc"}
+      "sort": [
+        {"field": "jam_datang", "direction": "desc"}
       ]
     }, "/pegawai/${box.read('sub')}/presensi/search?limit=31");
 
@@ -110,94 +114,149 @@ class _PresensiState extends State<Presensi> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (isLoding) {
-      return loadingku();
-    } else {
-      return Scaffold(
-        backgroundColor: bgColor,
-        appBar: AppBar(
-          title: Text(
-            "Presensi",
-            style: TextStyle(
-              color: textWhite,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          backgroundColor: primaryColor,
-          actions: [
-            IconButton(
-              onPressed: () {
-                _onFilterIconClicked(context);
-              },
-              icon: Icon(
-                Icons.calendar_month,
-                color: textWhite,
-              ),
-            ),
-            if (isFilter)
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    isLoding = true;
-                    isFilter = false;
-
-                    // dateinput.text = "";
-
-                    filterData.clear();
-                    dateinput.clear();
-                    searchController.clear();
-                  });
-
-                  _fetchData().then((value) {
-                    _setData(value);
-                  });
-                },
-                icon: Icon(
-                  Icons.clear,
-                  color: textWhite,
-                ),
-              )
-            else
-              const SizedBox(),
-          ],
+  Widget _buildTopHeader() {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 10,
+        left: 20,
+        right: 20,
+        bottom: 25,
+      ),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: primaryColor,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(30),
+          bottomRight: Radius.circular(30),
         ),
-        body: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.4),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
             children: [
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 5),
-                itemCount: dataPresensi.isEmpty ? 1 : dataPresensi.length,
-                itemBuilder: (context, index) {
-                  if (dataPresensi.isNotEmpty) {
-                    return InkWell(
-                        onTap: () {}, child: cardPresensi(dataPresensi[index]));
-                  }
-
-                  return const Center(
-                    child: Text(
-                      "Data tidak ditemukan",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  );
-                },
+              InkWell(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.arrow_back, color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: 15),
+              const Text(
+                "Riwayat Presensi",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
-        ),
-      );
-    }
+          Row(
+            children: [
+              if (isFilter)
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      isLoding = true;
+                      isFilter = false;
+                      filterData.clear();
+                      dateinput.clear();
+                      searchController.clear();
+                    });
+                    _fetchData().then((value) {
+                      _setData(value);
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child:
+                        const Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
+                ),
+              const SizedBox(width: 10),
+              InkWell(
+                onTap: () => _onFilterIconClicked(context),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: const Icon(Icons.calendar_month, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: Column(
+        children: [
+          _buildTopHeader(),
+          Expanded(
+            child: isLoding
+                ? const SkeletonList()
+                : dataPresensi.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_busy,
+                                size: 80, color: Colors.grey[300]),
+                            const SizedBox(height: 10),
+                            Text(
+                              "Belum ada data presensi",
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 20, horizontal: 20),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: dataPresensi.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 5),
+                        itemBuilder: (context, index) {
+                          return cardPresensi(dataPresensi[index]);
+                        },
+                      ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<dynamic> _onFilterIconClicked(BuildContext context) {
@@ -214,16 +273,9 @@ class _PresensiState extends State<Presensi> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Filter Presensi",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold
-                )
-              ),
-
+              const Text("Filter Presensi",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 5),
-
               TextField(
                 controller: dateinput,
                 decoration: InputDecoration(
@@ -247,9 +299,7 @@ class _PresensiState extends State<Presensi> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(
-                      color: dateinput.text.isNotEmpty
-                          ? primaryColor
-                          : bgWhite,
+                      color: dateinput.text.isNotEmpty ? primaryColor : bgWhite,
                       width: 2,
                     ),
                   ),
@@ -275,12 +325,14 @@ class _PresensiState extends State<Presensi> {
 
                   if (res != null) {
                     DateFormat dateFormat = DateFormat('yyyy-MM-dd');
-                    _fetchData(start: res.first!, end: res.last!).then((value) => _setData(value));
+                    _fetchData(start: res.first!, end: res.last!)
+                        .then((value) => _setData(value));
 
                     setState(() {
-                      dateinput.text = "${dateFormat.format(res.first!)} - ${dateFormat.format(res.last!)}";
+                      dateinput.text =
+                          "${dateFormat.format(res.first!)} - ${dateFormat.format(res.last!)}";
                     });
-                    
+
                     Navigator.pop(context);
                   }
                 },

@@ -1,8 +1,6 @@
-
-import 'dart:async';
-
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:rsia_employee_app/api/firebase_api.dart';
+import 'package:rsia_employee_app/firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -13,31 +11,63 @@ import 'package:rsia_employee_app/screen/login.dart';
 import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:rsia_employee_app/screen/menu/helpdesk_main.dart';
+// import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get_storage/get_storage.dart';
 
 Future<void> main() async {
-  runZonedGuarded<Future<void>>(() async {
-    try {
-      WidgetsFlutterBinding.ensureInitialized();
+  print('🚀 Starting app initialization...');
+  WidgetsFlutterBinding.ensureInitialized();
+  print('✅ WidgetsFlutterBinding initialized');
 
-      await Firebase.initializeApp();
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+  // Initialize Config (Network Check)
+  await AppConfig.init();
 
-      await initializeDateFormatting('id_ID', null);
-      await GetStorage.init();
-      await FlutterDownloader.initialize(
-        debug: false,
-        ignoreSsl: false, // Changed to false for security reasons
-      );
+  try {
+    print('🔥 Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('✅ Firebase initialized');
+  } catch (e, stack) {
+    print('❌ Firebase init error: $e');
+    print('Stack: $stack');
+  }
 
-      runApp(const MyApp());
-    } catch (e, stackTrace) {
-      await FirebaseCrashlytics.instance.recordError(e, stackTrace);
-    }
-  }, (error, stackTrace) async {
-    await FirebaseCrashlytics.instance.recordError(error, stackTrace);
-  });
+  try {
+    print('📅 Initializing date formatting...');
+    await initializeDateFormatting('id_ID', null);
+    print('✅ Date formatting initialized');
+  } catch (e) {
+    print('❌ Error initializing date formatting: $e');
+  }
+
+  try {
+    print('💾 Initializing GetStorage...');
+    await GetStorage.init();
+    print('✅ GetStorage initialized');
+  } catch (e) {
+    print('❌ Error initializing GetStorage: $e');
+  }
+
+  // FlutterDownloader only supports Android and iOS
+  // Temporarily disabled for iOS due to potential crash
+  // if (Platform.isAndroid) {
+  //   try {
+  //     print('⬇️ Initializing FlutterDownloader...');
+  //     await FlutterDownloader.initialize(
+  //       debug: false,
+  //       ignoreSsl: false, // Changed to false for security reasons
+  //     );
+  //     print('✅ FlutterDownloader initialized');
+  //   } catch (e) {
+  //     print('❌ Error initializing FlutterDownloader: $e');
+  //   }
+  // }
+
+  print('🎯 Running app...');
+  runApp(const MyApp());
+  print('✅ App started successfully');
 }
 
 class MyApp extends StatelessWidget {
@@ -47,9 +77,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData(
-        useMaterial3: false
-      ),
+      navigatorKey: navigatorKey,
+      theme: ThemeData(useMaterial3: false),
       title: appName,
       debugShowCheckedModeBanner: false,
       home: const Directionality(
@@ -61,7 +90,8 @@ class MyApp extends StatelessWidget {
         '/index': (context) => const IndexScreen(),
         '/profile': (context) => const ProfilePage(),
         '/logout': (context) => const LogoutScreen(),
-        '/undangan': (context) => const Undangan()
+        '/undangan': (context) => const Undangan(),
+        '/helpdesk_main': (context) => const HelpdeskMainScreen(),
       },
     );
   }
@@ -97,7 +127,7 @@ class CheckAuth extends StatelessWidget {
     }
 
     return FutureBuilder(
-      future: authCheck(),
+        future: authCheck(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Scaffold(
@@ -124,7 +154,6 @@ class CheckAuth extends StatelessWidget {
           }
 
           return const LoginScreen();
-        }
-    );
+        });
   }
 }

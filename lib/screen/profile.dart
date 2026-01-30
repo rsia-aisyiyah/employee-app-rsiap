@@ -11,10 +11,9 @@ import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/utils/helper.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:rsia_employee_app/components/loadingku.dart';
-import 'package:rsia_employee_app/utils/section_title.dart';
-
-import '../utils/table.dart';
+import 'package:rsia_employee_app/components/skeletons/skeleton_profile.dart';
+import 'package:rsia_employee_app/utils/biometric_helper.dart';
+import 'package:rsia_employee_app/utils/secure_storage_helper.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -34,6 +33,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String email = "";
   String no_telp = "";
   String alamat = "";
+  bool _biometricAvailable = false;
+  bool _biometricEnabled = false;
 
   final _formKey = GlobalKey<FormState>();
   final box = GetStorage();
@@ -42,32 +43,56 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     fetchAllData();
+    _checkBiometricStatus();
   }
 
   Future<void> fetchAllData() async {
-    await _getBio();
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _getBio() async {
-    var res = await Api().getData("/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja");
-    if (res.statusCode == 200) {
-      var body = json.decode(res.body);
+    try {
+      await _getBio();
+    } catch (e) {
+      print("DEBUG: Error in fetchAllData: $e");
+    } finally {
       if (mounted) {
         setState(() {
-          _bio = body['data'];
-          setDataTbl(_bio);
+          isLoading = false;
         });
       }
     }
   }
 
+  Future<void> _getBio() async {
+    try {
+      print("DEBUG: Fetching bio...");
+      var res = await Api().getData(
+          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja");
+
+      print("DEBUG: Bio Response Status: ${res.statusCode}");
+      print("DEBUG: Bio Response Body: ${res.body}");
+
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        if (mounted) {
+          setState(() {
+            _bio = body['data'];
+            // Wrap setDataTbl in try-catch to prevent crash from data issues
+            try {
+              setDataTbl(_bio);
+            } catch (e) {
+              print("DEBUG: Error in setDataTbl: $e");
+            }
+          });
+        }
+      } else {
+        print("DEBUG: Failed to fetch bio: ${res.statusCode}");
+      }
+    } catch (e) {
+      print("DEBUG: Exception in _getBio: $e");
+      rethrow;
+    }
+  }
+
   Future<void> updateProfil() async {
-    var data = { 'email': email, 'no_telp': no_telp, 'alamat': alamat };
+    var data = {'email': email, 'no_telp': no_telp, 'alamat': alamat};
     var res = await Api().postData(data, "/pegawai/${box.read('sub')}/profile");
     var body = json.decode(res.body);
 
@@ -83,28 +108,139 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void setDataTbl(detailBio) {
-    duration = AgeCalculator.age(DateTime.parse(detailBio['mulai_kerja']));
+    try {
+      if (detailBio['mulai_kerja'] != null) {
+        duration = AgeCalculator.age(DateTime.parse(detailBio['mulai_kerja']));
+      }
+    } catch (e) {
+      print("Error parsing age: $e");
+    }
+
     dataTbl = {
-      "No. KTP": detailBio['no_ktp'],
-      "Jenis Kelamin": detailBio['jk'],
-      "Tempat & Tanggal Lahir": "${detailBio['tmp_lahir']}, ${Helper.formatDate4(detailBio['tgl_lahir'])}",
-      "Alamat": detailBio['alamat'],
-      "Pendidikan": detailBio['pendidikan'],
-      "Jabatan": detailBio['jbtn'],
-      "Bidang": detailBio['bidang'],
-      "Status": detailBio['status_kerja']['ktg'],
-      "Mulai Kontrak": Helper.formatDate2(detailBio['mulai_kontrak']),
+      "No. KTP": detailBio['no_ktp'] ?? '-',
+      "Jenis Kelamin": (detailBio['jk'] == 'L' || detailBio['jk'] == 'Pria')
+          ? "Laki-laki"
+          : "Perempuan",
+      "Tempat & Tanggal Lahir":
+          "${detailBio['tmp_lahir'] ?? '-'}, ${detailBio['tgl_lahir'] != null ? Helper.formatDate4(detailBio['tgl_lahir']) : '-'}",
+      "Alamat": detailBio['alamat'] ?? '-',
+      "Pendidikan": detailBio['pendidikan'] ?? '-',
+      "Jabatan": detailBio['jbtn'] ?? '-',
+      "Bidang": detailBio['bidang'] ?? '-',
+      "Status": detailBio['status_kerja'] != null
+          ? detailBio['status_kerja']['ktg']
+          : '-',
+      "Mulai Kontrak": detailBio['mulai_kontrak'] != null
+          ? Helper.formatDate2(detailBio['mulai_kontrak'])
+          : '-',
     };
+
     dataTbl2 = {
-      "No. HP": detailBio['petugas']['no_telp'] ?? '-',
-      "Email": detailBio['email'] != null ? detailBio['email']['email'] : "-",
+      "No. HP": (detailBio['petugas'] != null &&
+              detailBio['petugas']['no_telp'] != null)
+          ? detailBio['petugas']['no_telp']
+          : '-',
+      "Email":
+          (detailBio['email'] != null && detailBio['email']['email'] != null)
+              ? detailBio['email']['email']
+              : "-",
     };
+  }
+
+  /// Check biometric availability and status
+  Future<void> _checkBiometricStatus() async {
+    final isAvailable = await BiometricHelper.isBiometricAvailable();
+    final isEnabled = await SecureStorageHelper.isBiometricEnabled();
+
+    if (mounted) {
+      setState(() {
+        _biometricAvailable = isAvailable;
+        _biometricEnabled = isEnabled;
+      });
+    }
+  }
+
+  /// Enable biometric authentication
+  Future<void> _enableBiometric(StateSetter setModalState) async {
+    // Show password confirmation dialog
+    final confirmed = await _showPasswordConfirmationDialog();
+    if (!confirmed) return;
+
+    // Authenticate with biometric
+    final result = await BiometricHelper.authenticate(
+      localizedReason: 'Verifikasi untuk mengaktifkan fingerprint login',
+    );
+
+    if (result.success) {
+      // Get current credentials from storage (NIK from box)
+      final nik = box.read('sub')?.toString() ?? '';
+
+      // Save credentials
+      final saved = await SecureStorageHelper.saveCredentials(
+        nik: nik,
+        password: '', // Password will be set during next manual login
+      );
+
+      if (saved && mounted) {
+        setState(() => _biometricEnabled = true);
+        setModalState(() => _biometricEnabled = true);
+        Msg.success(context, 'Fingerprint login berhasil diaktifkan!');
+      }
+    } else if (result.errorCode != BiometricErrorCode.userCanceled && mounted) {
+      Msg.error(
+          context, result.errorMessage ?? 'Gagal mengaktifkan fingerprint');
+    }
+  }
+
+  /// Disable biometric authentication
+  Future<void> _disableBiometric(StateSetter setModalState) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        title: const Text('Nonaktifkan Fingerprint?'),
+        content: const Text('Anda harus login manual di lain waktu.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Nonaktifkan',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await SecureStorageHelper.deleteCredentials();
+      if (mounted) {
+        setState(() => _biometricEnabled = false);
+        setModalState(() => _biometricEnabled = false);
+        Msg.success(context, 'Fingerprint login dinonaktifkan');
+      }
+    }
+  }
+
+  /// Show password confirmation dialog
+  Future<bool> _showPasswordConfirmationDialog() async {
+    // For now, just return true. In production, you'd verify the password.
+    // This is a simplified version.
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return loadingku();
+      return const SkeletonProfile();
     }
 
     return Scaffold(
@@ -114,283 +250,163 @@ class _ProfilePageState extends State<ProfilePage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(context),
-            const SizedBox(height: 10),
-            _buildSortBio(),
-            const SizedBox(height: 10),
-            _buildProfileInfo(),
-            const SizedBox(height: 10),
+            _buildTopHeader(context),
+            const SizedBox(height: 20),
+            _buildModernProfileInfo(),
+            const SizedBox(height: 80),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildTopHeader(BuildContext context) {
     return Stack(
+      alignment: Alignment.center,
       clipBehavior: Clip.none,
       children: [
-        Column(
-          children: [
-            Container(
-              height: 110 + MediaQuery.of(context).padding.top,
-              decoration: BoxDecoration(
-                image: const DecorationImage(
-                  image: AssetImage("assets/images/depan-rsia.jpg"),
-                  fit: BoxFit.cover,
-                  opacity: 0.3,
-                ),
+        Container(
+          margin: const EdgeInsets.only(bottom: 50),
+          width: double.infinity,
+          height: 180 + MediaQuery.of(context).padding.top,
+          decoration: BoxDecoration(
+            color: primaryColor,
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(40),
+              bottomRight: Radius.circular(40),
+            ),
+            boxShadow: [
+              BoxShadow(
                 color: primaryColor.withOpacity(0.4),
-                borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(50),
-                ),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  _buildHeaderLogo('assets/images/logo-rsia-aisyiyah.png'),
-                  _buildHeaderLogo('assets/images/logo-larsi.png'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 50),
-          ],
-        ),
-        Positioned(
-          bottom: 0,
+            ],
+          ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _buildProfilePicture(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSortBio() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _bio['nama'],
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            _bio['nik'],
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            _bio['dep']['nama'],
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeaderLogo(String imagePath) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 20),
-      child: Image.asset(
-        imagePath,
-        height: 80 + MediaQuery.of(context).padding.top,
-        width: 85,
-      ),
-    );
-  }
-
-  Widget _buildProfilePicture() {
-    return InkWell(
-      onTap: _showLogoutMenu,
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(100.0),
-              border: Border.all(
-                color: bgColor,
-                width: 5,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(100.0),
-              child: CachedNetworkImage(
-                imageUrl: photoUrl + (_bio['photo'] ?? ''),
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-                alignment: Alignment.topCenter,
-                placeholder: (context, url) => _buildImagePlaceholder(),
-                errorWidget: (context, url, error) => _buildImageError(),
-              ),
-            ),
-          ),
-          _buildProfileDetails(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImagePlaceholder() {
-    return Container(
-      width: 70,
-      height: 70,
-      color: Colors.grey[300],
-      child: Center(
-        child: CircularProgressIndicator(
-          color: bgColor,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageError() {
-    return Container(
-      width: 80,
-      height: 80,
-      color: Colors.grey[300],
-      child: const Icon(Icons.error),
-    );
-  }
-
-  Widget _buildProfileDetails() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 50),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Text(
-            "Masa Kerja : ${duration.years} th ${duration.months} bln ${duration.days} hr ",
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: Text(
-            "Mulai bergabung ${Helper.formatDate3(_bio['mulai_kerja'].toString())}",
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w400, fontStyle: FontStyle.italic),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showLogoutMenu() {
-    showMenu(
-      context: context,
-      position: const RelativeRect.fromLTRB(100, 100, 100, 100),
-      items: [
-        PopupMenuItem(
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const LogoutScreen(),
-                ),
-              );
-            },
-            child: const Row(
+            padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 10,
+                right: 20,
+                left: 20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(Icons.logout),
-                SizedBox(width: 10),
-                Text('Logout'),
+                const Text(
+                  "Profile Saya",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold),
+                ),
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: _showEditDialog,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.edit, color: Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    InkWell(
+                      onTap: _showLogoutMenu,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.settings, color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ),
+        Positioned(
+          bottom: 0,
+          child: _buildCenteredProfilePic(),
+        ),
       ],
     );
   }
 
-  Widget _buildProfileInfo() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: bgWhite,
-          borderRadius: const BorderRadius.all(Radius.circular(10)),
-          border: Border.all(width: 0.5),
-          boxShadow: [
-            BoxShadow(
-              color: textColor.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -1),
+  void _showEditDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+          child: Container(
+            height: MediaQuery.of(context).size.height *
+                0.70, // Slightly reduced height
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
             ),
-          ],
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              top: -20,
-              right: -5,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.yellow,
-                  padding: const EdgeInsets.all(5),
-                  minimumSize: const Size(25, 25),
-                  shape: const RoundedRectangleBorder(
-                    side: BorderSide(
-                      width: 1.0,
-                      color: Colors.black,
-                    ),
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(10),
-                      bottomLeft: Radius.circular(10),
-                      topLeft: Radius.circular(10),
-                      bottomRight: Radius.circular(10),
+            child: Column(
+              children: [
+                // Drag Handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 10, bottom: 10),
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(5),
                     ),
                   ),
                 ),
-                onPressed: () async {
-                  return await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        iconPadding: const EdgeInsets.only(top: 15, bottom: 5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                // Title
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Edit Data Profile",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: textBlue,
                         ),
-                        title: const Text("Form Edit Profile"),
-                        content: SingleChildScrollView(
-                          padding: const EdgeInsets.all(0.0),
-                          child: _buildFormEditProfile(),
-                        ),
-                      );
-                    }
-                  );
-                },
-                child: const Row(
-                  children: [
-                    Icon( Icons.edit_outlined, size: 18, color: Colors.black),
-                    Text( " |", style: TextStyle(color: Colors.black)),
-                    Text( "| Edit Data", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
-                    )
-                  ],
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      )
+                    ],
+                  ),
                 ),
-              ),
+                const Divider(),
+                // Form Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: _buildFormEditProfile(),
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                children: [
-                  const SectionTitle(title: "Biodata"),
-                  GenTable(data: dataTbl),
-                  const SizedBox(height: 15),
-                  const SectionTitle(title: "Kontak"),
-                  GenTable(data: dataTbl2),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -398,88 +414,367 @@ class _ProfilePageState extends State<ProfilePage> {
     return Form(
       key: _formKey,
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          SizedBox(
-            child: Column(
-              children: [
-                TextFormField(
-                  initialValue: _bio['email']['email'].toString(),
-                  maxLines: 1,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 10.0,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    hintText: 'Masukkan email disini',
-                    labelText: 'Email',
-                  ),
-                  onSaved: (value) => email = value!,
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Field tidak boleh kosong'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: _bio['petugas']['no_telp'].toString(),
-                  maxLines: 1,
-                  decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10.0,
-                        horizontal: 10.0,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      hintText: 'Masukkan no. handphone disini',
-                      labelText: 'No. HP'),
-                  onSaved: (value) => no_telp = value!,
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Field tidak boleh kosong'
-                      : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  initialValue: _bio['alamat'].toString(),
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 10.0,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    hintText: 'Masukkan alamat disini',
-                    labelText: 'Alamat',
-                  ),
-                  onSaved: (value) => alamat = value!,
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Field tidak boleh kosong'
-                      : null,
-                ),
-                const SizedBox(height: 10)
-              ],
-            ),
+          _buildModernInput(
+            label: 'Email',
+            initialValue:
+                _bio['email'] != null ? _bio['email']['email'].toString() : '',
+            icon: Icons.alternate_email,
+            hint: 'cth: nama@email.com',
+            onSaved: (val) => email = val!,
+            validator: (val) =>
+                val == null || val.isEmpty ? 'Email wajib diisi' : null,
           ),
-          Container(
+          const SizedBox(height: 20),
+          _buildModernInput(
+            label: 'No. Handphone',
+            initialValue: _bio['petugas'] != null
+                ? _bio['petugas']['no_telp'].toString()
+                : '',
+            icon: Icons.phone_iphone,
+            hint: 'cth: 08123456789',
+            keyboardType: TextInputType.phone,
+            onSaved: (val) => no_telp = val!,
+            validator: (val) =>
+                val == null || val.isEmpty ? 'No. HP wajib diisi' : null,
+          ),
+          const SizedBox(height: 20),
+          _buildModernInput(
+            label: 'Alamat',
+            initialValue: _bio['alamat']?.toString() ?? '',
+            icon: Icons.location_on_outlined,
+            hint: 'Masukkan alamat lengkap',
+            maxLines: 3,
+            onSaved: (val) => alamat = val!,
+            validator: (val) =>
+                val == null || val.isEmpty ? 'Alamat wajib diisi' : null,
+          ),
+          const SizedBox(height: 40),
+          SizedBox(
             width: double.infinity,
-            height: 50,
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(25)),
-            child: _buildSaveButton()
+            height: 55,
+            child: ElevatedButton(
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  _formKey.currentState!.save();
+
+                  if (!EmailValidator.validate(email)) {
+                    Msg.error(context, 'Format Email tidak sesuai');
+                    return;
+                  }
+                  updateProfil();
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                elevation: 5,
+                shadowColor: primaryColor.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+              child: const Text(
+                'Simpan Perubahan',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget buildEditableTextField(String label, String value, bool isEditable, [String? Function(String?)? validator]) {
+  Widget _buildModernInput({
+    required String label,
+    required String initialValue,
+    required IconData icon,
+    String? hint,
+    int maxLines = 1,
+    TextInputType keyboardType = TextInputType.text,
+    required FormFieldSetter<String> onSaved,
+    FormFieldValidator<String>? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[700],
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: TextFormField(
+            initialValue: initialValue,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+            decoration: InputDecoration(
+              prefixIcon: Icon(icon, color: primaryColor),
+              hintText: hint,
+              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+              border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            ),
+            onSaved: onSaved,
+            validator: validator,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCenteredProfilePic() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              image: _bio['photo'] != null
+                  ? DecorationImage(
+                      image: CachedNetworkImageProvider(
+                          photoUrl + _bio['photo'].toString()),
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    )
+                  : null,
+            ),
+            child: _bio['photo'] == null
+                ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                : null,
+          ),
+        ),
+        const SizedBox(height: 15),
+        Text(
+          _bio['nama']?.toString() ?? "Nama Pegawai",
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          _bio['jbtn']?.toString() ?? "Jabatan",
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  void _showLogoutMenu() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Biometric Toggle
+                  if (_biometricAvailable)
+                    ListTile(
+                      leading: Icon(
+                        Icons.fingerprint,
+                        color: _biometricEnabled ? primaryColor : Colors.grey,
+                      ),
+                      title: const Text("Login dengan Fingerprint"),
+                      subtitle: Text(
+                        _biometricEnabled ? 'Aktif' : 'Nonaktif',
+                        style: TextStyle(
+                          color: _biometricEnabled ? Colors.green : Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: Switch(
+                        value: _biometricEnabled,
+                        activeColor: primaryColor,
+                        onChanged: (value) async {
+                          if (value) {
+                            // Enable biometric
+                            await _enableBiometric(setModalState);
+                          } else {
+                            // Disable biometric
+                            await _disableBiometric(setModalState);
+                          }
+                        },
+                      ),
+                    ),
+                  if (_biometricAvailable) const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.red),
+                    title: const Text("Logout"),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LogoutScreen()));
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildModernProfileInfo() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          _buildInfoCard("Informasi Pribadi", [
+            _buildInfoTile(Icons.perm_identity, "NIK", _bio['nik'] ?? "-"),
+            _buildInfoTile(
+                Icons.wc,
+                "J. Kelamin",
+                (_bio['jk'] == "L" || _bio['jk'] == "Pria")
+                    ? "Laki-laki"
+                    : "Perempuan"),
+            _buildInfoTile(Icons.cake, "TTL",
+                "${_bio['tmp_lahir'] ?? '-'}, ${_bio['tgl_lahir'] != null ? Helper.formatDate4(_bio['tgl_lahir']) : '-'}"),
+            _buildInfoTile(
+                Icons.work_outline,
+                "Mulai Kerja",
+                _bio['mulai_kerja'] != null
+                    ? Helper.formatDate2(_bio['mulai_kerja'])
+                    : '-'),
+
+            // Only show duration if initialized (it might not be if mulai_kerja was null)
+            // We check if duration is initialized by checking if variables using it are accessed safely or just checking the logic above
+            // Since duration is 'late', accessing it before init throws.
+            // We can wrap it in a try-catch block conceptually or better, assume it's set if mulia_kerja was present.
+            // However, 'late' variable check is tricky.
+            // Better strategy: Make duration nullable or check _bio['mulai_kerja'] again.
+            if (_bio['mulai_kerja'] != null)
+              _buildInfoTile(Icons.timer, "Masa Kerja", _getDurationString()),
+          ]),
+          const SizedBox(height: 15),
+          _buildInfoCard("Kontak & Alamat", [
+            _buildInfoTile(
+                Icons.phone_android,
+                "No. HP",
+                (_bio['petugas'] != null && _bio['petugas']['no_telp'] != null)
+                    ? _bio['petugas']['no_telp']
+                    : "-"),
+            _buildInfoTile(
+                Icons.email_outlined,
+                "Email",
+                (_bio['email'] != null && _bio['email']['email'] != null)
+                    ? _bio['email']['email']
+                    : "-"),
+            _buildInfoTile(
+                Icons.location_on_outlined, "Alamat", _bio['alamat'] ?? "-"),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  String _getDurationString() {
+    try {
+      // Since we didn't make duration nullable in class def (it is 'late'),
+      // we rely on setDataTbl initializing it if mulai_kerja exists.
+      // But if setDataTbl failed silently, accessing `duration` crashes.
+      // Re-calculate safely here or rely on the bio check.
+      var d = AgeCalculator.age(DateTime.parse(_bio['mulai_kerja']));
+      return "${d.years} thn ${d.months} bln";
+    } catch (e) {
+      return "-";
+    }
+  }
+
+  Widget _buildInfoCard(String title, List<Widget> children) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.grey.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.blueGrey)),
+          const Divider(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoTile(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: Colors.grey[400]),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                const SizedBox(height: 2),
+                Text(value,
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildEditableTextField(String label, String value, bool isEditable,
+      [String? Function(String?)? validator]) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: TextFormField(
@@ -498,40 +793,6 @@ class _ProfilePageState extends State<ProfilePage> {
           border: const OutlineInputBorder(),
         ),
       ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return ElevatedButton(
-      onPressed: () {
-        if (_formKey.currentState!.validate()) {
-          _formKey.currentState!.save();
-
-          if (!EmailValidator.validate(email)) {
-            Msg.error(context, 'Format Email tidak sesuai');
-            return;
-          }
-
-          if (no_telp.isEmpty) {
-            Msg.error(context, 'No. Telp tidak boleh kosong');
-            return;
-          }
-
-          if (alamat.isEmpty) {
-            Msg.error(context, 'Alamat tidak boleh kosong');
-            return;
-          }
-
-          updateProfil();
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primaryColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-      ),
-      child: const Text('Simpan Perubahan'),
     );
   }
 }

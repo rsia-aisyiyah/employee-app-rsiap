@@ -8,8 +8,10 @@ import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:rsia_employee_app/components/loadingku.dart';
+import 'package:rsia_employee_app/components/skeletons/skeleton_home.dart';
 import 'package:intl/intl.dart';
+import 'package:rsia_employee_app/utils/icon_mapper.dart';
+import 'package:rsia_employee_app/utils/menu_navigator.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,13 +23,14 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final box = GetStorage();
 
-  bool isLoading = false;
+  bool isLoading = true; // Set to true by default to avoid flickering
   int selectedTab = 0;
   String nik = "";
   Map _bio = {};
   Map _jadwal = {};
   Map _tempPresensi = {};
   Map _rekapPresensi = {};
+  List _menus = [];
 
   @override
   void initState() {
@@ -49,6 +52,7 @@ class _HomePageState extends State<HomePage> {
       _getJadwal(),
       _getTempPresensi(),
       _getRekapPresensi(),
+      _getMenus(),
     ];
 
     await Future.wait(futures);
@@ -73,19 +77,30 @@ class _HomePageState extends State<HomePage> {
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
-          _jadwal = body['data']['jam_masuk'] ?? {};
+          if (body['data'] is List) {
+            _jadwal = body['data'].isNotEmpty
+                ? body['data'][0]['jam_masuk'] ?? {}
+                : {};
+          } else {
+            _jadwal = body['data']['jam_masuk'] ?? {};
+          }
         });
       }
     }
   }
 
   Future<void> _getTempPresensi() async {
-    var res = await Api().getData("/pegawai/${box.read('sub')}/presensi/temporary");
+    var res =
+        await Api().getData("/pegawai/${box.read('sub')}/presensi/temporary");
     var body = json.decode(res.body);
     if (res.statusCode == 200) {
       if (mounted) {
         setState(() {
-          _tempPresensi = body['data'];
+          if (body['data'] is List) {
+            _tempPresensi = body['data'].isNotEmpty ? body['data'][0] : {};
+          } else {
+            _tempPresensi = body['data'] ?? {};
+          }
         });
       }
     }
@@ -94,11 +109,17 @@ class _HomePageState extends State<HomePage> {
   Future<void> _getRekapPresensi() async {
     var res = await Api().postData({
       "scopes": [
-        { "name" : "withId", "parameters" : ["${box.read('sub')}"] },
-        { "name" : "withDatang", "parameters" : [DateFormat('yyyy-MM-dd').format(DateTime.now())] }
+        {
+          "name": "withId",
+          "parameters": ["${box.read('sub')}"]
+        },
+        {
+          "name": "withDatang",
+          "parameters": [DateFormat('yyyy-MM-dd').format(DateTime.now())]
+        }
       ],
-      "sort" : [
-        {"field" : "jam_datang", "direction" : "desc"}
+      "sort": [
+        {"field": "jam_datang", "direction": "desc"}
       ]
     }, "/pegawai/${box.read('sub')}/presensi/search");
     var body = json.decode(res.body);
@@ -113,386 +134,584 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Widget _buildHeader() {
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(30.0),
-        bottomRight: Radius.circular(30.0),
+  Future<void> _getMenus() async {
+    var res =
+        await Api().getData("/menu-management/user-menus?platform=mobile");
+    var body = json.decode(res.body);
+    if (res.statusCode == 200) {
+      if (mounted) {
+        setState(() {
+          _menus = body['data'] ?? [];
+        });
+      }
+    }
+  }
+
+  String _getGreeting() {
+    var hour = DateTime.now().hour;
+    if (hour < 12) return 'Selamat Pagi';
+    if (hour < 15) return 'Selamat Siang';
+    if (hour < 18) return 'Selamat Sore';
+    return 'Selamat Malam';
+  }
+
+  String _getTimeString() {
+    try {
+      if (_rekapPresensi.isEmpty && _tempPresensi.isEmpty) {
+        return "--:--";
+      }
+
+      String? rawDate = _rekapPresensi.isEmpty
+          ? _tempPresensi['jam_datang']
+          : _rekapPresensi['jam_datang'];
+
+      if (rawDate == null) return "--:--";
+
+      return DateFormat('HH:mm').format(DateTime.parse(rawDate));
+    } catch (e) {
+      return "--:--";
+    }
+  }
+
+  Widget _buildTopSection() {
+    return Container(
+      padding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 15,
+        left: 20,
+        right: 20,
+        bottom: 60, // Deeper padding for deeper curve
       ),
-      child: Container(
-        width: double.infinity,
-        height: 200,
-        decoration: BoxDecoration(
-          color: primaryColor,
-          boxShadow: [
-            BoxShadow(
-              color: primaryColor.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            )
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            primaryColor,
+            primaryColor.withBlue(210).withGreen(180), // Slightly deeper cyan
           ],
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(right: 5, left: 20),
-              child: Image.asset(
-                'assets/images/logo-rsia-aisyiyah.png',
-                height: 90,
-                width: 110,
-              ),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(60), // Deeper curvature for premium look
+          bottomRight: Radius.circular(60),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primaryColor.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getGreeting(),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _bio['nama']?.toString() ?? "Pegawai",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: MediaQuery.of(context).size.width *
+                        0.05, // Adaptive scaling
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _bio['nik']?.toString() ?? "-",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: Image.asset(
-                'assets/images/logo-larsi.png',
-                height: 90,
-                width: 110,
-              ),
+          ),
+          const SizedBox(width: 15),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                )
+              ],
             ),
-          ],
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.2),
+                image: _bio['photo'] != null
+                    ? DecorationImage(
+                        image: CachedNetworkImageProvider(
+                            photoUrl + _bio['photo'].toString()),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.topCenter, // Focus on head/hair
+                      )
+                    : null,
+              ),
+              child: _bio['photo'] == null
+                  ? const Icon(Icons.person, color: Colors.white, size: 35)
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendanceStatus() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Transform.translate(
+        offset: const Offset(0, -25), // Perfect floating overlap
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.calendar_today_rounded,
+                            color: primaryColor, size: 18),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Jadwal Hari Ini",
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w500)),
+                          Text(
+                            _jadwal['shift']?.toString() ?? "Libur / Kosong",
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: Colors.black87),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  if (_jadwal['shift'] != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Text(
+                        "${(_jadwal['jam_masuk']?.toString() ?? '00:00').split(':').take(2).join(':')} - ${(_jadwal['jam_pulang']?.toString() ?? '00:00').split(':').take(2).join(':')}",
+                        style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildTimeDetail(
+                      label: "Check In",
+                      time: _getTimeString(),
+                      icon: Icons.login_rounded,
+                      color: Colors.green,
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    margin: const EdgeInsets.symmetric(horizontal: 15),
+                    color: Colors.grey[100],
+                  ),
+                  Expanded(
+                    child: _buildTimeDetail(
+                      label: "Check Out",
+                      time: _rekapPresensi.isEmpty ||
+                              _rekapPresensi['jam_pulang'] == null
+                          ? "--:--"
+                          : DateFormat('HH:mm').format(
+                              DateTime.parse(_rekapPresensi['jam_pulang'])),
+                      icon: Icons.logout_rounded,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileCard() {
-    return Positioned(
-      top: 80, bottom: -80,
-      left: 0, right: 0,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: primaryColor.withOpacity(0.2),
-                offset: const Offset(0, 3),
-                blurRadius: 5,
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Column(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Assalamu'alaikum"),
-                          const SizedBox(height: 5),
-                          Text(
-                            _bio['nama'].toString(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            _bio['nik'].toString(),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(100.0),
-                        border: Border.all(
-                          color: bgColor,
-                          width: 2.5,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(100.0),
-                        child: _bio['photo'] != null ? CachedNetworkImage(
-                          imageUrl: photoUrl + _bio['photo'].toString(),
-                          width: 80, height: 80,
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                          placeholder: ( context, url, ) => Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[300],
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                color: bgColor,
-                              ),
-                            ),
-                          ),
-                          errorWidget: ( context,  url,  error ) => Container(
-                            width: 80,
-                            height: 80,
-                            color: Colors.grey[300],
-                            child: const Icon(Icons.error),
-                          ),
-                        ) : SizedBox(
-                          width: 80,
-                          height: 80,
-                          child: CircularProgressIndicator(
-                            color: bgColor,
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.start,
-                  children: [
-                    Text(
-                      _jadwal['shift'] != null ? _jadwal['shift'].toString() : "Libur",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                    _jadwal['shift'] != null ? Text(" (${_jadwal['jam_masuk'].toString().substring(0, _jadwal['jam_masuk'].toString() .length - 3)} - ${_jadwal['jam_pulang'].toString().substring(0, _jadwal['jam_pulang'].toString().length - 3)})",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ) : const Text(" -"),
-                  ],
-                ),
-                const SizedBox( height: 5 ),
-                Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.spaceBetween,
-                  // CrossAxisAlignment.stretch,
-                  children: [
-                    Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment.start,
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "IN ",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.green,
-                          ),
-                        ),
-                        Text( _rekapPresensi.isEmpty && _tempPresensi.isEmpty
-                              ? "-"
-                              : _rekapPresensi.isEmpty
-                                ? DateFormat.Hms().format( DateTime.parse( _tempPresensi['jam_datang']))
-                                : DateFormat.Hms().format(DateTime.parse(_rekapPresensi['jam_datang']),
-                          ),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "OUT ",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.red,
-                          ),
-                        ),
-                        Text(
-                          _rekapPresensi.isEmpty
-                              ? "-"
-                              : DateFormat.Hms().format(
-                                DateTime.parse(_rekapPresensi['jam_pulang']),
-                          ),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
-                      children: [
-                        const Text(
-                          "Status ",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                        Text(
-                          _rekapPresensi.isEmpty && _tempPresensi.isEmpty
-                              ? "-"
-                              : _rekapPresensi.isEmpty
-                                ? _tempPresensi['status'].toString()
-                                : _rekapPresensi['status'].toString(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+  Widget _buildTimeDetail(
+      {required String label,
+      required String time,
+      required IconData icon,
+      required Color color}) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color.withOpacity(0.7)),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: TextStyle(fontSize: 10, color: Colors.grey[400])),
+            Text(time,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                    letterSpacing: 0.5)),
+          ],
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildMenuGrid() {
-    return GridView.builder(
-      itemCount: menuScreenItems.length,
-      padding: const EdgeInsets.only(
-        left: 20,
-        right: 20,
-        bottom: 5,
-        top: 0,
-      ),
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.5,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-      ),
-      itemBuilder: (context, index) {
-        return InkWell(
-          onTap: () {
-            if (menuScreenItems[index]['disabled'] == true) {
-              Msg.warning(context, featureNotAvailableMsg);
-            } else {
-              if (menuScreenItems[index]['widget'] == "") {
-                Msg.warning(context, featureNotAvailableMsg);
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => menuScreenItems[index]['widget'] as Widget,
-                  ),
-                );
-              }
-            }
-          },
-          child: Container(
-            clipBehavior: Clip.hardEdge,
-            decoration: BoxDecoration(
-              color: menuScreenItems[index]['disabled'] == true
-                  ? Colors.grey[300]
-                  : bgWhite,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: primaryColor.withOpacity(0.2),
-                  offset: const Offset(0, 3),
-                  blurRadius: 5,
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(20, 5, 20, 10),
+          child: Text(
+            "Layanan Kepegawaian",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(15),
+          ),
+        ),
+        Expanded(
+          child: GridView.builder(
+            itemCount: _menus.length,
+            padding: const EdgeInsets.only(
+              left: 20,
+              right: 20,
+              bottom: 100,
+              top: 5,
+            ),
+            physics: const BouncingScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              childAspectRatio: 0.85,
+              mainAxisSpacing: 15,
+              crossAxisSpacing: 15,
+            ),
+            itemBuilder: (context, index) {
+              var item = _menus[index];
+              bool isDisabled = item['disabled'] == true;
+
+              // Modern predefined colors for icons
+              final colors = [
+                Colors.blue,
+                Colors.orange,
+                Colors.purple,
+                Colors.teal,
+                Colors.pink,
+                Colors.indigo,
+                Colors.amber,
+                Colors.cyan,
+                Colors.lightGreen,
+                Colors.deepOrange,
+                Colors.blueGrey,
+                Colors.redAccent,
+                Colors.deepPurple,
+              ];
+              final themeColor = colors[index % colors.length];
+
+              return InkWell(
+                onTap: () {
+                  if (isDisabled) {
+                    Msg.warning(context, featureNotAvailableMsg);
+                  } else if (item['children'] != null &&
+                      (item['children'] as List).isNotEmpty) {
+                    _showSubMenuSheet(item, themeColor);
+                  } else {
+                    // Dynamic navigation for API menus
+                    String routeKey = item['route']?.toString() ?? "";
+                    Widget? target = MenuNavigator.getWidget(routeKey);
+
+                    if (target != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => target),
+                      );
+                    } else {
+                      Msg.warning(context, featureNotAvailableMsg);
+                    }
+                  }
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        offset: const Offset(0, 4),
+                        blurRadius: 10,
+                      ),
+                    ],
+                  ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        menuScreenItems[index]['label'].toString(),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: menuScreenItems[index]['disabled'] == true
-                              ? bgWhite
-                              : textColor,
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isDisabled
+                              ? Colors.grey[100]
+                              : themeColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
                         ),
+                        child: Icon(
+                          IconMapper.getIcon(item['icon']?.toString() ?? ""),
+                          size: 28,
+                          color: isDisabled ? Colors.grey : themeColor,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        item['nama_menu'].toString(),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: isDisabled ? Colors.grey : Colors.black87,
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                Positioned(
-                  bottom: -8,
-                  right: -15,
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.22,
-                    child: Transform(
-                      transform: Matrix4.rotationZ(0.3),
-                      child: Icon(
-                        menuScreenItems[index]['icon'] as IconData,
-                        size: 80,
-                        color: menuScreenItems[index]['disabled'] == true
-                            ? bgWhite
-                            : primaryColor.withOpacity(0.3),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
-        );
-      },
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return loadingku();
+      return const SkeletonHome();
     }
 
     return Scaffold(
       extendBody: true,
-      backgroundColor: bgColor,
-      body: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: MediaQuery.of(context).padding.top,
-                child: Container(color: primaryColor),
-              ),
-              Stack(
-                clipBehavior: Clip.none,
+      backgroundColor: Colors.grey[50], // Modern clean background
+      body: Column(
+        children: [
+          _buildTopSection(),
+          Expanded(
+            child: SingleChildScrollView(
+              clipBehavior: Clip
+                  .none, // Allow items to overlap header without being clipped
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
                 children: [
-                  _buildHeader(),
-                  _buildProfileCard()
+                  _buildAttendanceStatus(),
+                  const SizedBox(height: 0),
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: _buildMenuGrid(),
+                  ),
                 ],
               ),
-              const SizedBox(height: 90),
-              _buildMenuGrid(),
-              const SizedBox(height: 70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSubMenuSheet(Map parent, Color themeColor) {
+    List children = parent['children'] ?? [];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: themeColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      IconMapper.getIcon(parent['icon']?.toString() ?? ""),
+                      color: themeColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Text(
+                    parent['nama_menu'].toString(),
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: Colors.grey[400]),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: children.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3,
+                  childAspectRatio: 0.85,
+                  mainAxisSpacing: 15,
+                  crossAxisSpacing: 15,
+                ),
+                itemBuilder: (context, index) {
+                  var sub = children[index];
+                  bool isSubDisabled = sub['disabled'] == true;
+
+                  return InkWell(
+                    onTap: () {
+                      if (isSubDisabled) {
+                        Msg.warning(context, featureNotAvailableMsg);
+                      } else {
+                        String routeKey = sub['route']?.toString() ?? "";
+                        Widget? target = MenuNavigator.getWidget(routeKey);
+
+                        if (target != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => target),
+                          );
+                        } else {
+                          Msg.warning(context, featureNotAvailableMsg);
+                        }
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: isSubDisabled
+                                ? Colors.grey[100]
+                                : themeColor.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            IconMapper.getIcon(sub['icon']?.toString() ?? ""),
+                            size: 24,
+                            color: isSubDisabled ? Colors.grey : themeColor,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          sub['nama_menu'].toString(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isSubDisabled ? Colors.grey : Colors.black87,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 15),
             ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

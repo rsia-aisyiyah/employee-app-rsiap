@@ -1,0 +1,131 @@
+import 'package:flutter/material.dart';
+
+class IconMapper {
+  static IconData getIcon(String iconName) {
+    switch (iconName.toLowerCase()) {
+      // Essentials & Common Actions
+      case 'home':
+        return Icons.home;
+      case 'add':
+      case 'plus':
+        return Icons.add;
+      case 'edit':
+      case 'update':
+        return Icons.edit;
+      case 'delete':
+      case 'remove':
+      case 'trash':
+        return Icons.delete_outline;
+      case 'check':
+      case 'approve':
+      case 'success':
+        return Icons.check_circle_outline;
+      case 'close':
+      case 'cancel':
+      case 'reject':
+        return Icons.cancel_outlined;
+      case 'info':
+        return Icons.info_outline;
+      case 'warning':
+        return Icons.warning_amber_rounded;
+      case 'settings':
+      case 'gear':
+        return Icons.settings_outlined;
+      case 'search':
+        return Icons.search;
+      case 'history':
+      case 'rekap':
+        return Icons.history;
+
+      // SDI / Personnel Specific
+      case 'user':
+      case 'person':
+      case 'pegawai':
+        return Icons.person_outline;
+      case 'users':
+      case 'people':
+      case 'kelompok':
+        return Icons.people_outline;
+      case 'dashboard':
+      case 'analytics':
+      case 'overview':
+        return Icons.analytics_rounded;
+      case 'fingerprint':
+      case 'presensi':
+      case 'absensi':
+      case 'checkin':
+      case 'attendance':
+      case 'presence':
+      case 'lokasi':
+      case 'location':
+        return Icons.fingerprint_rounded;
+      case 'calendar':
+      case 'calendar_month':
+      case 'cuti':
+        return Icons.calendar_month;
+      case 'event':
+      case 'jadwal':
+        return Icons.event_note_rounded;
+      case 'money':
+      case 'payments':
+      case 'payment':
+      case 'jaspel':
+      case 'gaji':
+      case 'slip':
+        return Icons.payments_outlined;
+      case 'folder':
+      case 'berkas':
+        return Icons.folder_copy_outlined;
+      case 'file':
+      case 'dokumen':
+      case 'surat':
+        return Icons.file_copy_outlined;
+      case 'mail':
+      case 'pesan':
+      case 'undangan':
+        return Icons.mail_outline;
+      case 'kinerja':
+      case 'assessment':
+        return Icons.assessment_outlined;
+      case 'education':
+      case 'school':
+      case 'elearning':
+      case 'pelatihan':
+        return Icons.school_outlined;
+      case 'membership':
+      case 'sertifikasi':
+      case 'licence':
+        return Icons.card_membership_outlined;
+      case 'overtime':
+      case 'lembur':
+        return Icons.access_time_filled;
+      case 'campaign':
+      case 'news':
+      case 'pengumuman':
+        return Icons.campaign_outlined;
+      case 'support':
+      case 'helpdesk':
+      case 'tiket':
+      case 'ticket':
+      case 'lapor':
+      case 'report':
+        return Icons.support_agent;
+      case 'hospital':
+      case 'medis':
+        return Icons.local_hospital_outlined;
+      case 'medicine':
+      case 'obat':
+        return Icons.medical_services_outlined;
+      case 'patient':
+      case 'pasien':
+        return Icons.accessible_forward_outlined;
+      case 'bed':
+      case 'tempat_tidur':
+        return Icons.hotel_outlined;
+
+      // Default
+      default:
+        return Icons.apps;
+    }
+  }
+}

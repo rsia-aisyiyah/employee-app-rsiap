@@ -39,6 +39,16 @@ class Api {
     );
   }
 
+  putData(data, pathUrl) async {
+    var fullUrl = apiUrl + pathUrl;
+    await _getToken();
+    return await http.put(
+      Uri.parse(fullUrl),
+      body: jsonEncode(data),
+      headers: _setHeaders(),
+    );
+  }
+
   deleteData(data, pathUrl) async {
     var fullUrl = apiUrl + pathUrl;
     await _getToken();
@@ -84,8 +94,9 @@ class Api {
   }
 
   _setHeaders() => {
-    'Content-type': 'application/json',
-    'Accept': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'X-App-Type': 'mobile',
+      };
 }

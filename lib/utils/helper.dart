@@ -190,4 +190,21 @@ class Helper {
       'id_ID',
     ).format(DateTime.parse(date));
   }
+
+  static String getDuration(String? checkIn, String? checkOut) {
+    if (checkIn == null || checkOut == null) return "-";
+    try {
+      DateTime start = DateTime.parse(checkIn);
+      DateTime end = DateTime.parse(checkOut);
+      Duration diff = end.difference(start);
+
+      int hours = diff.inHours;
+      int minutes = diff.inMinutes.remainder(60);
+
+      if (hours == 0) return "${minutes}m";
+      return "${hours}j ${minutes}m";
+    } catch (e) {
+      return "-";
+    }
+  }
 }

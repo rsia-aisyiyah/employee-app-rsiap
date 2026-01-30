@@ -1,78 +1,64 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/screen/home.dart';
-import 'package:rsia_employee_app/screen/menu/berkas_pegawai.dart';
-import 'package:rsia_employee_app/screen/menu/cuti.dart';
-import 'package:rsia_employee_app/screen/menu/file_manager.dart';
-import 'package:rsia_employee_app/screen/menu/otp_jasa_medis.dart';
-import 'package:rsia_employee_app/screen/menu/presensi.dart';
-import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
 
-import '../screen/menu/jasa_medis.dart';
+class AppConfig {
+  static const String publicBaseUrl = 'https://sim.rsiaaisyiyah.com/rsiapi-v2';
+  static const String localBaseUrl =
+      'http://192.168.100.33/rsiapi-v2'; // Adjust this IP as needed
 
-const String baseUrl = 'https://sim.rsiaaisyiyah.com/rsiapi';
-// const String baseUrl = 'http://172.24.19.22/rsia';
-const String apiUrl = '$baseUrl/api/v2';
-const String photoUrl = 'https://sim.rsiaaisyiyah.com/rsiap/file/pegawai/';
+  static String baseUrl = publicBaseUrl;
+  static String apiUrl = '$baseUrl/api/v2';
+  static String photoUrl = 'https://sim.rsiaaisyiyah.com/rsiap/file/pegawai/';
+
+  static Future<void> init() async {
+    print('Checking network connectivity...');
+    try {
+      // Try to connect to office local IP (port 80 or 443)
+      // Extract IP from localBaseUrl (e.g., 192.168.1.100)
+      final host = localBaseUrl.replaceFirst('http://', '').split('/')[0];
+
+      final socket =
+          await Socket.connect(host, 80, timeout: const Duration(seconds: 2));
+      socket.destroy();
+
+      print('✅ Office network detected. Using local API.');
+      baseUrl = localBaseUrl;
+    } catch (e) {
+      print('🌐 External network or local IP unreachable. Using public API.');
+      baseUrl = publicBaseUrl;
+    }
+
+    apiUrl = '$baseUrl/api/v2';
+    // Update photo URL if it mirrors base URL structure
+    if (baseUrl == localBaseUrl) {
+      // Adjust local photo URL if different
+      photoUrl = 'http://192.168.100.33/rsiap/file/pegawai/';
+    } else {
+      photoUrl = 'https://sim.rsiaaisyiyah.com/rsiap/file/pegawai/';
+    }
+  }
+}
+
+// Keep constants for external compatibility but redirect to AppConfig
+String get apiUrl => AppConfig.apiUrl;
+String get photoUrl => AppConfig.photoUrl;
+String get baseUrl => AppConfig.baseUrl;
 
 const String appName = 'RSIAP Portal Karyawan';
 
 const int snackBarDuration = 5;
 
-List<Map<String, Object>> menuScreenItems = [
-  {
-    'label': 'Presensi',
-    'widget': const Presensi(),
-    'disabled': false,
-    'icon': Icons.more_time
-  },
-  {
-    'label': 'Cuti',
-    'widget': const Cuti(),
-    'disabled': false,
-    'icon': Icons.calendar_month_sharp
-  },
-  {
-    'label': 'Slip Jaspel',
-    'widget': const JasaMedis(),
-    'disabled': false,
-    'icon': Icons.payments_outlined
-  },
-  {
-    'label': 'Slip Gaji',
-    'widget': '',
-    'disabled': true,
-    'icon': Icons.payments_rounded
-  },
-  {
-    'label': 'Berkas Kepegawaian',
-    'widget': const BerkasPegawai(),
-    'disabled': false,
-    'icon': Icons.folder_copy
-  },
-  {
-    'label': 'Dokumen & Surat',
-    'widget': const FileManager(),
-    'disabled': false,
-    'icon': Icons.file_copy
-  },
-  {
-    'label': 'Undangan',
-    'widget': const Undangan(),
-    'disabled': false,
-    'icon': Icons.mail,
-  },
-];
-
-const List<Map<String, Object>> navigationItems = [
+final List<Map<String, Object>> navigationItems = [
   {
     'icon': Icons.home,
     'label': 'Home',
-    'widget': HomePage(),
+    'widget': const HomePage(),
   },
   {
     'icon': Icons.person,
     'label': 'Profile',
-    'widget': ProfilePage(),
+    'widget': const ProfilePage(),
   },
 ];
