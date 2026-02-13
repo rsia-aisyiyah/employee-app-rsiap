@@ -64,8 +64,14 @@ class IconMapper {
       case 'cuti':
         return Icons.calendar_month;
       case 'event':
-      case 'jadwal':
+      case 'pengajuan_jadwal':
+      case 'menu_pengajuan_jadwal':
         return Icons.event_note_rounded;
+      case 'approval':
+      case 'approval_jadwal':
+      case 'jadwal_approval':
+      case 'menu_approval_jadwal':
+        return Icons.event_available_rounded;
       case 'money':
       case 'payments':
       case 'payment':
@@ -105,7 +111,9 @@ class IconMapper {
         return Icons.campaign_outlined;
       case 'support':
       case 'helpdesk':
+      case 'menu_helpdesk':
       case 'tiket':
+      case 'support_agent':
       case 'ticket':
       case 'lapor':
       case 'report':
@@ -119,9 +127,20 @@ class IconMapper {
       case 'patient':
       case 'pasien':
         return Icons.accessible_forward_outlined;
+      case 'penyakit':
+      case 'diagnosa':
+      case 'diagnosis':
+      case 'icd10':
+        return Icons.sick_outlined;
       case 'bed':
       case 'tempat_tidur':
+      case 'kamar':
         return Icons.hotel_outlined;
+      case 'statistik':
+      case 'statistik_ranap':
+      case 'indikator':
+      case 'indikator_ranap':
+        return Icons.query_stats_rounded;
 
       // Default
       default:

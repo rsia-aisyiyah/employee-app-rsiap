@@ -14,7 +14,8 @@ class DashboardStatistikRanap extends StatefulWidget {
       _DashboardStatistikRanapState();
 }
 
-class _DashboardStatistikRanapState extends State<DashboardStatistikRanap> {
+class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _tglAwalController = TextEditingController();
   final TextEditingController _tglAkhirController = TextEditingController();
   bool _isLoading = true;
@@ -27,6 +28,16 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap> {
   List<dynamic> _yearlyMonths = [];
   String _activeCategory = "Gabungan";
   String _selectedMetric = "BOR";
+  late TabController _tabController;
+
+  final List<String> _tabs = [
+    "Gabungan",
+    "Anak",
+    "Kandungan",
+    "BYC",
+    "ICU",
+    "Isolasi"
+  ];
 
   @override
   void initState() {
@@ -35,7 +46,42 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap> {
     DateTime firstDay = DateTime(now.year, now.month, 1);
     _tglAwalController.text = DateFormat('yyyy-MM-dd').format(firstDay);
     _tglAkhirController.text = DateFormat('yyyy-MM-dd').format(now);
+
+    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController.addListener(_handleTabChange);
+
     _loadData();
+  }
+
+  void _handleTabChange() {
+    if (!_tabController.indexIsChanging) {
+      setState(() {
+        _activeCategory = _tabs[_tabController.index];
+        if (!_isYearlyMode) {
+          if (_activeCategory == "Gabungan") {
+            _currentData = Map<String, dynamic>.from(_overallData);
+          } else {
+            final found = _breakdownData.firstWhere(
+              (element) => element['category'] == _activeCategory,
+              orElse: () => null,
+            );
+            _currentData =
+                found != null ? Map<String, dynamic>.from(found) : {};
+          }
+        } else {
+          _loadData();
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_handleTabChange);
+    _tabController.dispose();
+    _tglAwalController.dispose();
+    _tglAkhirController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -127,91 +173,69 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> tabs = [
-      "Gabungan",
-      "Anak",
-      "Kandungan",
-      "BYC",
-      "ICU",
-      "Isolasi"
-    ];
-
-    return DefaultTabController(
-      length: tabs.length,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Statistik Rawat Inap",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          centerTitle: true,
-          bottom: TabBar(
-            isScrollable: true,
-            indicatorColor: Colors.white,
-            indicatorWeight: 3,
-            labelStyle:
-                const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            unselectedLabelStyle:
-                const TextStyle(fontWeight: FontWeight.normal, fontSize: 12),
-            onTap: (index) {
-              setState(() {
-                _activeCategory = tabs[index];
-                if (!_isYearlyMode) {
-                  if (_activeCategory == "Gabungan") {
-                    _currentData = Map<String, dynamic>.from(_overallData);
-                  } else {
-                    final found = _breakdownData.firstWhere(
-                      (element) => element['category'] == _activeCategory,
-                      orElse: () => null,
-                    );
-                    _currentData =
-                        found != null ? Map<String, dynamic>.from(found) : {};
-                  }
-                } else {
-                  _loadData();
-                }
-              });
-            },
-            tabs: tabs.map((e) => Tab(text: e)).toList(),
-          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Statistik Rawat Inap",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelStyle:
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          unselectedLabelStyle:
+              const TextStyle(fontWeight: FontWeight.normal, fontSize: 12),
+          tabs: _tabs.map((e) => Tab(text: e)).toList(),
         ),
-        body: Column(
-          children: [
-            _buildFilterSection(),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : RefreshIndicator(
-                      onRefresh: _loadData,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child: _isYearlyMode
-                            ? _buildYearlySection()
-                            : (_currentData.isEmpty
-                                ? const Center(
-                                    child: Padding(
-                                    padding: EdgeInsets.only(top: 100),
-                                    child: Text(
-                                        "Data tidak tersedia untuk kategori ini",
-                                        style: TextStyle(color: Colors.grey)),
-                                  ))
-                                : Column(
-                                    children: [
-                                      _buildMainIndicatorCard(),
-                                      const SizedBox(height: 20),
-                                      _buildSecondaryIndicatorsGrid(),
-                                      const SizedBox(height: 20),
-                                      _buildDataDetailCard(),
-                                      const SizedBox(height: 40),
-                                    ],
-                                  )),
-                      ),
-                    ),
+      ),
+      body: Column(
+        children: [
+          _buildFilterSection(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: _tabs.map((tab) => _buildTabContent(tab)).toList(),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabContent(String category) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadData,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: _isYearlyMode
+            ? _buildYearlySection()
+            : (_currentData.isEmpty
+                ? const Center(
+                    child: Padding(
+                    padding: EdgeInsets.only(top: 100),
+                    child: Text("Data tidak tersedia untuk kategori ini",
+                        style: TextStyle(color: Colors.grey)),
+                  ))
+                : Column(
+                    children: [
+                      _buildMainIndicatorCard(),
+                      const SizedBox(height: 20),
+                      _buildSecondaryIndicatorsGrid(),
+                      const SizedBox(height: 20),
+                      _buildDataDetailCard(),
+                      const SizedBox(height: 40),
+                    ],
+                  )),
       ),
     );
   }

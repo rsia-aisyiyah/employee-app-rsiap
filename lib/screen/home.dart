@@ -9,7 +9,6 @@ import 'package:rsia_employee_app/config/string.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:rsia_employee_app/components/skeletons/skeleton_home.dart';
-import 'package:intl/intl.dart';
 import 'package:rsia_employee_app/utils/icon_mapper.dart';
 import 'package:rsia_employee_app/utils/menu_navigator.dart';
 
@@ -28,34 +27,32 @@ class _HomePageState extends State<HomePage> {
   String nik = "";
   Map _bio = {};
   Map _jadwal = {};
-  Map _tempPresensi = {};
   Map _rekapPresensi = {};
   List _menus = [];
 
   @override
   void initState() {
     super.initState();
-    if (mounted) {
-      fetchAllData().then((value) {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-          });
-        }
-      });
-    }
+    _initialize();
   }
 
-  Future<void> fetchAllData() async {
-    List<Future> futures = [
-      _getBio(),
-      _getJadwal(),
-      _getTempPresensi(),
-      _getRekapPresensi(),
-      _getMenus(),
-    ];
+  Future<void> _initialize() async {
+    if (mounted) {
+      setState(() {
+        isLoading = true;
+      });
+    }
 
-    await Future.wait(futures);
+    await _getBio();
+    await _getJadwal();
+    await _getPresensiStatus();
+    await _getMenus();
+
+    if (mounted) {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _getBio() async {
@@ -89,48 +86,27 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  Future<void> _getTempPresensi() async {
-    var res =
-        await Api().getData("/pegawai/${box.read('sub')}/presensi/temporary");
-    var body = json.decode(res.body);
-    if (res.statusCode == 200) {
-      if (mounted) {
-        setState(() {
-          if (body['data'] is List) {
-            _tempPresensi = body['data'].isNotEmpty ? body['data'][0] : {};
-          } else {
-            _tempPresensi = body['data'] ?? {};
-          }
-        });
-      }
-    }
-  }
+  Future<void> _getPresensiStatus() async {
+    String endpoint = "/presensi-online/status";
 
-  Future<void> _getRekapPresensi() async {
-    var res = await Api().postData({
-      "scopes": [
-        {
-          "name": "withId",
-          "parameters": ["${box.read('sub')}"]
-        },
-        {
-          "name": "withDatang",
-          "parameters": [DateFormat('yyyy-MM-dd').format(DateTime.now())]
-        }
-      ],
-      "sort": [
-        {"field": "jam_datang", "direction": "desc"}
-      ]
-    }, "/pegawai/${box.read('sub')}/presensi/search");
-    var body = json.decode(res.body);
-    if (res.statusCode == 200) {
-      if (body['data'].length > 0) {
+    if (_bio.isNotEmpty && _bio['nik'] != null) {
+      endpoint += "?nik=${_bio['nik']}";
+    }
+
+    try {
+      var res = await Api().getData(endpoint);
+
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
         if (mounted) {
           setState(() {
-            _rekapPresensi = body['data'][0];
+            var data = body['data'];
+            _rekapPresensi = data is Map ? data : {};
           });
         }
       }
+    } catch (e) {
+      print("DEBUG PRESENSI: Error fetching status: $e");
     }
   }
 
@@ -156,21 +132,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   String _getTimeString() {
-    try {
-      if (_rekapPresensi.isEmpty && _tempPresensi.isEmpty) {
-        return "--:--";
-      }
-
-      String? rawDate = _rekapPresensi.isEmpty
-          ? _tempPresensi['jam_datang']
-          : _rekapPresensi['jam_datang'];
-
-      if (rawDate == null) return "--:--";
-
-      return DateFormat('HH:mm').format(DateTime.parse(rawDate));
-    } catch (e) {
-      return "--:--";
-    }
+    if (_rekapPresensi.isEmpty) return "--:--";
+    return _rekapPresensi['jam_masuk']?.toString() ?? "--:--";
   }
 
   Widget _buildTopSection() {
@@ -381,11 +344,7 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: _buildTimeDetail(
                       label: "Check Out",
-                      time: _rekapPresensi.isEmpty ||
-                              _rekapPresensi['jam_pulang'] == null
-                          ? "--:--"
-                          : DateFormat('HH:mm').format(
-                              DateTime.parse(_rekapPresensi['jam_pulang'])),
+                      time: _rekapPresensi['jam_pulang'] ?? "--:--",
                       icon: Icons.logout_rounded,
                       color: Colors.orange,
                     ),

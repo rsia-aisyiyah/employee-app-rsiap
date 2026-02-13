@@ -20,6 +20,18 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
   final TextEditingController _tglAwalController = TextEditingController();
   final TextEditingController _tglAkhirController = TextEditingController();
   String _statusLanjut = 'all';
+  String _selectedPoli = 'all';
+  String _selectedDokter = 'all';
+  String _selectedPoliName = 'Semua Unit/Poli';
+  String _selectedDokterName = 'Semua Dokter';
+
+  List<dynamic> _poliList = [];
+  List<dynamic> _dokterList = [];
+
+  // Mode and year for yearly period
+  bool _showFilters = true;
+  String _mode = 'harian'; // 'harian' or 'tahunan'
+  int _selectedYear = DateTime.now().year;
 
   @override
   void initState() {
@@ -28,20 +40,33 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
     DateTime firstDayOfMonth = DateTime(now.year, now.month, 1);
     _tglAwalController.text = DateFormat('yyyy-MM-dd').format(firstDayOfMonth);
     _tglAkhirController.text = DateFormat('yyyy-MM-dd').format(now);
+
     _loadData();
   }
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      final queryParams =
-          "?tgl_awal=${_tglAwalController.text}&tgl_akhir=${_tglAkhirController.text}&status_lanjut=$_statusLanjut";
-      final res = await Api().getData("/dashboard/visits$queryParams");
+      String queryParams;
+      String filterParams =
+          "&status_lanjut=$_statusLanjut&kd_poli=$_selectedPoli&kd_dokter=$_selectedDokter";
+
+      if (_mode == 'tahunan') {
+        queryParams = "?mode=tahunan&tahun=$_selectedYear$filterParams";
+      } else {
+        queryParams =
+            "?mode=harian&tgl_awal=${_tglAwalController.text}&tgl_akhir=${_tglAkhirController.text}$filterParams";
+      }
+
+      final url = "/dashboard/visits$queryParams";
+      final res = await Api().getData(url);
 
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
         setState(() {
           _data = body['data'];
+          _poliList = _data['poli_list'] ?? [];
+          _dokterList = _data['dokter_list'] ?? [];
           _isLoading = false;
         });
       } else {
@@ -113,10 +138,18 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                         children: [
                           _buildSummaryGrid(),
                           const SizedBox(height: 15),
+                          // Monthly chart for yearly mode
+                          if (_mode == 'tahunan') ...[
+                            _buildMonthlyChart(),
+                            const SizedBox(height: 20),
+                          ],
                           _buildTrendIndicator(),
                           const SizedBox(height: 20),
-                          _buildVisitChart(),
-                          const SizedBox(height: 20),
+                          // Daily chart only for harian mode
+                          if (_mode == 'harian') ...[
+                            _buildVisitChart(),
+                            const SizedBox(height: 20),
+                          ],
                           if (_statusLanjut == 'Ranap' &&
                               _data['inpatient_care'] != null) ...[
                             _buildInpatientStats(),
@@ -132,7 +165,10 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                           const SizedBox(height: 20),
                           _buildCancellationAnalysis(),
                           const SizedBox(height: 20),
-                          _buildTopDoctorsList(),
+                          if (_selectedDokter == 'all') ...[
+                            _buildTopDoctorsList(),
+                            const SizedBox(height: 20),
+                          ],
                           const SizedBox(height: 100), // Extra space for scroll
                         ],
                       ),
@@ -155,35 +191,137 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
         ),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _buildDateInput("Mulai", _tglAwalController),
+              const Text(
+                "Filter Statistik",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildDateInput("Selesai", _tglAkhirController),
+              InkWell(
+                onTap: () => setState(() => _showFilters = !_showFilters),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _showFilters
+                        ? Colors.white.withOpacity(0.3)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Icon(
+                    _showFilters ? Icons.tune : Icons.filter_list,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
+          const SizedBox(height: 15),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: _showFilters
+                ? Column(
+                    children: [
+                      // Mode Selector
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildModeButton(
+                                'harian', 'Harian', Icons.calendar_today),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildModeButton(
+                                'tahunan', 'Tahunan', Icons.event_note),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Parameter Content
+                      _mode == 'harian'
+                          ? _buildHarianSection()
+                          : _buildTahunanSection(),
+
+                      const SizedBox(height: 12),
+
+                      // Status and Poliklinik (Side by side)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatusDropdown(),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildPoliPicker(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Dokter Selection
+                      _buildDokterPicker(),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHarianSection() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDateInput("Mulai", _tglAwalController),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildDateInput("Selesai", _tglAkhirController),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTahunanSection() {
+    return _buildYearPicker();
+  }
+
+  Widget _buildStatusDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.layers_outlined, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _statusLanjut,
                 dropdownColor: primaryColor,
                 isExpanded: true,
-                icon:
-                    const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
                 style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold),
                 items: const [
                   DropdownMenuItem(value: 'all', child: Text("Semua Layanan")),
                   DropdownMenuItem(value: 'Ralan', child: Text("Rawat Jalan")),
@@ -199,6 +337,181 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPoliPicker() {
+    return GestureDetector(
+      onTap: () => _showPoliSearch(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.local_hospital_outlined,
+                color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _selectedPoliName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showPoliSearch() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _PoliSearchSheet(
+        poliList: _poliList,
+        onSelected: (kd, name) {
+          setState(() {
+            _selectedPoli = kd;
+            _selectedPoliName = name;
+          });
+          _loadData();
+        },
+      ),
+    );
+  }
+
+  Widget _buildDokterPicker() {
+    return GestureDetector(
+      onTap: () => _showDokterSearch(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.person_search, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _selectedDokterName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: Colors.white),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDokterSearch() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _DokterSearchSheet(
+        dokterList: _dokterList,
+        onSelected: (kd, name) {
+          setState(() {
+            _selectedDokter = kd;
+            _selectedDokterName = name;
+          });
+          _loadData();
+        },
+      ),
+    );
+  }
+
+  Widget _buildModeButton(String mode, String label, IconData icon) {
+    bool isActive = _mode == mode;
+    return InkWell(
+      onTap: () {
+        setState(() => _mode = mode);
+        _loadData();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.white : Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isActive ? Colors.white : Colors.white.withOpacity(0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isActive ? primaryColor : Colors.white,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? primaryColor : Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildYearPicker() {
+    List<int> years = List.generate(11, (i) => DateTime.now().year - 5 + i);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _selectedYear,
+          dropdownColor: primaryColor,
+          isExpanded: true,
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+          items: years.map((year) {
+            return DropdownMenuItem<int>(
+              value: year,
+              child: Text("Tahun $year"),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) {
+              setState(() => _selectedYear = val);
+              _loadData();
+            }
+          },
+        ),
       ),
     );
   }
@@ -1041,6 +1354,556 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyChart() {
+    List monthlyData = _data['monthly_breakdown'] ?? [];
+
+    // Empty state widget
+    if (monthlyData.isEmpty) {
+      return _buildVisualCard(
+        "Tren Kunjungan Bulanan ($_selectedYear)",
+        Column(
+          children: [
+            const SizedBox(height: 40),
+            Icon(Icons.bar_chart_outlined, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text(
+              "Tidak ada data kunjungan",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "untuk tahun $_selectedYear",
+              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      );
+    }
+
+    // Create bar chart data
+    List<BarChartGroupData> barGroups = [];
+    double maxY = 0;
+
+    for (int i = 0; i < monthlyData.length; i++) {
+      var item = monthlyData[i];
+      double value = (item['total'] ?? 0).toDouble();
+      if (value > maxY) maxY = value;
+
+      barGroups.add(
+        BarChartGroupData(
+          x: i,
+          barRods: [
+            BarChartRodData(
+              toY: value,
+              color: primaryColor,
+              width: 16,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(6),
+                topRight: Radius.circular(6),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return _buildVisualCard(
+      "Tren Kunjungan Bulanan ($_selectedYear)",
+      Column(
+        children: [
+          SizedBox(
+            height: 220,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: maxY * 1.2, // Add 20% padding
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipBgColor: Colors.blueGrey[800]!,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      String month =
+                          monthlyData[group.x.toInt()]['nama_bulan'] ?? '';
+                      return BarTooltipItem(
+                        '$month\n${rod.toY.toInt()} Pasien',
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        int idx = value.toInt();
+                        if (idx < 0 || idx >= monthlyData.length) {
+                          return const SizedBox.shrink();
+                        }
+                        // Show abbreviated month names
+                        List<String> monthAbbr = [
+                          'Jan',
+                          'Feb',
+                          'Mar',
+                          'Apr',
+                          'Mei',
+                          'Jun',
+                          'Jul',
+                          'Agu',
+                          'Sep',
+                          'Okt',
+                          'Nov',
+                          'Des'
+                        ];
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(
+                            monthAbbr[idx],
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                              fontSize: 9,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 35,
+                      getTitlesWidget: (value, meta) {
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          child: Text(
+                            value.toInt().toString(),
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 9,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxY / 5,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.grey[100],
+                    strokeWidth: 1,
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: barGroups,
+              ),
+            ),
+          ),
+          const SizedBox(height: 15),
+          _buildMonthlyInsights(monthlyData),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMonthlyInsights(List monthlyData) {
+    if (monthlyData.isEmpty) return const SizedBox.shrink();
+
+    // Find max and min months
+    var maxMonth = monthlyData
+        .reduce((a, b) => (a['total'] ?? 0) > (b['total'] ?? 0) ? a : b);
+    var minMonth = monthlyData
+        .reduce((a, b) => (a['total'] ?? 0) < (b['total'] ?? 0) ? a : b);
+
+    return Column(
+      children: [
+        _buildMonthlyInsightRow(
+          "Puncak Kunjungan",
+          maxMonth['nama_bulan'] ?? '-',
+          "${maxMonth['total'] ?? 0} Pasien",
+          Colors.green,
+          Icons.trending_up_rounded,
+        ),
+        const SizedBox(height: 8),
+        _buildMonthlyInsightRow(
+          "Terendah",
+          minMonth['nama_bulan'] ?? '-',
+          "${minMonth['total'] ?? 0} Pasien",
+          Colors.orange,
+          Icons.trending_down_rounded,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthlyInsightRow(
+      String label, String month, String value, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: color.withOpacity(0.8),
+                  ),
+                ),
+                Text(
+                  month,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PoliSearchSheet extends StatefulWidget {
+  final List<dynamic> poliList;
+  final Function(String, String) onSelected;
+
+  const _PoliSearchSheet({
+    required this.poliList,
+    required this.onSelected,
+  });
+
+  @override
+  State<_PoliSearchSheet> createState() => _PoliSearchSheetState();
+}
+
+class _PoliSearchSheetState extends State<_PoliSearchSheet> {
+  List<dynamic> _filteredList = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredList = widget.poliList;
+  }
+
+  void _filter(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredList = widget.poliList;
+      } else {
+        _filteredList = widget.poliList
+            .where((p) => p['nm_poli']
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Pilih Poliklinik / Unit",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _filter,
+                    decoration: InputDecoration(
+                      hintText: "Cari nama poli...",
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: primaryColor),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                itemCount: _filteredList.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.grey[100],
+                        child: const Icon(Icons.local_hospital,
+                            color: Colors.grey),
+                      ),
+                      title: const Text("Semua Unit / Poli"),
+                      onTap: () {
+                        widget.onSelected('all', 'Semua Unit / Poli');
+                        Navigator.pop(context);
+                      },
+                    );
+                  }
+
+                  var poli = _filteredList[index - 1];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: primaryColor.withOpacity(0.1),
+                      child: Icon(Icons.local_hospital_outlined,
+                          color: primaryColor),
+                    ),
+                    title: Text(poli['nm_poli']),
+                    onTap: () {
+                      widget.onSelected(
+                        poli['kd_poli'].toString(),
+                        poli['nm_poli'].toString(),
+                      );
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DokterSearchSheet extends StatefulWidget {
+  final List<dynamic> dokterList;
+  final Function(String, String) onSelected;
+
+  const _DokterSearchSheet({
+    required this.dokterList,
+    required this.onSelected,
+  });
+
+  @override
+  State<_DokterSearchSheet> createState() => _DokterSearchSheetState();
+}
+
+class _DokterSearchSheetState extends State<_DokterSearchSheet> {
+  List<dynamic> _filteredList = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredList = widget.dokterList;
+  }
+
+  void _filter(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _filteredList = widget.dokterList;
+      } else {
+        _filteredList = widget.dokterList.where((d) {
+          final name = d['nm_dokter'].toString().toLowerCase();
+          final sps =
+              (d['spesialis']?['nm_sps'] ?? '').toString().toLowerCase();
+          final q = query.toLowerCase();
+          return name.contains(q) || sps.contains(q);
+        }).toList();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, controller) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 10),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Pilih Dokter Spesialis",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _searchController,
+                    onChanged: _filter,
+                    decoration: InputDecoration(
+                      hintText: "Cari nama atau spesialis...",
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: primaryColor),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView.builder(
+                controller: controller,
+                itemCount: _filteredList.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.grey[100],
+                        child: const Icon(Icons.people, color: Colors.grey),
+                      ),
+                      title: const Text("Semua Dokter"),
+                      onTap: () {
+                        widget.onSelected('all', 'Semua Dokter');
+                        Navigator.pop(context);
+                      },
+                    );
+                  }
+
+                  var dokter = _filteredList[index - 1];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: primaryColor.withOpacity(0.1),
+                      child: Icon(Icons.person, color: primaryColor),
+                    ),
+                    title: Text(dokter['nm_dokter']),
+                    subtitle: Text(
+                      dokter['spesialis']?['nm_sps'] ?? '-',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    onTap: () {
+                      widget.onSelected(
+                        dokter['kd_dokter'].toString(),
+                        dokter['nm_dokter'].toString(),
+                      );
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

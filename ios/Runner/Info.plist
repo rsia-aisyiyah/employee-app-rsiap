@@ -46,7 +46,13 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan QR codes</string>
+	<string>This app needs camera access to scan QR codes and verify attendance</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Aplikasi membutuhkan lokasi Anda untuk memverifikasi kehadiran saat berada di area kantor.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Aplikasi membutuhkan lokasi Anda untuk memverifikasi kehadiran saat berada di area kantor.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Aplikasi membutuhkan lokasi Anda untuk memverifikasi kehadiran saat berada di area kantor.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photos access to save downloaded files</string>
 	<key>NSMicrophoneUsageDescription</key>

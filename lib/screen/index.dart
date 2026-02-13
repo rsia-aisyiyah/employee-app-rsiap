@@ -227,7 +227,7 @@ class _IndexScreenState extends State<IndexScreen>
               // Sub Menu Items (Floating above FAB)
               if (_isMenuOpen || _animationController.isAnimating)
                 Positioned(
-                  bottom: Platform.isIOS ? 100 : 80, // Moved closer to main FAB
+                  bottom: Platform.isIOS ? 115 : 95, // Refined offset
                   left: 0,
                   right: 0,
                   child: Column(
@@ -271,7 +271,7 @@ class _IndexScreenState extends State<IndexScreen>
                         },
                         index: 0,
                       ),
-                      const SizedBox(height: 10), // Extra buffer from main FAB
+                      const SizedBox(height: 25), // More buffer from main FAB
                     ],
                   ),
                 ),
@@ -353,7 +353,10 @@ class _IndexScreenState extends State<IndexScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(width: 60), // Increased Gap for FAB.small
+                  SizedBox(
+                      width: MediaQuery.of(context).size.width < 360
+                          ? 65
+                          : 75), // Dynamic Gap
                   const Expanded(child: SizedBox()),
                 ],
               ),

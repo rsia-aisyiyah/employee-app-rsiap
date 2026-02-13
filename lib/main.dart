@@ -20,34 +20,41 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   print('✅ WidgetsFlutterBinding initialized');
 
+  try {
+    debugPrint('💾 Initializing GetStorage...');
+    await GetStorage.init();
+    debugPrint('✅ GetStorage initialized');
+  } catch (e) {
+    debugPrint('❌ Error initializing GetStorage: $e');
+  }
+
   // Initialize Config (Network Check)
-  await AppConfig.init();
+  try {
+    debugPrint('⚙️ Starting AppConfig initialization...');
+    await AppConfig.init().timeout(const Duration(seconds: 4));
+    debugPrint('✅ AppConfig initialized');
+  } catch (e) {
+    debugPrint(
+        '⚠️ AppConfig init failed or timed out ($e). Proceeding with defaults.');
+  }
 
   try {
-    print('🔥 Initializing Firebase...');
+    debugPrint('🔥 Initializing Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('✅ Firebase initialized');
+    ).timeout(const Duration(seconds: 5));
+    debugPrint('✅ Firebase initialized');
   } catch (e, stack) {
-    print('❌ Firebase init error: $e');
-    print('Stack: $stack');
+    debugPrint('❌ Firebase init failed or timed out: $e');
   }
 
   try {
-    print('📅 Initializing date formatting...');
-    await initializeDateFormatting('id_ID', null);
-    print('✅ Date formatting initialized');
+    debugPrint('📅 Initializing date formatting...');
+    await initializeDateFormatting('id_ID', null)
+        .timeout(const Duration(seconds: 2));
+    debugPrint('✅ Date formatting initialized');
   } catch (e) {
-    print('❌ Error initializing date formatting: $e');
-  }
-
-  try {
-    print('💾 Initializing GetStorage...');
-    await GetStorage.init();
-    print('✅ GetStorage initialized');
-  } catch (e) {
-    print('❌ Error initializing GetStorage: $e');
+    debugPrint('❌ Error initializing date formatting: $e');
   }
 
   // FlutterDownloader only supports Android and iOS
@@ -118,9 +125,18 @@ class CheckAuth extends StatelessWidget {
         return false;
       }
 
-      var tkns = await Api().getData('/user/auth/detail');
-      if (tkns.statusCode != 200) {
-        return false;
+      try {
+        var tkns = await Api().getData('/user/auth/detail');
+        if (tkns.statusCode != 200) {
+          return false;
+        }
+      } catch (e) {
+        debugPrint('❌ Auth check failed: $e');
+        // Let it throw or return false.
+        // Returning false will redirect to login, which is safer.
+        // But if it's a timeout, maybe we want to show the error UI.
+        // FutureBuilder will catch the exception and show snapshot.hasError.
+        rethrow;
       }
 
       return true;
@@ -138,9 +154,24 @@ class CheckAuth extends StatelessWidget {
           }
 
           if (snapshot.hasError) {
-            return const Scaffold(
+            return Scaffold(
               body: Center(
-                child: Text('Something went wrong!'),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error_outline,
+                          color: Colors.red, size: 60),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Unable to connect to server.\nPlease check your internet connection.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           }

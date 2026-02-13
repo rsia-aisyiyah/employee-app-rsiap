@@ -11,9 +11,11 @@ import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/menu/pengajuan_jadwal.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_kunjungan.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_bed.dart';
+import 'package:rsia_employee_app/screen/menu/e_presensi.dart';
 import 'package:rsia_employee_app/screen/menu/helpdesk_main.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_penyakit.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_statistik_ranap.dart';
+import 'package:rsia_employee_app/screen/menu/approval_jadwal.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -21,7 +23,13 @@ class MenuNavigator {
       case 'menu_dashboard':
       case 'menu_dashboard_rs':
         return const DashboardRS();
+      case 'menu_e_presensi':
+      case 'e_presensi':
+      case 'presensi_online':
+      case 'menu_presensi_online':
+        return const EPresensiScreen(title: 'E-Presensi');
       case 'menu_presensi':
+      case 'presensi_history':
         return const Presensi();
       case 'menu_cuti':
         return const Cuti();
@@ -38,10 +46,18 @@ class MenuNavigator {
         return const Undangan();
       case 'menu_sertifikasi':
         return const Sertifikasi();
+      case 'pengajuan_jadwal':
       case 'menu_pengajuan_jadwal':
         return const PengajuanJadwal();
       case 'menu_approval_cuti':
         return const ApprovalCuti();
+      case 'approval':
+      case 'approval/jadwal':
+      case 'approval-jadwal':
+      case 'approval_jadwal':
+      case 'jadwal_approval':
+      case 'menu_approval_jadwal':
+        return const ApprovalJadwal();
       case 'menu_dashboard_kunjungan':
         return const DashboardKunjungan();
       case 'menu_dashboard_bed':
