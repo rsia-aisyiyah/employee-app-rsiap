@@ -527,19 +527,22 @@ class _HomePageState extends State<HomePage> {
         children: [
           _buildTopSection(),
           Expanded(
-            child: SingleChildScrollView(
-              clipBehavior: Clip
-                  .none, // Allow items to overlap header without being clipped
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                children: [
-                  _buildAttendanceStatus(),
-                  const SizedBox(height: 0),
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: _buildMenuGrid(),
-                  ),
-                ],
+            child: RefreshIndicator(
+              onRefresh: _initialize,
+              color: primaryColor,
+              child: SingleChildScrollView(
+                clipBehavior: Clip.none,
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildAttendanceStatus(),
+                    const SizedBox(height: 0),
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: _buildMenuGrid(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

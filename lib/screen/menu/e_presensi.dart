@@ -378,6 +378,9 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isLoading = false; // Stop loading on error
+        });
         Msg.error(context, "Gagal memproses: $e");
 
         // Reset state to retry
