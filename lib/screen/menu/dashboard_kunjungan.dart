@@ -29,7 +29,7 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
   List<dynamic> _dokterList = [];
 
   // Mode and year for yearly period
-  bool _showFilters = true;
+  bool _showFilters = false;
   String _mode = 'harian'; // 'harian' or 'tahunan'
   int _selectedYear = DateTime.now().year;
 

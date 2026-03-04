@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -11,8 +12,13 @@ import 'package:in_app_update/in_app_update.dart';
 import 'package:rsia_employee_app/api/firebase_api.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
-import 'package:rsia_employee_app/screen/menu/presensi.dart';
+import 'package:rsia_employee_app/screen/menu/e_presensi.dart';
 import 'package:rsia_employee_app/screen/menu/helpdesk_form.dart';
+import 'package:rsia_employee_app/screen/menu/lembur.dart';
+import 'package:rsia_employee_app/screen/menu/pengajuan_jadwal.dart';
+import 'package:rsia_employee_app/screen/menu/surat_eksternal/surat_eksternal_add_screen.dart';
+import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_add_screen.dart';
+import 'package:rsia_employee_app/screen/menu/presensi_dokter.dart';
 import 'package:animations/animations.dart';
 
 import '../config/config.dart';
@@ -33,6 +39,8 @@ class _IndexScreenState extends State<IndexScreen>
   late AnimationController _animationController;
   late Animation<double> _expandAnimation;
   bool _isMenuOpen = false;
+  List<dynamic> _userMenus = [];
+  bool _isMenuLoading = true;
 
   @override
   void initState() {
@@ -48,6 +56,8 @@ class _IndexScreenState extends State<IndexScreen>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
+
+    _fetchUserMenus();
   }
 
   @override
@@ -111,6 +121,10 @@ class _IndexScreenState extends State<IndexScreen>
               (depObj != null ? depObj['nama'] : "").toString().toUpperCase();
           String deptCode =
               (depObj != null ? depObj['dep_id'] : "").toString().toUpperCase();
+
+          if (deptCode.isNotEmpty && deptCode != '-') {
+            box.write('dep', deptCode);
+          }
           String jabatan = (userData['jbtn'] ?? "").toString().toUpperCase();
           String role =
               (box.read('role') ?? "").toString().trim().toUpperCase();
@@ -156,6 +170,50 @@ class _IndexScreenState extends State<IndexScreen>
         });
       }
     }
+  }
+
+  Future<void> _fetchUserMenus() async {
+    try {
+      var res =
+          await Api().getData("/menu-management/user-menus?platform=mobile");
+      var body = json.decode(res.body);
+      if (res.statusCode == 200) {
+        if (mounted) {
+          List<dynamic> rawMenus = body['data'] ?? [];
+          setState(() {
+            _userMenus = _flattenMenus(rawMenus);
+            _isMenuLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _isMenuLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isMenuLoading = false;
+        });
+      }
+    }
+  }
+
+  List<dynamic> _flattenMenus(List<dynamic> menus) {
+    List<dynamic> flat = [];
+    for (var menu in menus) {
+      flat.add(menu);
+      if (menu['children'] != null && (menu['children'] as List).isNotEmpty) {
+        flat.addAll(_flattenMenus(menu['children']));
+      }
+    }
+    return flat;
+  }
+
+  bool _hasAccess(String routeKey) {
+    return _userMenus.any((menu) => menu['route'] == routeKey);
   }
 
   void _listenToFirebaseMessages() {
@@ -224,55 +282,176 @@ class _IndexScreenState extends State<IndexScreen>
                   ),
                 ),
 
-              // Sub Menu Items (Floating above FAB)
+              // Sub Menu Items (Radial Layout around FAB)
               if (_isMenuOpen || _animationController.isAnimating)
-                Positioned(
-                  bottom: Platform.isIOS ? 115 : 95, // Refined offset
-                  left: 0,
-                  right: 0,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildSubMenuItem(
-                        icon: Icons.location_on,
-                        label: "Presensi Online",
-                        onTap: () {
-                          _toggleMenu();
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => const Presensi()));
-                        },
-                        index: 2,
-                      ),
-                      _buildSubMenuItem(
-                        icon: Icons.calendar_month,
-                        label: "Tambah Cuti",
-                        onTap: () {
-                          _toggleMenu();
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const Cuti(showForm: true)));
-                        },
-                        index: 1,
-                      ),
-                      _buildSubMenuItem(
-                        icon: Icons.support_agent,
-                        label: "Lapor Helpdesk",
-                        onTap: () {
-                          _toggleMenu();
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const HelpdeskFormScreen()));
-                        },
-                        index: 0,
-                      ),
-                      const SizedBox(height: 25), // More buffer from main FAB
-                    ],
+                Positioned.fill(
+                  child: Builder(
+                    builder: (context) {
+                      // Collect visible menu items based on access
+                      final List<Map<String, dynamic>> visibleItems = [];
+
+                      if (_hasAccess('menu_presensi_online') ||
+                          _hasAccess('e_presensi') ||
+                          _hasAccess('presensi_online')) {
+                        visibleItems.add({
+                          'icon': Icons.location_on,
+                          'label': 'Presensi',
+                          'color': const Color(0xFFFBC02D),
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const EPresensiScreen(
+                                          title: "Presensi Online",
+                                        )));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_presensi_dokter') ||
+                          _hasAccess('menu_presensi_online') ||
+                          _hasAccess('e_presensi') ||
+                          _hasAccess('presensi_online')) {
+                        visibleItems.add({
+                          'icon': Icons.medical_services_rounded,
+                          'label': 'Presensi Dokter',
+                          'color': Colors.redAccent,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PresensiDokter()));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_lembur')) {
+                        visibleItems.add({
+                          'icon': Icons.more_time_rounded,
+                          'label': 'Lembur',
+                          'color': Colors.cyan,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => const LemburScreen(
+                                          title: "Lembur",
+                                        )));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_cuti') || _hasAccess('cuti')) {
+                        visibleItems.add({
+                          'icon': Icons.calendar_month,
+                          'label': 'Cuti',
+                          'color': Colors.blue,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const Cuti(showForm: true)));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_pengajuan_jadwal')) {
+                        visibleItems.add({
+                          'icon': Icons.event_note_rounded,
+                          'label': 'Jadwal',
+                          'color': Colors.orange,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PengajuanJadwal()));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_surat_internal')) {
+                        visibleItems.add({
+                          'icon': Icons.domain_rounded,
+                          'label': 'S. Internal',
+                          'color': Colors.teal,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SuratInternalAddScreen()));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_surat_eksternal')) {
+                        visibleItems.add({
+                          'icon': Icons.public_rounded,
+                          'label': 'S. Eksternal',
+                          'color': Colors.indigo,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const SuratEksternalAddScreen()));
+                          },
+                        });
+                      }
+
+                      if (_hasAccess('menu_helpdesk')) {
+                        visibleItems.add({
+                          'icon': Icons.support_agent,
+                          'label': 'Helpdesk',
+                          'color': Colors.redAccent,
+                          'onTap': () {
+                            _toggleMenu();
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const HelpdeskFormScreen()));
+                          },
+                        });
+                      }
+
+                      // Calculate dynamic angles based on item count
+                      final int count = visibleItems.length;
+                      if (count == 0) return const SizedBox.shrink();
+
+                      // For 1 item: center at 90°
+                      // For 2+ items: evenly spread from 180° to 0°
+                      final double startAngle = count == 1 ? 90.0 : 180.0;
+                      final double endAngle = count == 1 ? 90.0 : 0.0;
+                      final double step = count <= 1
+                          ? 0.0
+                          : (startAngle - endAngle) / (count - 1);
+
+                      return Stack(
+                        children: List.generate(count, (i) {
+                          final item = visibleItems[i];
+                          final double angle = startAngle - (step * i);
+                          return _buildRadialMenuItem(
+                            icon: item['icon'] as IconData,
+                            label: item['label'] as String,
+                            color: item['color'] as Color,
+                            angle: angle,
+                            onTap: item['onTap'] as VoidCallback,
+                            index: i,
+                          );
+                        }),
+                      );
+                    },
                   ),
                 ),
             ],
@@ -305,75 +484,40 @@ class _IndexScreenState extends State<IndexScreen>
     );
   }
 
-  Widget _buildSubMenuItem({
+  Widget _buildRadialMenuItem({
     required IconData icon,
     required String label,
+    required Color color,
+    required double angle, // in degrees
     required VoidCallback onTap,
     required int index,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: ScaleTransition(
-        scale: _expandAnimation,
-        child: FadeTransition(
-          opacity: _expandAnimation,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Label (Offset to the left of the icon)
-              Row(
-                children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        margin: const EdgeInsets.only(
-                            right: 12), // Space between label and icon
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                      width: MediaQuery.of(context).size.width < 360
-                          ? 65
-                          : 75), // Dynamic Gap
-                  const Expanded(child: SizedBox()),
-                ],
-              ),
+    double radius = 115.0; // Clean circular radius
+    double radians = angle * math.pi / 180.0;
+    double appBarHeight = Platform.isIOS ? 90 : 70;
+    double x = radius * math.cos(radians);
+    double y = radius * math.sin(radians);
 
-              // Icon (Centered)
-              FloatingActionButton.small(
-                heroTag: 'sub-fab-$index',
-                onPressed: onTap,
-                backgroundColor: Colors.white,
-                foregroundColor: primaryColor,
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(100),
-                ),
-                child: Icon(icon),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: Transform.translate(
+        offset: Offset(x, -(y + appBarHeight + 30)),
+        child: ScaleTransition(
+          scale: _expandAnimation,
+          child: FadeTransition(
+            opacity: _expandAnimation,
+            child: FloatingActionButton.small(
+              heroTag: 'sub-fab-$index',
+              onPressed: onTap,
+              backgroundColor: Colors.white,
+              foregroundColor: color,
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(100),
+                side: BorderSide(color: color.withOpacity(0.2), width: 2),
               ),
-            ],
+              child: Icon(icon, size: 20),
+            ),
           ),
         ),
       ),

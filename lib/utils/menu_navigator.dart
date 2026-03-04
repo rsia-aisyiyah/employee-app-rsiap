@@ -8,6 +8,7 @@ import 'package:rsia_employee_app/screen/menu/jasa_medis.dart';
 import 'package:rsia_employee_app/screen/menu/presensi.dart';
 import 'package:rsia_employee_app/screen/menu/sertifikasi.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
+import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_screen.dart';
 import 'package:rsia_employee_app/screen/menu/pengajuan_jadwal.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_kunjungan.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_bed.dart';
@@ -16,6 +17,11 @@ import 'package:rsia_employee_app/screen/menu/helpdesk_main.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_penyakit.dart';
 import 'package:rsia_employee_app/screen/menu/dashboard_statistik_ranap.dart';
 import 'package:rsia_employee_app/screen/menu/approval_jadwal.dart';
+import 'package:rsia_employee_app/screen/menu/surat_eksternal/surat_eksternal_screen.dart';
+import 'package:rsia_employee_app/screen/menu/lembur.dart';
+import 'package:rsia_employee_app/screen/menu/lembur_history.dart';
+import 'package:rsia_employee_app/screen/menu/presensi_dokter.dart';
+import 'package:rsia_employee_app/screen/menu/jadwal_pegawai.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -42,6 +48,10 @@ class MenuNavigator {
       case 'menu_dokumen':
       case 'menu_dokumen_surat':
         return const FileManager();
+      case 'menu_surat_internal':
+        return const SuratInternalScreen();
+      case 'menu_surat_eksternal':
+        return const SuratEksternalScreen();
       case 'menu_undangan':
         return const Undangan();
       case 'menu_sertifikasi':
@@ -49,6 +59,9 @@ class MenuNavigator {
       case 'pengajuan_jadwal':
       case 'menu_pengajuan_jadwal':
         return const PengajuanJadwal();
+      case 'jadwal_pegawai':
+      case 'menu_jadwal_pegawai':
+        return const JadwalPegawai();
       case 'menu_approval_cuti':
         return const ApprovalCuti();
       case 'approval':
@@ -64,10 +77,18 @@ class MenuNavigator {
         return const DashboardBed();
       case 'menu_helpdesk':
         return const HelpdeskMainScreen();
+      case 'menu_lembur':
+        return const LemburScreen(title: 'Lembur');
+      case 'menu_riwayat_lembur':
+        return const LemburHistoryScreen();
       case 'menu_penyakit':
         return const DashboardPenyakit();
       case 'menu_statistik_ranap':
         return const DashboardStatistikRanap();
+      case 'presensi_dokter':
+      case 'dokter_presensi':
+      case 'menu_presensi_dokter':
+        return const PresensiDokter();
       case 'menu_berkas_pegawai':
         return null;
       default:

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
@@ -11,6 +12,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:animations/animations.dart';
 import 'package:rsia_employee_app/utils/biometric_helper.dart';
 import 'package:rsia_employee_app/utils/secure_storage_helper.dart';
+import 'package:rsia_employee_app/screen/forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -402,7 +404,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildUsernameField(),
                   const SizedBox(height: 20),
                   _buildPasswordField(),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen(),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        "Lupa Password?",
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   _buildLoginButton(),
                 ],
               ),
@@ -435,10 +458,17 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: TextFormField(
         style: const TextStyle(fontWeight: FontWeight.w600),
+        maxLength: 10,
+        keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+          LengthLimitingTextInputFormatter(10),
+        ],
         decoration: InputDecoration(
           hintText: "Username",
           hintStyle: TextStyle(color: Colors.grey[400]),
           prefixIcon: Icon(Icons.person_outline, color: primaryColor),
+          counterText: '',
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,

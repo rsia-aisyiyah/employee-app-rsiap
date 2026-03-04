@@ -57,6 +57,17 @@ class Api {
     });
   }
 
+  getGuestData(pathUrl) async {
+    return await _retryWithFallback(() async {
+      var fullUrl = apiUrl + pathUrl;
+      return await http.get(Uri.parse(fullUrl), headers: {
+        'Content-type': 'application/json',
+        'Accept': 'application/json',
+        'X-App-Type': 'mobile',
+      }).timeout(timeoutDuration);
+    });
+  }
+
   postRequest(pathUrl) async {
     var fullUrl = apiUrl + pathUrl;
     await _getToken();

@@ -71,28 +71,28 @@ class Helper {
     return DateFormat(
       'EEEE, dd MMMM yyyy',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String formatDate2(String date) {
     return DateFormat(
       'EEE, dd MMM yyyy',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String formatDate3(String date) {
     return DateFormat(
       'dd-MM-yyyy',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String formatDate4(String date) {
     return DateFormat(
       'dd MMM yyyy',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   // ====================  //
@@ -146,56 +146,56 @@ class Helper {
     return DateFormat(
       'dd',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String numtoDay(String date) {
     return DateFormat(
       'EEE',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String numtoDayFull(String date) {
     return DateFormat(
       'EEEE',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String daytoMonth(String date) {
     return DateFormat(
       'MMM',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String daytoYear(String date) {
     return DateFormat(
       'yyyy',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String dateTimeToDate(String date) {
     return DateFormat(
       'HH:mm:ss',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String dateToMonthYear(String date) {
     return DateFormat(
       'MMM yyyy',
       'id_ID',
-    ).format(DateTime.parse(date));
+    ).format(DateTime.parse(date).toLocal());
   }
 
   static String getDuration(String? checkIn, String? checkOut) {
     if (checkIn == null || checkOut == null) return "-";
     try {
-      DateTime start = DateTime.parse(checkIn);
-      DateTime end = DateTime.parse(checkOut);
+      DateTime start = DateTime.parse(checkIn).toLocal();
+      DateTime end = DateTime.parse(checkOut).toLocal();
       Duration diff = end.difference(start);
 
       int hours = diff.inHours;

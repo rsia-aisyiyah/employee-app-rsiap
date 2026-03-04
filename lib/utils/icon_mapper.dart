@@ -66,6 +66,8 @@ class IconMapper {
       case 'event':
       case 'pengajuan_jadwal':
       case 'menu_pengajuan_jadwal':
+      case 'jadwal_pegawai':
+      case 'menu_jadwal_pegawai':
         return Icons.event_note_rounded;
       case 'approval':
       case 'approval_jadwal':
@@ -90,6 +92,16 @@ class IconMapper {
       case 'pesan':
       case 'undangan':
         return Icons.mail_outline;
+      case 'template_dokumen':
+      case 'template':
+        return Icons.copy_all_rounded;
+      case 'surat_internal':
+      case 'internal':
+        return Icons.domain_rounded;
+      case 'surat_eksternal':
+      case 'eksternal':
+      case 'fas fa-envelope-open-text':
+        return Icons.public_rounded;
       case 'kinerja':
       case 'assessment':
         return Icons.assessment_outlined;
@@ -104,7 +116,11 @@ class IconMapper {
         return Icons.card_membership_outlined;
       case 'overtime':
       case 'lembur':
-        return Icons.access_time_filled;
+      case 'menu_lembur':
+        return Icons.more_time_rounded;
+      case 'riwayat_lembur':
+      case 'menu_riwayat_lembur':
+        return Icons.manage_history_rounded;
       case 'campaign':
       case 'news':
       case 'pengumuman':

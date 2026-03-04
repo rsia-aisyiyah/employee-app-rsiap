@@ -64,7 +64,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       print("DEBUG: Fetching bio...");
       var res = await Api().getData(
-          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja");
+          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja,keluarga");
 
       print("DEBUG: Bio Response Status: ${res.statusCode}");
       print("DEBUG: Bio Response Body: ${res.body}");
@@ -253,7 +253,7 @@ class _ProfilePageState extends State<ProfilePage> {
             _buildTopHeader(context),
             const SizedBox(height: 20),
             _buildModernProfileInfo(),
-            const SizedBox(height: 80),
+            const SizedBox(height: 120),
           ],
         ),
       ),
@@ -299,32 +299,16 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontSize: 20,
                       fontWeight: FontWeight.bold),
                 ),
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: _showEditDialog,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.edit, color: Colors.white),
-                      ),
+                InkWell(
+                  onTap: _showLogoutMenu,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 10),
-                    InkWell(
-                      onTap: _showLogoutMenu,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.settings, color: Colors.white),
-                      ),
-                    ),
-                  ],
+                    child: const Icon(Icons.settings, color: Colors.white),
+                  ),
                 ),
               ],
             ),
@@ -491,13 +475,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildModernInput({
     required String label,
-    required String initialValue,
+    TextEditingController? controller,
+    String? initialValue,
     required IconData icon,
-    String? hint,
-    int maxLines = 1,
+    required String hint,
+    required Function(String?) onSaved,
+    String? Function(String?)? validator,
     TextInputType keyboardType = TextInputType.text,
-    required FormFieldSetter<String> onSaved,
-    FormFieldValidator<String>? validator,
+    int maxLines = 1,
+    Widget? suffixIcon,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,28 +497,36 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.grey[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!),
-          ),
-          child: TextFormField(
-            initialValue: initialValue,
-            maxLines: maxLines,
-            keyboardType: keyboardType,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-            decoration: InputDecoration(
-              prefixIcon: Icon(icon, color: primaryColor),
-              hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        TextFormField(
+          controller: controller,
+          initialValue: initialValue,
+          maxLines: maxLines,
+          keyboardType: keyboardType,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: primaryColor, size: 20),
+            suffixIcon: suffixIcon,
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[200]!),
             ),
-            onSaved: onSaved,
-            validator: validator,
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primaryColor, width: 1.5),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.red, width: 1),
+            ),
           ),
+          onSaved: onSaved,
+          validator: validator,
         ),
       ],
     );
@@ -586,6 +580,527 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ],
     );
+  }
+
+  void _showAddFamilyDialog() {
+    final _familyFormKey = GlobalKey<FormState>();
+    final TextEditingController _nameController = TextEditingController();
+    final TextEditingController _ktpController = TextEditingController();
+    final TextEditingController _bpjsController = TextEditingController();
+    final TextEditingController _birthDateController = TextEditingController();
+    final TextEditingController _jobController = TextEditingController();
+    final TextEditingController _descController = TextEditingController();
+
+    String fName = "";
+    String fRelation = "Anak";
+    String fKtp = "";
+    String fBpjs = "";
+    String fJk = "L";
+    DateTime? fBirthDate;
+    String fJob = "";
+    String fDesc = "";
+    bool isSearching = false;
+
+    void _performAutopopulate(
+        Map<String, dynamic> peserta, Function setModalState) {
+      if (peserta['nama'] != null) {
+        _nameController.text = peserta['nama'];
+        fName = peserta['nama'];
+      }
+
+      if (peserta['nik'] != null) {
+        _ktpController.text = peserta['nik'];
+        fKtp = peserta['nik'];
+      }
+
+      if (peserta['noKartu'] != null) {
+        _bpjsController.text = peserta['noKartu'];
+        fBpjs = peserta['noKartu'];
+      }
+
+      if (peserta['tglLahir'] != null) {
+        try {
+          fBirthDate = DateTime.parse(peserta['tglLahir']);
+          _birthDateController.text = Helper.formatDate4(fBirthDate.toString());
+        } catch (e) {
+          print("Error parsing birth date: $e");
+        }
+      }
+
+      if (peserta['sex'] != null) {
+        fJk = peserta['sex'] == 'L' ? 'L' : 'P';
+      }
+
+      setModalState(() {});
+    }
+
+    Future<void> _lookupBpjs(
+        String value, bool isNik, Function setModalState) async {
+      if (value.isEmpty) {
+        Msg.error(
+            context, "Harap isi ${isNik ? 'NIK' : 'No. BPJS'} terlebih dahulu");
+        return;
+      }
+
+      setModalState(() => isSearching = true);
+      try {
+        String today = DateTime.now().toString().split(' ')[0]; // yyyy-mm-dd
+        String type = isNik ? "nik" : "nokartu";
+        var res =
+            await Api().getData("/bpjs/vclaim/peserta/$type/$value/$today");
+
+        if (res.statusCode == 200) {
+          var body = json.decode(res.body);
+          if (body['metaData'] != null && body['metaData']['code'] == '200') {
+            _performAutopopulate(body['response']['peserta'], setModalState);
+            Msg.success(context, "Data ditemukan!");
+          } else {
+            Msg.error(context,
+                body['metaData']?['message'] ?? "Data tidak ditemukan");
+          }
+        } else {
+          Msg.error(context, "Koneksi ke server BPJS bermasalah");
+        }
+      } catch (e) {
+        Msg.error(context, "Terjadi kesalahan: $e");
+      } finally {
+        setModalState(() => isSearching = false);
+      }
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Center(
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 10, bottom: 10),
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Tambah Anggota Keluarga",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: textBlue,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
+                        )
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Form(
+                        key: _familyFormKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildModernInput(
+                              label: 'Nama Lengkap',
+                              controller: _nameController,
+                              icon: Icons.person_outline,
+                              hint: 'Nama anggota keluarga',
+                              onSaved: (val) => fName = val!,
+                              validator: (val) => val == null || val.isEmpty
+                                  ? 'Nama wajib diisi'
+                                  : null,
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              "Hubungan",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.grey[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[200]!),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: fRelation,
+                                  isExpanded: true,
+                                  items: [
+                                    'Suami',
+                                    'Istri',
+                                    'Anak',
+                                    'Ayah',
+                                    'Ibu',
+                                    'Saudara'
+                                  ].map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600)),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) {
+                                    setModalState(() => fRelation = val!);
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _buildModernInput(
+                              label: 'No. KTP',
+                              controller: _ktpController,
+                              icon: Icons.credit_card,
+                              hint: '16 digit NIK',
+                              keyboardType: TextInputType.number,
+                              onSaved: (val) => fKtp = val!,
+                              suffixIcon: isSearching
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2)))
+                                  : IconButton(
+                                      icon: Icon(Icons.search,
+                                          color: primaryColor),
+                                      onPressed: () => _lookupBpjs(
+                                          _ktpController.text,
+                                          true,
+                                          setModalState),
+                                    ),
+                            ),
+                            const SizedBox(height: 20),
+                            _buildModernInput(
+                              label: 'No. BPJS',
+                              controller: _bpjsController,
+                              icon: Icons.card_membership,
+                              hint: '13 digit No. BPJS',
+                              keyboardType: TextInputType.number,
+                              onSaved: (val) => fBpjs = val!,
+                              suffixIcon: isSearching
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2)))
+                                  : IconButton(
+                                      icon: Icon(Icons.search,
+                                          color: primaryColor),
+                                      onPressed: () => _lookupBpjs(
+                                          _bpjsController.text,
+                                          false,
+                                          setModalState),
+                                    ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              "Jenis Kelamin",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setModalState(() => fJk = "L"),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: fJk == "L"
+                                            ? primaryColor.withOpacity(0.1)
+                                            : Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: fJk == "L"
+                                              ? primaryColor
+                                              : Colors.grey[200]!,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.male,
+                                              color: fJk == "L"
+                                                  ? primaryColor
+                                                  : Colors.grey),
+                                          const SizedBox(width: 8),
+                                          Text("Laki-laki",
+                                              style: TextStyle(
+                                                  color: fJk == "L"
+                                                      ? primaryColor
+                                                      : Colors.grey,
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                Expanded(
+                                  child: InkWell(
+                                    onTap: () => setModalState(() => fJk = "P"),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: fJk == "P"
+                                            ? primaryColor.withOpacity(0.1)
+                                            : Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: fJk == "P"
+                                              ? primaryColor
+                                              : Colors.grey[200]!,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.female,
+                                              color: fJk == "P"
+                                                  ? primaryColor
+                                                  : Colors.grey),
+                                          const SizedBox(width: 8),
+                                          Text("Perempuan",
+                                              style: TextStyle(
+                                                  color: fJk == "P"
+                                                      ? primaryColor
+                                                      : Colors.grey,
+                                                  fontWeight: FontWeight.bold)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              "Tanggal Lahir",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: fBirthDate ??
+                                      DateTime.now().subtract(
+                                          const Duration(days: 365 * 10)),
+                                  firstDate: DateTime(1900),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (picked != null) {
+                                  setModalState(() {
+                                    fBirthDate = picked;
+                                    _birthDateController.text =
+                                        Helper.formatDate4(picked.toString());
+                                  });
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 15),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.grey[200]!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.calendar_today,
+                                        color: primaryColor, size: 20),
+                                    const SizedBox(width: 15),
+                                    Expanded(
+                                      child: Text(
+                                        _birthDateController.text.isEmpty
+                                            ? "Pilih Tanggal Lahir"
+                                            : _birthDateController.text,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color:
+                                              _birthDateController.text.isEmpty
+                                                  ? Colors.grey[400]
+                                                  : Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _buildModernInput(
+                              label: 'Pekerjaan',
+                              controller: _jobController,
+                              icon: Icons.work_outline,
+                              hint: 'Opsional',
+                              onSaved: (val) => fJob = val!,
+                            ),
+                            const SizedBox(height: 20),
+                            _buildModernInput(
+                              label: 'Keterangan',
+                              controller: _descController,
+                              icon: Icons.info_outline,
+                              hint: 'Tambahkan catatan jika perlu',
+                              maxLines: 2,
+                              onSaved: (val) => fDesc = val!,
+                            ),
+                            const SizedBox(height: 40),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 55,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (_familyFormKey.currentState!.validate()) {
+                                    _familyFormKey.currentState!.save();
+                                    _saveFamilyMember({
+                                      'nama': fName,
+                                      'hubungan': fRelation,
+                                      'no_ktp': fKtp,
+                                      'no_bpjs': fBpjs,
+                                      'jk': fJk,
+                                      'tgl_lahir':
+                                          fBirthDate?.toString().split(' ')[0],
+                                      'pekerjaan': fJob,
+                                      'keterangan': fDesc,
+                                    });
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15)),
+                                  elevation: 5,
+                                  shadowColor: primaryColor.withOpacity(0.4),
+                                ),
+                                child: const Text(
+                                  "Simpan Anggota Keluarga",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  Future<void> _saveFamilyMember(Map<String, dynamic> data) async {
+    try {
+      var res =
+          await Api().postData(data, "/pegawai/${box.read('sub')}/keluarga");
+      var body = json.decode(res.body);
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        Msg.success(context, "Berhasil menambahkan anggota keluarga");
+        Navigator.pop(context); // Close dialog
+        fetchAllData(); // Refresh list
+      } else {
+        Msg.error(context, body['message'] ?? "Gagal menyimpan data");
+      }
+    } catch (e) {
+      Msg.error(context, "Terjadi kesalahan: $e");
+    }
+  }
+
+  Future<void> _deleteFamilyMember(String id, String name) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Hapus Data?"),
+        content:
+            Text("Apakah Anda yakin ingin menghapus $name dari data keluarga?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Batal"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Hapus"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        var res = await Api()
+            .deleteData({}, "/pegawai/${box.read('sub')}/keluarga/$id");
+        if (res.statusCode == 200) {
+          Msg.success(context, "Data berhasil dihapus");
+          fetchAllData();
+        } else {
+          Msg.error(context, "Gagal menghapus data");
+        }
+      } catch (e) {
+        Msg.error(context, "Terjadi kesalahan: $e");
+      }
+    }
   }
 
   void _showLogoutMenu() {
@@ -684,22 +1199,158 @@ class _ProfilePageState extends State<ProfilePage> {
               _buildInfoTile(Icons.timer, "Masa Kerja", _getDurationString()),
           ]),
           const SizedBox(height: 15),
-          _buildInfoCard("Kontak & Alamat", [
-            _buildInfoTile(
-                Icons.phone_android,
-                "No. HP",
-                (_bio['petugas'] != null && _bio['petugas']['no_telp'] != null)
-                    ? _bio['petugas']['no_telp']
-                    : "-"),
-            _buildInfoTile(
-                Icons.email_outlined,
-                "Email",
-                (_bio['email'] != null && _bio['email']['email'] != null)
-                    ? _bio['email']['email']
-                    : "-"),
-            _buildInfoTile(
-                Icons.location_on_outlined, "Alamat", _bio['alamat'] ?? "-"),
-          ]),
+          _buildInfoCard(
+            "Kontak & Alamat",
+            [
+              _buildInfoTile(
+                  Icons.phone_android,
+                  "No. HP",
+                  (_bio['petugas'] != null &&
+                          _bio['petugas']['no_telp'] != null)
+                      ? _bio['petugas']['no_telp']
+                      : "-"),
+              _buildInfoTile(
+                  Icons.email_outlined,
+                  "Email",
+                  (_bio['email'] != null && _bio['email']['email'] != null)
+                      ? _bio['email']['email']
+                      : "-"),
+              _buildInfoTile(
+                  Icons.location_on_outlined, "Alamat", _bio['alamat'] ?? "-"),
+            ],
+            onAdd: _showEditDialog,
+          ),
+          const SizedBox(height: 15),
+          _buildInfoCard(
+            "Data Keluarga",
+            (_bio['keluarga'] != null && (_bio['keluarga'] as List).isNotEmpty)
+                ? (_bio['keluarga'] as List).map((member) {
+                    IconData familyIcon = Icons.person_outline;
+                    switch (member['hubungan'].toString().toLowerCase()) {
+                      case 'suami':
+                      case 'ayah':
+                        familyIcon = Icons.male;
+                        break;
+                      case 'istri':
+                      case 'ibu':
+                        familyIcon = Icons.female;
+                        break;
+                      case 'anak':
+                        familyIcon = Icons.child_care;
+                        break;
+                      default:
+                        familyIcon = Icons.people_outline;
+                    }
+
+                    return _buildFamilyTile(
+                      id: member['id'].toString(),
+                      icon: familyIcon,
+                      name: member['nama'] ?? "-",
+                      relation: member['hubungan'] ?? "-",
+                      ktp: member['no_ktp'],
+                      bpjs: member['no_bpjs'],
+                    );
+                  }).toList()
+                : [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: Text(
+                          "Belum ada data keluarga",
+                          style: TextStyle(color: Colors.grey, fontSize: 13),
+                        ),
+                      ),
+                    )
+                  ],
+            onAdd: _showAddFamilyDialog,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFamilyTile({
+    required String id,
+    required IconData icon,
+    required String name,
+    required String relation,
+    String? ktp,
+    String? bpjs,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 20, color: primaryColor),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey[50],
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: Text(
+                        relation,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.blueGrey[700],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    InkWell(
+                      onTap: () => _deleteFamilyMember(id, name),
+                      child: Icon(Icons.delete_outline,
+                          size: 18, color: Colors.red[300]),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                if (ktp != null && ktp.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text(
+                      "KTP: $ktp",
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  ),
+                if (bpjs != null && bpjs.isNotEmpty)
+                  Text(
+                    "BPJS: $bpjs",
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -718,7 +1369,8 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Widget _buildInfoCard(String title, List<Widget> children) {
+  Widget _buildInfoCard(String title, List<Widget> children,
+      {VoidCallback? onAdd}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
@@ -735,11 +1387,33 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.blueGrey)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(title,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.blueGrey)),
+              if (onAdd != null)
+                InkWell(
+                  onTap: onAdd,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                        title.contains("Data Keluarga")
+                            ? Icons.add
+                            : Icons.edit,
+                        color: primaryColor,
+                        size: 20),
+                  ),
+                ),
+            ],
+          ),
           const Divider(height: 20),
           ...children,
         ],

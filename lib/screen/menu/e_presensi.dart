@@ -46,12 +46,13 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
   bool _isWithinLocation = false;
   bool _isLoading = true;
   bool _isCompleted = false; // Add completion flag
+  bool _isJadwalTambahan = false;
   String _statusMessage = "Memeriksa izin dan lokasi...";
 
   // Location Config
   static const double _centerLat = -6.94159449034943;
   static const double _centerLng = 109.65221083435888;
-  static const double _maxRadius = 200; // meters
+  static const double _maxRadius = 100; // meters
   Position? _currentPosition;
 
   // Timer for cooldown
@@ -108,7 +109,7 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _statusMessage = "Error: $e";
+          _statusMessage = e.toString();
         });
       }
     }
@@ -160,6 +161,7 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
         });
       }
     } catch (e) {
+      if (e.toString().contains("Lokasi palsu")) rethrow;
       throw "Gagal mendapatkan lokasi: $e";
     }
   }
@@ -319,12 +321,23 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
               _endpoint = '/presensi-online/check-out';
             });
           } else if (status == 'checked_out') {
-            // Already completed for today
+            if (_isJadwalTambahan) {
+              // We are already in additional shift mode, don't show dialog or set completed
+              return;
+            }
+
             setState(() {
+              _isCompleted = true;
               _statusMessage = "Anda sudah menyelesaikan presensi hari ini.";
-              _isWithinLocation = false; // Prevent camera start
-              _isCompleted = true; // Set completed flag
+              _isWithinLocation =
+                  false; // Show message scaffold instead of camera
             });
+
+            if (data['has_jadwal_tambahan'] == true) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                _showJadwalTambahanConfirmation(data['jadwal_tambahan_shift']);
+              });
+            }
           }
           // else status == 'none', default is check-in (already set)
         }
@@ -350,6 +363,7 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
       final body = {
         'nik': _bio['nik']?.toString() ?? '',
         'type': _presensiType == 'masuk' ? 'check_in' : 'check_out',
+        'is_tambahan': _isJadwalTambahan ? 'true' : 'false',
         'latitude':
             _currentPosition?.latitude.toString() ?? _centerLat.toString(),
         'longitude':
@@ -391,6 +405,64 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
         });
       }
     }
+  }
+
+  void _showJadwalTambahanConfirmation(String shift) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.info_outline, color: primaryColor),
+            const SizedBox(width: 10),
+            const Text("E-Presensi"),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text("Sudah ada data presensi hari ini."),
+            const SizedBox(height: 10),
+            Text(
+              "Tersedia jadwal tambahan: $shift",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text("Apakah Anda akan proses presensi jadwal tambahan?"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Close E-Presensi entirely
+            },
+            child: Text("Tidak", style: TextStyle(color: Colors.grey[600])),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _isJadwalTambahan = true;
+                _isCompleted = false;
+                _isWithinLocation = true; // Re-enable camera check logic
+              });
+              _initialize(); // Re-initialize to start camera flow for additional schedule
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Ya, Tambahan",
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   // Helper to convert CameraImage to InputImage (Generic boilerplate)
