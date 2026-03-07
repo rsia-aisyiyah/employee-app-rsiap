@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
@@ -485,6 +486,49 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showPatternModal(),
+                  icon: const Icon(Icons.auto_fix_high, size: 18),
+                  label: const Text(
+                    "Isi Pola",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: primaryColor,
+                    elevation: 0,
+                    side: BorderSide(color: primaryColor.withOpacity(0.5)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAiPromptDialog(),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text(
+                    "Rekomendasi AI",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1102,5 +1146,485 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
     if (lower.contains('cuti')) return Colors.red[700]!;
     if (lower == '-' || lower == '') return Colors.grey[400]!;
     return primaryColor;
+  }
+
+  void _showPatternModal() {
+    List<String?> patternRules = List.filled(7, null);
+    final List<String> dayNames = [
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu'
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const Text("Isi Pola Otomatis",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Atur pola shift berdasarkan hari. Pola ini akan diterapkan ke ${filteredEmployees.length} pegawai yang sedang tampil.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: 7,
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              dayNames[index],
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            Container(
+                              width: 220,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
+                              decoration: BoxDecoration(
+                                  color: Colors.grey[100],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey[300]!)),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String?>(
+                                  value: patternRules[index],
+                                  hint: const Text("- Tidak Diubah -",
+                                      style: TextStyle(fontSize: 13)),
+                                  isExpanded: true,
+                                  items: [
+                                    const DropdownMenuItem(
+                                        value: null,
+                                        child: Text("- Tidak Diubah -",
+                                            style: TextStyle(fontSize: 13))),
+                                    const DropdownMenuItem(
+                                        value: 'EMPTY',
+                                        child: Text("❌ Libur / Kosong",
+                                            style: TextStyle(fontSize: 13))),
+                                    ...allShifts.map(
+                                      (shift) => DropdownMenuItem(
+                                        value: shift['shift'],
+                                        child: Text(
+                                            "${shift['shift']} (${shift['jam_masuk']}-${shift['jam_pulang']})",
+                                            style:
+                                                const TextStyle(fontSize: 13)),
+                                      ),
+                                    )
+                                  ],
+                                  onChanged: (val) {
+                                    setModalState(() {
+                                      patternRules[index] = val;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -5),
+                    )
+                  ]),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _applyPattern(patternRules);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text("Terapkan Pola",
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.white)),
+                  ),
+                )
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  void _applyPattern(List<String?> patternRules) {
+    int daysInMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
+    setState(() {
+      for (var emp in filteredEmployees) {
+        String empId = emp['id'].toString();
+        if (!pendingChanges.containsKey(empId)) {
+          pendingChanges[empId] = {};
+        }
+
+        for (int d = 1; d <= daysInMonth; d++) {
+          DateTime date = DateTime(selectedYear, selectedMonth, d);
+          int weekdayIndex = date.weekday - 1; // 0 for Monday, 6 for Sunday
+
+          String? rule = patternRules[weekdayIndex];
+          if (rule != null) {
+            pendingChanges[empId]![d] = rule == 'EMPTY' ? '' : rule;
+          }
+        }
+      }
+    });
+
+    Msg.success(context, "Pola berhasil diterapkan! Klik Simpan di bawah.");
+  }
+
+  void _showAiPromptDialog() {
+    TextEditingController promptController = TextEditingController();
+
+    showDialog(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1E293B),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.all(24),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blueAccent.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.auto_awesome,
+                            color: Colors.blueAccent, size: 28),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text("AI Workload Optimizer",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text("Generate shift strategy",
+                                style: TextStyle(
+                                    color: Colors.blueGrey[300], fontSize: 13)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.1))),
+                    child: Column(
+                      children: [
+                        _buildAiStatRow("Objek Analisis",
+                            "${filteredEmployees.length} Pegawai"),
+                        const SizedBox(height: 8),
+                        _buildAiStatRow("Target Periode",
+                            "${months[selectedMonth - 1]} $selectedYear"),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text("Instruksi Khusus (Opsional):",
+                      style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: promptController,
+                    maxLines: 4,
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: "Contoh: Setiap shift min 4 orang...",
+                      hintStyle:
+                          TextStyle(color: Colors.blueGrey[600], fontSize: 13),
+                      filled: true,
+                      fillColor: Colors.black26,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actionsPadding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Batal",
+                    style: TextStyle(color: Colors.blueGrey[300])),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _generateAiSchedule(promptController.text);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                ),
+                child: const Text("Generate Strategy ⚡",
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          );
+        });
+  }
+
+  Widget _buildAiStatRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label,
+            style: TextStyle(color: Colors.blueGrey[400], fontSize: 12)),
+        Text(value,
+            style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Future<void> _generateAiSchedule(String prompt) async {
+    if (filteredEmployees.isEmpty) {
+      Msg.error(context, "Tidak ada data pegawai untuk dijadwalkan.");
+      return;
+    }
+
+    setState(() => isSaving = true);
+
+    try {
+      int daysInThisMonth = DateTime(selectedYear, selectedMonth + 1, 0).day;
+
+      String shiftListTxt = allShifts.map((s) => s['shift']).join(', ');
+      String mappingTxt = filteredEmployees
+          .map((e) => "- ${e['nama']} (ID: ${e['id']})")
+          .join('\n');
+
+      List<String> calendarGuide = [];
+      for (int i = 1; i <= daysInThisMonth; i++) {
+        // Fallback or use standard weekday
+        DateTime dt = DateTime(selectedYear, selectedMonth, i);
+        List<String> wDays = [
+          'Minggu',
+          'Senin',
+          'Selasa',
+          'Rabu',
+          'Kamis',
+          'Jumat',
+          'Sabtu'
+        ];
+        String dayName = wDays[dt.weekday == 7 ? 0 : dt.weekday];
+        calendarGuide.add("h$i:$dayName");
+      }
+      String calendarGuideTxt = calendarGuide.join(', ');
+
+      String finalPrompt = '''
+Calendar Info (${months[selectedMonth - 1]} $selectedYear):
+$calendarGuideTxt
+
+Employee Mapping (Total Staff: ${filteredEmployees.length}):
+$mappingTxt
+
+Available Shift Codes for this Unit:
+$shiftListTxt
+
+STRICT STAFFING QUOTA (NON-NEGOTIABLE):
+Every single day (h1 to h$daysInThisMonth) must satisfy the staffing requirement appropriately.
+- TOTAL LIBUR: MAX around 1/3 of total staff per day.
+
+ASSIGNMENT LOGIC (STEP-BY-STEP):
+1. REASONING FIRST: For each day, write down how many people you are assigning.
+2. BALANCE: Distribute staff across shifts.
+3. INDIVIDUAL MANDATES: ${prompt.isNotEmpty ? prompt : 'No specific individual overrides.'} (Absolute priority).
+4. NIGHT REST RULES: Avoid excessive nights.
+5. CODE CONSISTENCY: Use full codes provided (e.g., "Pagi8", "Siang3"). DO NOT use abbreviations.
+
+CRITICAL OUTPUT FORMAT:
+You MUST finish with a RAW JSON array: [{"id": <ID>, "schedule": [...]}, ...]
+DO NOT use single letter codes in the final JSON. Use full code names.
+      '''
+          .trim();
+
+      Map<String, dynamic> payload = {
+        "month": selectedMonth,
+        "year": selectedYear,
+        "daysInMonth": daysInThisMonth,
+        "department": selectedDept ?? 'all',
+        "employees": filteredEmployees
+            .map((e) => {"id": e['id'], "nama": e['nama']})
+            .toList(),
+        "shifts": allShifts,
+        "prompt": finalPrompt
+      };
+
+      Uri url =
+          Uri.parse('https://n31.rsiap.my.id/webhook/schedule-ai-generation');
+      var response = await http.post(url,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-AI-KEY': 'schedule-ai-123'
+          },
+          body: json.encode(payload));
+
+      if (response.statusCode != 200) {
+        throw Exception(
+            "AI Service mengembalikan respons error (${response.statusCode})");
+      }
+
+      String text = response.body;
+      if (text.trim().isEmpty) {
+        throw Exception("AI Service mengembalikan respon kosong.");
+      }
+
+      var results = _extractAiResults(text);
+      if (results == null || results.isEmpty) {
+        throw Exception("Gagal mengekstrak output JSON dari respon AI.");
+      }
+
+      setState(() {
+        for (var res in results) {
+          String empId =
+              res['id']?.toString() ?? res['id_pegawai']?.toString() ?? '';
+          if (empId.isEmpty) continue;
+
+          List schedList = res['schedule'] ?? [];
+          if (!pendingChanges.containsKey(empId)) {
+            pendingChanges[empId] = {};
+          }
+
+          for (int i = 0; i < schedList.length; i++) {
+            int d = i + 1;
+            if (d > daysInThisMonth) break;
+
+            String shiftVal = schedList[i]?.toString().trim() ?? '';
+            if (shiftVal.toUpperCase() == 'EMPTY' ||
+                shiftVal == '-' ||
+                shiftVal.toUpperCase() == 'LIBUR') {
+              shiftVal = '';
+            }
+            pendingChanges[empId]![d] = shiftVal;
+          }
+        }
+      });
+
+      Msg.success(context, "Strategi jadwal AI berhasil diterapkan!");
+    } catch (e) {
+      Msg.error(context, e.toString());
+    } finally {
+      setState(() => isSaving = false);
+    }
+  }
+
+  dynamic _extractAiResults(String inputStr) {
+    try {
+      String clean = inputStr.trim();
+      if (clean.contains('```')) {
+        clean = clean.replaceAll(RegExp(r'```json\n?|```'), '').trim();
+      }
+
+      int firstBracket = clean.indexOf('[');
+      int firstBrace = clean.indexOf('{');
+      int start = -1;
+
+      if (firstBracket != -1 && firstBrace != -1) {
+        start = firstBracket < firstBrace ? firstBracket : firstBrace;
+      } else if (firstBracket != -1) {
+        start = firstBracket;
+      } else if (firstBrace != -1) {
+        start = firstBrace;
+      }
+
+      if (start != -1) {
+        int lastBracket = clean.lastIndexOf(']');
+        int lastBrace = clean.lastIndexOf('}');
+        int end = lastBracket > lastBrace ? lastBracket : lastBrace;
+        if (end > start) {
+          clean = clean.substring(start, end + 1).trim();
+        }
+      }
+
+      var decoded = json.decode(clean);
+      if (decoded is List) return decoded;
+      if (decoded is Map) {
+        if (decoded.containsKey('output') && decoded['output'] is List)
+          return decoded['output'];
+        if (decoded.containsKey('result') && decoded['result'] is List)
+          return decoded['result'];
+      }
+      return null;
+    } catch (e) {
+      debugPrint("Extracted Error: $e");
+      return null;
+    }
   }
 }
