@@ -158,6 +158,26 @@ class IconMapper {
       case 'indikator_ranap':
         return Icons.query_stats_rounded;
 
+      // Aset & Fasilitas
+      case 'maintenance':
+      case 'pemeliharaan':
+      case 'pemeliharaan_inventaris':
+        return Icons.build_circle_rounded;
+      case 'permintaan_perbaikan':
+        return Icons.assignment_late_rounded;
+      case 'perbaikan_service':
+        return Icons.home_repair_service_rounded;
+      case 'inventory':
+      case 'inventaris':
+      case 'aset':
+      case 'inventory_2':
+        return Icons.inventory_2_rounded;
+      case 'track_changes':
+      case 'mutasi':
+      case 'riwayat_mutasi':
+      case 'inventaris_mutasi':
+        return Icons.track_changes;
+
       // Default
       default:
         return Icons.apps;

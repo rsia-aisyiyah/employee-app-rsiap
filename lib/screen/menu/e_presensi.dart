@@ -48,6 +48,8 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
   bool _isCompleted = false; // Add completion flag
   bool _isJadwalTambahan = false;
   String _statusMessage = "Memeriksa izin dan lokasi...";
+  String _presensiType = 'masuk';
+  String? _todayShift;
 
   // Location Config
   static const double _centerLat = -6.94159449034943;
@@ -86,6 +88,9 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
 
       // 3. Get Location & Validate
       await _checkLocation();
+
+      // 3.5. Fetch Today's Shift
+      await _fetchTodayShift();
 
       // 4. Check Status (Determine Check-In or Check-Out)
       await _checkStatus();
@@ -296,8 +301,34 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
   }
 
   // Presensi State
-  String _presensiType = 'masuk'; // masuk, pulang
   String _endpoint = '/presensi-online/check-in';
+
+  // ─── Fetch Today's Shift ──────────────────────────────────────
+  Future<void> _fetchTodayShift() async {
+    try {
+      DateTime now = DateTime.now();
+      String nik = box.read('sub')?.toString() ?? '';
+      String path =
+          '/sdi/jadwal-pegawai?bulan=${now.month}&tahun=${now.year}&nik=$nik';
+      var res = await Api().getData(path);
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        var data = body['data'];
+        if (data != null && data.isNotEmpty) {
+          var empData = data[0];
+          String dayKey = 'h${now.day}';
+          if (empData['jadwal'] != null && empData['jadwal'][dayKey] != null) {
+            String shift = empData['jadwal'][dayKey];
+            if (shift.isNotEmpty && shift != '-') {
+              setState(() => _todayShift = shift);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error fetching shift: $e');
+    }
+  }
 
   Future<void> _checkStatus() async {
     try {
@@ -811,16 +842,36 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
                           color: Colors.black54,
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.location_on,
+                            const Icon(Icons.location_on,
                                 color: Colors.green, size: 16),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              "Dalam Area",
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 12),
+                              _presensiType == 'masuk'
+                                  ? "Check In"
+                                  : "Check Out",
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 12),
                             ),
+                            if (_todayShift != null) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: primaryColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  _todayShift!,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -870,6 +921,18 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
                       else
                         Column(
                           children: [
+                            Text(
+                              _presensiType == 'masuk'
+                                  ? "CHECK IN"
+                                  : "CHECK OUT",
+                              style: TextStyle(
+                                  color: primaryColor,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
                             Text(
                               _livenessInstruction,
                               style: const TextStyle(

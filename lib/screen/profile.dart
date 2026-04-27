@@ -33,6 +33,12 @@ class _ProfilePageState extends State<ProfilePage> {
   String email = "";
   String no_telp = "";
   String alamat = "";
+  String stts_nikah = "SINGLE";
+  String nomor_str = "";
+  String nomor_sip = "";
+  String tanggal_str = "";
+  String tanggal_akhir_str = "";
+  String tanggal_izin_praktek = "";
   bool _biometricAvailable = false;
   bool _biometricEnabled = false;
 
@@ -64,7 +70,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       print("DEBUG: Fetching bio...");
       var res = await Api().getData(
-          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja,keluarga");
+          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja,keluarga,kualifikasiStaf");
 
       print("DEBUG: Bio Response Status: ${res.statusCode}");
       print("DEBUG: Bio Response Body: ${res.body}");
@@ -92,7 +98,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> updateProfil() async {
-    var data = {'email': email, 'no_telp': no_telp, 'alamat': alamat};
+    var data = {
+      'email': email,
+      'no_telp': no_telp,
+      'alamat': alamat,
+      'stts_nikah': stts_nikah,
+      if (_bio['kualifikasi_staf'] != null) ...{
+        'nomor_str': nomor_str,
+        'nomor_sip': nomor_sip,
+        'tanggal_str': tanggal_str,
+        'tanggal_akhir_str': tanggal_akhir_str,
+        'tanggal_izin_praktek': tanggal_izin_praktek,
+      }
+    };
     var res = await Api().postData(data, "/pegawai/${box.read('sub')}/profile");
     var body = json.decode(res.body);
 
@@ -104,6 +122,34 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       isSuccess = false;
       Msg.error(context, body['message']);
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context, String initialDate, Function(String) onSelected) async {
+    DateTime firstDate = DateTime(1900);
+    DateTime lastDate = DateTime(2100);
+    DateTime initial = DateTime.tryParse(initialDate) ?? DateTime.now();
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: primaryColor,
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      onSelected(picked.toString().split(' ')[0]);
     }
   }
 
@@ -134,6 +180,15 @@ class _ProfilePageState extends State<ProfilePage> {
           ? Helper.formatDate2(detailBio['mulai_kontrak'])
           : '-',
     };
+
+    if (detailBio['kualifikasi_staf'] != null) {
+      var k = detailBio['kualifikasi_staf'];
+      dataTbl["Nomor STR"] = k['nomor_str'] ?? '-';
+      dataTbl["Nomor SIP"] = k['nomor_sip'] ?? '-';
+      dataTbl["Tgl. Berakhir SIP"] = k['tanggal_akhir_str'] != null
+          ? Helper.formatDate2(k['tanggal_akhir_str'])
+          : '-';
+    }
 
     dataTbl2 = {
       "No. HP": (detailBio['petugas'] != null &&
@@ -323,6 +378,28 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _showEditDialog() {
+    stts_nikah = (_bio['petugas'] != null && _bio['petugas']['stts_nikah'] != null)
+        ? _bio['petugas']['stts_nikah'].toString()
+        : "SINGLE";
+
+    if (_bio['kualifikasi_staf'] != null) {
+      var k = _bio['kualifikasi_staf'];
+      nomor_str = k['nomor_str']?.toString() ?? "";
+      nomor_sip = k['nomor_sip']?.toString() ?? "";
+      
+      // Format ISO dates from backend (e.g. 2025-07-24T17:00:00.000000Z) to YYYY-MM-DD
+      // We parse and convert to local first to ensure timezone shifts are handled correctly
+      tanggal_str = k['tanggal_str'] != null 
+          ? DateTime.parse(k['tanggal_str'].toString()).toLocal().toString().split(' ')[0] 
+          : "";
+      tanggal_akhir_str = k['tanggal_akhir_str'] != null 
+          ? DateTime.parse(k['tanggal_akhir_str'].toString()).toLocal().toString().split(' ')[0] 
+          : "";
+      tanggal_izin_praktek = k['tanggal_izin_praktek'] != null 
+          ? DateTime.parse(k['tanggal_izin_praktek'].toString()).toLocal().toString().split(' ')[0] 
+          : "";
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -434,6 +511,122 @@ class _ProfilePageState extends State<ProfilePage> {
             validator: (val) =>
                 val == null || val.isEmpty ? 'Alamat wajib diisi' : null,
           ),
+          const SizedBox(height: 20),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Status Menikah',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: stts_nikah,
+                items: [
+                  const DropdownMenuItem(value: 'SINGLE', child: Text('Single / Belum Menikah')),
+                  const DropdownMenuItem(value: 'MENIKAH', child: Text('Menikah')),
+                  const DropdownMenuItem(value: 'JANDA', child: Text('Janda')),
+                  const DropdownMenuItem(value: 'DUDHA', child: Text('Dudha')),
+                ],
+                onChanged: (val) {
+                  stts_nikah = val!;
+                },
+                onSaved: (val) => stts_nikah = val!,
+                decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.favorite_border, color: primaryColor, size: 20),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[200]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: primaryColor, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (_bio['kualifikasi_staf'] != null) ...[
+            const SizedBox(height: 30),
+            Row(
+              children: [
+                Icon(Icons.verified_user, color: primaryColor, size: 20),
+                const SizedBox(width: 10),
+                const Text(
+                  'Kualifikasi Klinis',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 25),
+            _buildModernInput(
+              label: 'Nomor STR',
+              initialValue: nomor_str,
+              icon: Icons.badge,
+              hint: 'Masukkan Nomor STR',
+              onSaved: (val) => nomor_str = val!,
+            ),
+            const SizedBox(height: 20),
+            StatefulBuilder(builder: (context, setModalState) {
+              return _buildModernInput(
+                label: 'Tanggal Terbit STR',
+                controller: TextEditingController(text: tanggal_str),
+                icon: Icons.calendar_today,
+                hint: 'Pilih Tanggal',
+                readOnly: true,
+                onTap: () => _selectDate(context, tanggal_str, (val) {
+                  setModalState(() => tanggal_str = val);
+                }),
+                onSaved: (val) => tanggal_str = val!,
+              );
+            }),
+            const SizedBox(height: 20),
+            _buildModernInput(
+              label: 'Nomor SIP',
+              initialValue: nomor_sip,
+              icon: Icons.assignment,
+              hint: 'Masukkan Nomor SIP',
+              onSaved: (val) => nomor_sip = val!,
+            ),
+            const SizedBox(height: 20),
+            StatefulBuilder(builder: (context, setModalState) {
+              return _buildModernInput(
+                label: 'Tanggal Mulai SIP',
+                controller: TextEditingController(text: tanggal_izin_praktek),
+                icon: Icons.event_available,
+                hint: 'Pilih Tanggal',
+                readOnly: true,
+                onTap: () => _selectDate(context, tanggal_izin_praktek, (val) {
+                  setModalState(() => tanggal_izin_praktek = val);
+                }),
+                onSaved: (val) => tanggal_izin_praktek = val!,
+              );
+            }),
+            const SizedBox(height: 20),
+            StatefulBuilder(builder: (context, setModalState) {
+              return _buildModernInput(
+                label: 'Tanggal Berakhir SIP',
+                controller: TextEditingController(text: tanggal_akhir_str),
+                icon: Icons.event_busy,
+                hint: 'Pilih Tanggal',
+                readOnly: true,
+                onTap: () => _selectDate(context, tanggal_akhir_str, (val) {
+                  setModalState(() => tanggal_akhir_str = val);
+                }),
+                onSaved: (val) => tanggal_akhir_str = val!,
+              );
+            }),
+          ],
           const SizedBox(height: 40),
           SizedBox(
             width: double.infinity,
@@ -484,6 +677,8 @@ class _ProfilePageState extends State<ProfilePage> {
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
     Widget? suffixIcon,
+    bool readOnly = false,
+    VoidCallback? onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -502,6 +697,8 @@ class _ProfilePageState extends State<ProfilePage> {
           initialValue: initialValue,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          readOnly: readOnly,
+          onTap: onTap,
           style: const TextStyle(fontWeight: FontWeight.w600),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: primaryColor, size: 20),
@@ -1217,9 +1414,45 @@ class _ProfilePageState extends State<ProfilePage> {
                       : "-"),
               _buildInfoTile(
                   Icons.location_on_outlined, "Alamat", _bio['alamat'] ?? "-"),
+              _buildInfoTile(
+                  Icons.favorite_border,
+                  "Status Menikah",
+                  () {
+                    final status = (_bio['petugas'] != null && _bio['petugas']['stts_nikah'] != null)
+                        ? _bio['petugas']['stts_nikah'].toString()
+                        : 'SINGLE';
+                    const labels = {
+                      'SINGLE': 'Single / Belum Menikah',
+                      'MENIKAH': 'Menikah',
+                      'JANDA': 'Janda',
+                      'DUDHA': 'Dudha',
+                      'JOMBLO': 'Jomblo',
+                    };
+                    return labels[status] ?? status;
+                  }()),
             ],
             onAdd: _showEditDialog,
           ),
+          if (_bio['kualifikasi_staf'] != null) ...[
+            const SizedBox(height: 15),
+            _buildInfoCard(
+              "Kualifikasi Klinis",
+              [
+                _buildInfoTile(Icons.verified_user, "Nomor STR",
+                    _bio['kualifikasi_staf']['nomor_str'] ?? "-"),
+                _buildInfoTile(Icons.assignment, "Nomor SIP",
+                    _bio['kualifikasi_staf']['nomor_sip'] ?? "-"),
+                _buildInfoTile(
+                    Icons.event_busy,
+                    "Tgl. Berakhir SIP",
+                    _bio['kualifikasi_staf']['tanggal_akhir_str'] != null
+                        ? Helper.formatDate2(
+                            _bio['kualifikasi_staf']['tanggal_akhir_str'])
+                        : "-"),
+              ],
+              onAdd: _showEditDialog,
+            ),
+          ],
           const SizedBox(height: 15),
           _buildInfoCard(
             "Data Keluarga",

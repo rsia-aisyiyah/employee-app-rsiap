@@ -22,6 +22,11 @@ import 'package:rsia_employee_app/screen/menu/lembur.dart';
 import 'package:rsia_employee_app/screen/menu/lembur_history.dart';
 import 'package:rsia_employee_app/screen/menu/presensi_dokter.dart';
 import 'package:rsia_employee_app/screen/menu/jadwal_pegawai.dart';
+import 'package:rsia_employee_app/screen/menu/pemeliharaan_inventaris.dart';
+import 'package:rsia_employee_app/screen/menu/permintaan_perbaikan.dart';
+import 'package:rsia_employee_app/screen/menu/perbaikan_service.dart';
+import 'package:rsia_employee_app/screen/menu/inventaris_mutasi.dart';
+import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -89,6 +94,22 @@ class MenuNavigator {
       case 'dokter_presensi':
       case 'menu_presensi_dokter':
         return const PresensiDokter();
+      case 'menu_pemeliharaan_inventaris':
+      case 'pemeliharaan_inventaris':
+        return const PemeliharaanInventaris();
+      case 'menu_permintaan_perbaikan':
+      case 'permintaan_perbaikan':
+        return const PermintaanPerbaikan();
+      case 'menu_perbaikan_service':
+      case 'perbaikan_service':
+        return const PerbaikanService();
+      case 'menu_mutasi_inventaris':
+      case 'mutasi_inventaris':
+        return const InventarisMutasi();
+      case 'menu_mood':
+      case 'mood_checkin':
+      case 'menu_mood_checkin':
+        return const MoodCheckinScreen();
       case 'menu_berkas_pegawai':
         return null;
       default:

@@ -362,7 +362,7 @@ class _DashboardPenyakitState extends State<DashboardPenyakit> {
 
   Widget _buildTop10Chart() {
     if (_top10.isEmpty) return const SizedBox.shrink();
-    int maxVal = _top10[0]['total'] ?? 1;
+    int maxVal = int.tryParse(_top10[0]['total']?.toString() ?? '1') ?? 1;
 
     return _buildVisualCard(
       "Distribusi 10 Besar Penyakit",
@@ -370,7 +370,8 @@ class _DashboardPenyakitState extends State<DashboardPenyakit> {
         children: _top10.asMap().entries.map((entry) {
           int idx = entry.key;
           var item = entry.value;
-          double percent = (item['total'] ?? 0) / maxVal;
+          int total = int.tryParse(item['total']?.toString() ?? '0') ?? 0;
+          double percent = total / maxVal;
 
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),

@@ -27,6 +27,7 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
 
   // Track changes: Map<String employeeId, Map<int day, String shiftCode>>
   Map<String, Map<int, String>> pendingChanges = {};
+  Map<String, String> holidays = {}; // Key: YYYY-MM-DD, Value: Holiday Name
   bool _showFilters = true; // State for toggling filters
 
   String? selectedDept;
@@ -104,8 +105,29 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
     await Future.wait([
       _fetchShifts(),
       _fetchEmployees(),
+      _fetchHolidays(),
     ]);
     setState(() => isLoading = false);
+  }
+
+  Future<void> _fetchHolidays() async {
+    try {
+      var res = await http
+          .get(Uri.parse('https://libur.deno.dev/api?year=$selectedYear'))
+          .timeout(const Duration(seconds: 5)); // Prevent hanging if API is slow
+      if (res.statusCode == 200) {
+        List data = json.decode(res.body);
+        Map<String, String> fetchedHolidays = {};
+        for (var item in data) {
+          fetchedHolidays[item['date']] = item['name'];
+        }
+        setState(() {
+          holidays = fetchedHolidays;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching holidays (API might be down): $e");
+    }
   }
 
   Future<void> _fetchShifts() async {
@@ -650,13 +672,15 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                             DateTime date =
                                 DateTime(selectedYear, selectedMonth, day);
                             bool isSunday = date.weekday == DateTime.sunday;
+                            String dateStr = DateFormat('yyyy-MM-dd').format(date);
+                            bool isHoliday = holidays.containsKey(dateStr);
 
                             return Container(
                               width: cellWidth,
                               height: cellHeight * 0.8,
                               decoration: BoxDecoration(
-                                color:
-                                    _getSummaryRowColor(type, count, isSunday),
+                                color: _getSummaryRowColor(
+                                    type, count, isSunday, isHoliday),
                                 border: Border.all(
                                     color: Colors.grey[100]!, width: 0.5),
                               ),
@@ -668,7 +692,9 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                                   fontWeight: count > 0
                                       ? FontWeight.bold
                                       : FontWeight.normal,
-                                  color: isSunday ? Colors.red : Colors.black87,
+                                  color: (isSunday || isHoliday)
+                                      ? Colors.red
+                                      : Colors.black87,
                                 ),
                               ),
                             );
@@ -686,8 +712,8 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
     );
   }
 
-  Color _getSummaryRowColor(String type, int count, bool isSunday) {
-    if (isSunday) return Colors.red[50]!;
+  Color _getSummaryRowColor(String type, int count, bool isSunday, bool isHoliday) {
+    if (isSunday || isHoliday) return Colors.red[50]!;
     if (count == 0) return Colors.white;
 
     switch (type) {
@@ -753,32 +779,72 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
   Widget _buildDateHeader(int day) {
     DateTime date = DateTime(selectedYear, selectedMonth, day);
     bool isSunday = date.weekday == DateTime.sunday;
+    String dateStr = DateFormat('yyyy-MM-dd').format(date);
+    bool isHoliday = holidays.containsKey(dateStr);
+    String? holidayName = holidays[dateStr];
 
-    return Container(
-      width: cellWidth,
-      height: cellHeight,
-      decoration: BoxDecoration(
-        color: isSunday ? const Color(0xFFFFF1F2) : const Color(0xFFF8FAFC),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 0.5),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(DateFormat('dd').format(date),
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: isSunday
-                      ? const Color(0xFFE11D48)
-                      : const Color(0xFF334155))),
-          Text(DateFormat('E').format(date).toUpperCase(),
-              style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: isSunday
-                      ? const Color(0xFFE11D48).withOpacity(0.7)
-                      : Colors.grey[500])),
-        ],
+    return GestureDetector(
+      onTap: () {
+        if (isHoliday) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Hari Libur: $holidayName"),
+              backgroundColor: const Color(0xFFE11D48),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Tooltip(
+        message: holidayName ?? (isSunday ? 'Minggu' : ''),
+        child: Container(
+          width: cellWidth,
+          height: cellHeight,
+          decoration: BoxDecoration(
+            color: (isSunday || isHoliday)
+                ? const Color(0xFFFFF1F2)
+                : const Color(0xFFF8FAFC),
+            border: Border.all(color: const Color(0xFFF1F5F9), width: 0.5),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isHoliday)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE11D48),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(DateFormat('dd').format(date),
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: (isSunday || isHoliday)
+                              ? const Color(0xFFE11D48)
+                              : const Color(0xFF334155))),
+                  Text(DateFormat('E').format(date).toUpperCase(),
+                      style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: (isSunday || isHoliday)
+                              ? const Color(0xFFE11D48).withOpacity(0.7)
+                              : Colors.grey[500])),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -825,6 +891,8 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
 
     DateTime date = DateTime(selectedYear, selectedMonth, day);
     bool isSunday = date.weekday == DateTime.sunday;
+    String dateStr = DateFormat('yyyy-MM-dd').format(date);
+    bool isHoliday = holidays.containsKey(dateStr);
 
     return InkWell(
       onTap: () => _showShiftPicker(emp, day),
@@ -834,7 +902,7 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
         decoration: BoxDecoration(
           color: isChanged
               ? primaryColor.withOpacity(0.08)
-              : (isSunday
+              : ((isSunday || isHoliday)
                   ? const Color(0xFFFFF1F2).withOpacity(0.5)
                   : Colors.white),
           border: Border.all(
@@ -849,7 +917,7 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
           style: TextStyle(
             fontSize: 9,
             fontWeight: isChanged ? FontWeight.w900 : FontWeight.w600,
-            color: isSunday
+            color: (isSunday || isHoliday)
                 ? const Color(0xFFE11D48)
                 : _getShiftColor(currentShift ?? '-'),
           ),
@@ -859,6 +927,10 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
   }
 
   void _showShiftPicker(Map emp, int day) {
+    String dateStr = DateFormat('yyyy-MM-dd')
+        .format(DateTime(selectedYear, selectedMonth, day));
+    bool isHoliday = holidays.containsKey(dateStr);
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -886,29 +958,64 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                 child: Column(
                   children: [
                     Text("Pilih Shift: ${emp['nama']}",
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text("Tanggal $day ${months[selectedMonth - 1]}",
-                        style:
-                            TextStyle(fontSize: 12, color: Colors.grey[600])),
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 5),
+                    Text(
+                      "Tanggal $day ${DateFormat('MMMM yyyy').format(DateTime(selectedYear, selectedMonth))}",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                    if (isHoliday)
+                      Container(
+                        margin: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.red[50],
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.red[100]!),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.event_available,
+                                color: Colors.red[700], size: 16),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                "Libur: ${holidays[dateStr]}",
+                                style: TextStyle(
+                                  color: Colors.red[800],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 10),
                   ],
                 ),
               ),
               Expanded(
                 child: GridView.builder(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 2.2,
+                    childAspectRatio: 2.1, // Adjusted for even larger time text
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
-                  itemCount: allShifts.length + 1,
+                  itemCount: allShifts.length + 2,
                   itemBuilder: (context, index) {
                     if (index == 0) return _buildShiftButton(null, emp, day);
-                    return _buildShiftButton(allShifts[index - 1], emp, day);
+                    if (index == 1) {
+                      return _buildShiftButton({'shift': 'Cuti'}, emp, day);
+                    }
+                    return _buildShiftButton(allShifts[index - 2], emp, day);
                   },
                 ),
               ),
@@ -926,6 +1033,52 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
         ? (currentVal == null || currentVal == '' || currentVal == '-')
         : (currentVal == shift['shift']);
 
+    // Style logic borrowed from Presensi Dokter
+    String shiftName = (shift?['shift'] ?? 'libur').toString().toLowerCase();
+    Color cardColor;
+    IconData shiftIcon;
+    List<Color> gradient;
+
+    if (shiftName.contains('pagi')) {
+      cardColor = Colors.orange;
+      shiftIcon = Icons.wb_sunny_rounded;
+      gradient = [
+        Colors.orange[400]!.withOpacity(0.12),
+        Colors.orange[600]!.withOpacity(0.12)
+      ];
+    } else if (shiftName.contains('siang') ||
+        shiftName.contains('sore') ||
+        shiftName.contains('siang')) {
+      cardColor = Colors.blue;
+      shiftIcon = Icons.wb_cloudy_rounded;
+      gradient = [
+        Colors.blue[400]!.withOpacity(0.12),
+        Colors.blue[600]!.withOpacity(0.12)
+      ];
+    } else if (shiftName.contains('malam')) {
+      cardColor = Colors.indigo;
+      shiftIcon = Icons.nightlight_round;
+      gradient = [
+        Colors.indigo[400]!.withOpacity(0.12),
+        Colors.indigo[800]!.withOpacity(0.12)
+      ];
+    } else if (shiftName.contains('cuti')) {
+      cardColor = Colors.teal;
+      shiftIcon = Icons.beach_access_rounded;
+      gradient = [
+        Colors.teal[400]!.withOpacity(0.12),
+        Colors.teal[600]!.withOpacity(0.12)
+      ];
+    } else {
+      // Libur / Kosong
+      cardColor = Colors.grey;
+      shiftIcon = Icons.event_busy_rounded;
+      gradient = [
+        Colors.grey[300]!.withOpacity(0.12),
+        Colors.grey[400]!.withOpacity(0.12)
+      ];
+    }
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -934,30 +1087,125 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
         });
         Navigator.pop(context);
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      borderRadius: BorderRadius.circular(20),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? primaryColor.withOpacity(0.1) : Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: gradient,
+          ),
           border: Border.all(
-              color: isSelected ? primaryColor : Colors.transparent,
-              width: 1.5),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              shift?['shift'] ?? "Libur / Kosong",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: isSelected ? primaryColor : Colors.black87),
-            ),
-            if (shift != null)
-              Text("${shift['jam_masuk']} - ${shift['jam_pulang']}",
-                  style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+            color: isSelected ? cardColor : cardColor.withOpacity(0.2),
+            width: isSelected ? 2 : 1,
+          ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: cardColor.withOpacity(0.2),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: Stack(
+            children: [
+              // Decorative background icon
+              Positioned(
+                right: -8,
+                bottom: -8,
+                child: Icon(
+                  shiftIcon,
+                  size: 45, // Smaller background icon
+                  color: cardColor.withOpacity(0.06),
+                ),
+              ),
+              // Selection indicator
+              if (isSelected)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check, color: Colors.white, size: 8),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center, // Center items to reduce gap
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: cardColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(shiftIcon, color: cardColor, size: 14),
+                    ),
+                    const SizedBox(height: 6), // Fixed gap instead of spaceBetween
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          shift?['shift'] ?? "Libur / Kosong",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 14, // Increased from 12
+                            color: isSelected ? cardColor : Colors.black87,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        if (shift != null && shift['jam_masuk'] != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Icon(Icons.access_time_filled_rounded,
+                                    size: 12, color: cardColor.withOpacity(0.5)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  "${shift['jam_masuk']} - ${shift['jam_pulang']}",
+                                  style: TextStyle(
+                                    fontSize: 12, // Increased from 10
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (shift == null)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 2),
+                            child: Text(
+                              "Tidak ada jadwal",
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1114,8 +1362,12 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
+                    bool yearChanged = selectedYear != tempYear;
                     selectedMonth = tempMonth;
                     selectedYear = tempYear;
+                    if (yearChanged) {
+                      _fetchHolidays();
+                    }
                   });
                   Navigator.pop(context);
                   _fetchEmployees();
@@ -1239,6 +1491,10 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                                     const DropdownMenuItem(
                                         value: 'EMPTY',
                                         child: Text("❌ Libur / Kosong",
+                                            style: TextStyle(fontSize: 13))),
+                                    const DropdownMenuItem(
+                                        value: 'Cuti',
+                                        child: Text("🏖️ Cuti",
                                             style: TextStyle(fontSize: 13))),
                                     ...allShifts.map(
                                       (shift) => DropdownMenuItem(

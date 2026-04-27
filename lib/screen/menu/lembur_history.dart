@@ -76,6 +76,20 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
     }
   }
 
+  String _formatDuration(DateTime start, DateTime? end) {
+    if (end == null) return "-";
+    final diff = end.difference(start);
+    final hours = diff.inHours;
+    final minutes = diff.inMinutes % 60;
+    final seconds = diff.inSeconds % 60;
+
+    String res = "";
+    if (hours > 0) res += "${hours}j ";
+    res += "${minutes}m ";
+    res += "${seconds}s";
+    return res;
+  }
+
   Color _getStatusColor(String status) {
     switch (status.toUpperCase()) {
       case 'PENGAJUAN':
@@ -116,9 +130,9 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
                   }
 
                   final item = _history[index];
-                  final jamDatang = DateTime.parse(item['jam_datang']);
+                  final jamDatang = DateTime.parse(item['jam_datang']).toLocal();
                   final jamPulang = item['jam_pulang'] != null
-                      ? DateTime.parse(item['jam_pulang'])
+                      ? DateTime.parse(item['jam_pulang']).toLocal()
                       : null;
 
                   return Container(
@@ -203,33 +217,51 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
                             border: Border.all(color: Colors.grey[100]!),
                           ),
                           child: IntrinsicHeight(
-                            child: Row(
-                              children: [
-                                _buildTimeInfo(
-                                    "DATANG",
-                                    DateFormat('HH:mm').format(jamDatang),
-                                    Icons.login_rounded),
-                                VerticalDivider(
-                                    color: Colors.grey[300],
-                                    thickness: 0.5,
-                                    indent: 5,
-                                    endIndent: 5),
-                                _buildTimeInfo(
-                                    "PULANG",
-                                    jamPulang != null
-                                        ? DateFormat('HH:mm').format(jamPulang)
-                                        : "--:--",
-                                    Icons.logout_rounded),
-                                VerticalDivider(
-                                    color: Colors.grey[300],
-                                    thickness: 0.5,
-                                    indent: 5,
-                                    endIndent: 5),
-                                _buildTimeInfo("DURASI", "${item['durasi']}",
-                                    Icons.timer_outlined,
-                                    isHighlight: true),
-                              ],
-                            ),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: [
+                                  _buildTimeInfo(
+                                      "DATANG",
+                                      DateFormat('HH:mm:ss').format(jamDatang),
+                                      Icons.login_rounded),
+                                  _buildDivider(),
+                                  _buildTimeInfo(
+                                      "PULANG",
+                                      jamPulang != null
+                                          ? DateFormat('HH:mm:ss')
+                                              .format(jamPulang)
+                                          : "--:--:--",
+                                      Icons.logout_rounded),
+                                  _buildDivider(),
+                                  _buildTimeInfo(
+                                      "DURASI", _formatDuration(jamDatang, jamPulang),
+                                      Icons.timer_outlined,
+                                      isHighlight: true),
+                                ],
+                              ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 12),
+                                child: Divider(height: 1, thickness: 0.5),
+                              ),
+                              Row(
+                                children: [
+                                  _buildTimeInfo(
+                                      "PENGJUAN",
+                                      item['durasi_pengajuan']?.toString() ?? "-",
+                                      Icons.hourglass_bottom_rounded),
+                                  _buildDivider(),
+                                  _buildTimeInfo(
+                                      "ACC",
+                                      item['durasi_acc']?.toString() ?? "-",
+                                      Icons.check_circle_outline_rounded),
+                                  _buildDivider(),
+                                  const Expanded(child: SizedBox()), // Placeholder
+                                ],
+                              ),
+                            ],
+                          ),
                           ),
                         ),
 
@@ -326,5 +358,10 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildDivider() {
+    return VerticalDivider(
+        color: Colors.grey[300], thickness: 0.5, indent: 5, endIndent: 5);
   }
 }

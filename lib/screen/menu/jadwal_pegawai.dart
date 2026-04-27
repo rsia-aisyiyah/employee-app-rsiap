@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 
@@ -20,6 +21,7 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
   List employees = [];
   List filteredEmployees = [];
   List authorizedDepts = [];
+  Map<String, String> holidays = {}; // Key: YYYY-MM-DD, Value: Holiday Name
 
   bool _showFilters = true;
 
@@ -93,8 +95,31 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
 
   Future<void> _fetchInitialData() async {
     setState(() => isLoading = true);
-    await _fetchEmployees();
+    await Future.wait([
+      _fetchEmployees(),
+      _fetchHolidays(),
+    ]);
     setState(() => isLoading = false);
+  }
+
+  Future<void> _fetchHolidays() async {
+    try {
+      var res = await http
+          .get(Uri.parse('https://libur.deno.dev/api?year=$selectedYear'))
+          .timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) {
+        List data = json.decode(res.body);
+        Map<String, String> fetchedHolidays = {};
+        for (var item in data) {
+          fetchedHolidays[item['date']] = item['name'];
+        }
+        setState(() {
+          holidays = fetchedHolidays;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching holidays: $e");
+    }
   }
 
   Future<void> _fetchEmployees() async {
@@ -539,13 +564,15 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
                             DateTime date =
                                 DateTime(selectedYear, selectedMonth, day);
                             bool isSunday = date.weekday == DateTime.sunday;
+                            String dateStr = DateFormat('yyyy-MM-dd').format(date);
+                            bool isHoliday = holidays.containsKey(dateStr);
 
                             return Container(
                               width: cellWidth,
                               height: cellHeight * 0.8,
                               decoration: BoxDecoration(
-                                color:
-                                    _getSummaryRowColor(type, count, isSunday),
+                                color: _getSummaryRowColor(
+                                    type, count, isSunday, isHoliday),
                                 border: Border.all(
                                     color: Colors.grey[100]!, width: 0.5),
                               ),
@@ -557,7 +584,9 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
                                   fontWeight: count > 0
                                       ? FontWeight.bold
                                       : FontWeight.normal,
-                                  color: isSunday ? Colors.red : Colors.black87,
+                                  color: (isSunday || isHoliday)
+                                      ? Colors.red
+                                      : Colors.black87,
                                 ),
                               ),
                             );
@@ -574,8 +603,8 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
     );
   }
 
-  Color _getSummaryRowColor(String type, int count, bool isSunday) {
-    if (isSunday) return Colors.red[50]!;
+  Color _getSummaryRowColor(String type, int count, bool isSunday, bool isHoliday) {
+    if (isSunday || isHoliday) return Colors.red[50]!;
     if (count == 0) return Colors.white;
 
     switch (type) {
@@ -639,32 +668,72 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
   Widget _buildDateHeader(int day) {
     DateTime date = DateTime(selectedYear, selectedMonth, day);
     bool isSunday = date.weekday == DateTime.sunday;
+    String dateStr = DateFormat('yyyy-MM-dd').format(date);
+    bool isHoliday = holidays.containsKey(dateStr);
+    String? holidayName = holidays[dateStr];
 
-    return Container(
-      width: cellWidth,
-      height: cellHeight,
-      decoration: BoxDecoration(
-        color: isSunday ? const Color(0xFFFFF1F2) : const Color(0xFFF8FAFC),
-        border: Border.all(color: const Color(0xFFF1F5F9), width: 0.5),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(DateFormat('dd').format(date),
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  color: isSunday
-                      ? const Color(0xFFE11D48)
-                      : const Color(0xFF334155))),
-          Text(DateFormat('E').format(date).toUpperCase(),
-              style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: isSunday
-                      ? const Color(0xFFE11D48).withOpacity(0.7)
-                      : Colors.grey[500])),
-        ],
+    return GestureDetector(
+      onTap: () {
+        if (isHoliday) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Hari Libur: $holidayName"),
+              backgroundColor: const Color(0xFFE11D48),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      },
+      child: Tooltip(
+        message: holidayName ?? (isSunday ? 'Minggu' : ''),
+        child: Container(
+          width: cellWidth,
+          height: cellHeight,
+          decoration: BoxDecoration(
+            color: (isSunday || isHoliday)
+                ? const Color(0xFFFFF1F2)
+                : const Color(0xFFF8FAFC),
+            border: Border.all(color: const Color(0xFFF1F5F9), width: 0.5),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              if (isHoliday)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: Container(
+                    width: 4,
+                    height: 4,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE11D48),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(DateFormat('dd').format(date),
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: (isSunday || isHoliday)
+                              ? const Color(0xFFE11D48)
+                              : const Color(0xFF334155))),
+                  Text(DateFormat('E').format(date).toUpperCase(),
+                      style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: (isSunday || isHoliday)
+                              ? const Color(0xFFE11D48).withOpacity(0.7)
+                              : Colors.grey[500])),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -707,13 +776,16 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
     String? currentShift = emp['jadwal']?['h$day'];
     DateTime date = DateTime(selectedYear, selectedMonth, day);
     bool isSunday = date.weekday == DateTime.sunday;
+    String dateStr = DateFormat('yyyy-MM-dd').format(date);
+    bool isHoliday = holidays.containsKey(dateStr);
 
     return Container(
       width: cellWidth,
       height: cellHeight,
       decoration: BoxDecoration(
-        color:
-            isSunday ? const Color(0xFFFFF1F2).withOpacity(0.5) : Colors.white,
+        color: (isSunday || isHoliday)
+            ? const Color(0xFFFFF1F2).withOpacity(0.5)
+            : Colors.white,
         border: Border.all(color: const Color(0xFFF1F5F9), width: 0.5),
       ),
       alignment: Alignment.center,
@@ -724,7 +796,7 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
         style: TextStyle(
           fontSize: 9,
           fontWeight: FontWeight.w600,
-          color: isSunday
+          color: (isSunday || isHoliday)
               ? const Color(0xFFE11D48)
               : _getShiftColor(currentShift ?? '-'),
         ),
@@ -829,8 +901,12 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
               ElevatedButton(
                 onPressed: () {
                   setState(() {
+                    bool yearChanged = selectedYear != tempYear;
                     selectedMonth = tempMonth;
                     selectedYear = tempYear;
+                    if (yearChanged) {
+                      _fetchHolidays();
+                    }
                   });
                   Navigator.pop(context);
                   _fetchEmployees();
