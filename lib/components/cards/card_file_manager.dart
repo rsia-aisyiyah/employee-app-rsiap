@@ -26,7 +26,7 @@ class _CardFileManagerState extends State<CardFileManager> {
   String filePath = '';
   var error = '';
   double progress = 0;
-  String baseUrl = 'https://sim.rsiaaisyiyah.com/rsiap/file/berkas/';
+  String baseUrl = 'https://rsiap.my.id/rsiap/file/berkas/';
   String fileExt = '';
 
   @override
@@ -35,23 +35,7 @@ class _CardFileManagerState extends State<CardFileManager> {
     checkFile();
   }
 
-  Future<void> requestPermission(downloadUrl) async {
-    var storage = await Permission.storage.status;
-    var image = await Permission.mediaLibrary.status;
-    var mediaLocation = await Permission.accessMediaLocation.status;
-
-    if (!storage.isGranted) {
-      await Permission.storage.request();
-    }
-
-    if (!image.isGranted) {
-      await Permission.mediaLibrary.request();
-    }
-
-    if (!mediaLocation.isGranted) {
-      await Permission.accessMediaLocation.request();
-    }
-
+  void requestPermission(downloadUrl) {
     openFile(downloadUrl);
   }
 

@@ -16,56 +16,28 @@ class Api {
   }
 
   auth(data, pathUrl) async {
-    return await _retryWithFallback(() async {
-      var fullUrl = apiUrl + pathUrl;
-      return await http
-          .post(Uri.parse(fullUrl),
-              body: jsonEncode(data), headers: _setHeaders())
-          .timeout(timeoutDuration);
-    });
-  }
-
-  /// Retry wrapper that automatically tries alternative URL on failure
-  Future<http.Response> _retryWithFallback(
-      Future<http.Response> Function() request) async {
-    try {
-      // Try with current URL
-      return await request();
-    } catch (e) {
-      // If failed, try with alternative URL
-      debugPrint('⚠️ Request failed with current URL. Trying alternative...');
-      AppConfig.switchToAlternativeUrl();
-
-      try {
-        return await request();
-      } catch (e2) {
-        // Both URLs failed, switch back to original and rethrow
-        AppConfig.switchToAlternativeUrl();
-        debugPrint('❌ Both URLs failed. Error: $e2');
-        rethrow;
-      }
-    }
+    var fullUrl = apiUrl + pathUrl;
+    return await http
+        .post(Uri.parse(fullUrl),
+            body: jsonEncode(data), headers: _setHeaders())
+        .timeout(timeoutDuration);
   }
 
   getData(pathUrl) async {
     await _getToken();
-    return await _retryWithFallback(() async {
-      var fullUrl = apiUrl + pathUrl;
-      return await http
-          .get(Uri.parse(fullUrl), headers: _setHeaders())
-          .timeout(timeoutDuration);
-    });
+    var fullUrl = apiUrl + pathUrl;
+    return await http
+        .get(Uri.parse(fullUrl), headers: _setHeaders())
+        .timeout(timeoutDuration);
   }
 
   getGuestData(pathUrl) async {
-    return await _retryWithFallback(() async {
-      var fullUrl = apiUrl + pathUrl;
-      return await http.get(Uri.parse(fullUrl), headers: {
-        'Content-type': 'application/json',
-        'Accept': 'application/json',
-        'X-App-Type': 'mobile',
-      }).timeout(timeoutDuration);
-    });
+    var fullUrl = apiUrl + pathUrl;
+    return await http.get(Uri.parse(fullUrl), headers: {
+      'Content-type': 'application/json',
+      'Accept': 'application/json',
+      'X-App-Type': 'mobile',
+    }).timeout(timeoutDuration);
   }
 
   postRequest(pathUrl) async {

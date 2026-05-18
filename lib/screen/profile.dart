@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:age_calculator/age_calculator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -14,6 +15,8 @@ import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/components/skeletons/skeleton_profile.dart';
 import 'package:rsia_employee_app/utils/biometric_helper.dart';
 import 'package:rsia_employee_app/utils/secure_storage_helper.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -70,7 +73,7 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       print("DEBUG: Fetching bio...");
       var res = await Api().getData(
-          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja,keluarga,kualifikasiStaf");
+          "/pegawai/${box.read('sub')}?include=dep,petugas,email,statusKerja,keluarga,kualifikasiStaf,latestSkKredensial");
 
       print("DEBUG: Bio Response Status: ${res.statusCode}");
       print("DEBUG: Bio Response Body: ${res.body}");
@@ -122,6 +125,110 @@ class _ProfilePageState extends State<ProfilePage> {
     } else {
       isSuccess = false;
       Msg.error(context, body['message']);
+    }
+  }
+
+  Future<void> _pickAndUploadBerkas(BuildContext context, String type) async {
+    try {
+      // 1. Get kategori from qualification
+      String? kategoriProfesi = _bio['kualifikasi_staf']?['kategori_profesi'];
+      if (kategoriProfesi == null) {
+        Msg.error(context, "Kategori profesi tidak ditemukan");
+        return;
+      }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator()),
+      );
+      
+      // 2. Fetch master berkas to find the right code
+      var resMaster = await Api().getData("/sdi/pegawai/berkas/nama-berkas");
+      
+      // Close loading
+      Navigator.pop(context);
+
+      if (resMaster.statusCode != 200) {
+        Msg.error(context, "Gagal mengambil daftar berkas");
+        return;
+      }
+
+      var bodyMaster = json.decode(resMaster.body);
+      List masterList = bodyMaster['data'] ?? [];
+
+      // Filter by type name
+      String searchName = type == 'SIP' ? 'Surat Izin Praktik (SIP)' : 'Surat Tanda Registrasi(STR)';
+      
+      // Find the one that matches our professional category (partial match)
+      // "Staf Keperawatan" -> "Tenaga klinis Perawat dan Bid"
+      // "Staf Medis" -> "Tenaga klinis Dokter"
+      var match = masterList.firstWhere((item) {
+        String kategori = item['kategori'] ?? '';
+        String nama = item['nama'] ?? '';
+        
+        bool nameMatch = nama.contains(searchName);
+        bool catMatch = false;
+
+        if (kategoriProfesi.contains('Keperawatan') || kategoriProfesi.contains('Kebidanan')) {
+          catMatch = kategori.contains('Perawat');
+        } else if (kategoriProfesi.contains('Medis')) {
+          catMatch = kategori.contains('Dokter');
+        } else {
+          catMatch = kategori.contains('Profesi Lain');
+        }
+
+        return nameMatch && catMatch;
+      }, orElse: () => null);
+
+      if (match == null) {
+        Msg.error(context, "Jenis berkas untuk $type tidak ditemukan untuk kategori Anda");
+        return;
+      }
+
+      String kodeBerkas = match['kode'];
+
+      // 3. Pick File
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      );
+
+      if (result != null) {
+        File file = File(result.files.single.path!);
+        
+        // 4. Upload
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(child: CircularProgressIndicator()),
+        );
+
+        Map<String, String> fields = {
+          'nik': box.read('sub'),
+          'berkas': kodeBerkas,
+        };
+
+        var resUpload = await Api().postMultipart(fields, file, "/sdi/pegawai/upload/berkas", fieldName: 'file_berkas');
+        
+        // Close loading
+        Navigator.pop(context);
+
+        var bodyUpload = json.decode(resUpload.body);
+        if (resUpload.statusCode == 200 && bodyUpload['success'] == true) {
+          Msg.success(context, "Berkas $type berhasil diunggah");
+        } else {
+          Msg.error(context, bodyUpload['message'] ?? "Gagal mengunggah berkas");
+        }
+      }
+    } catch (e) {
+      // If error occurs, try to pop if dialog is still open
+      // This is a bit tricky in Flutter without context management, 
+      // but usually we can assume if it fails here we might need to pop.
+      // However, to be safe, I'll just print and show error.
+      print("DEBUG: Error in _pickAndUploadBerkas: $e");
+      Msg.error(context, "Terjadi kesalahan: $e");
     }
   }
 
@@ -188,6 +295,11 @@ class _ProfilePageState extends State<ProfilePage> {
       dataTbl["Tgl. Berakhir SIP"] = k['tanggal_akhir_str'] != null
           ? Helper.formatDate2(k['tanggal_akhir_str'])
           : '-';
+    }
+
+    if (detailBio['latest_sk_kredensial'] != null && detailBio['latest_sk_kredensial']['kredensial'] != null) {
+      var kred = detailBio['latest_sk_kredensial']['kredensial'];
+      dataTbl["Jenjang Kredensial"] = kred['label'] ?? '-';
     }
 
     dataTbl2 = {
@@ -471,196 +583,270 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Widget _buildFormSection(
+      {required String title,
+      required IconData icon,
+      required List<Widget> children}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 25),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            spreadRadius: 2,
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+        border: Border.all(color: Colors.grey[100]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: primaryColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey[800],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          ...children,
+        ],
+      ),
+    );
+  }
+
   Widget _buildFormEditProfile() {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          _buildModernInput(
-            label: 'Email',
-            initialValue:
-                _bio['email'] != null ? _bio['email']['email'].toString() : '',
-            icon: Icons.alternate_email,
-            hint: 'cth: nama@email.com',
-            onSaved: (val) => email = val!,
-            validator: (val) =>
-                val == null || val.isEmpty ? 'Email wajib diisi' : null,
-          ),
-          const SizedBox(height: 20),
-          _buildModernInput(
-            label: 'No. Handphone',
-            initialValue: _bio['petugas'] != null
-                ? _bio['petugas']['no_telp'].toString()
-                : '',
-            icon: Icons.phone_iphone,
-            hint: 'cth: 08123456789',
-            keyboardType: TextInputType.phone,
-            onSaved: (val) => no_telp = val!,
-            validator: (val) =>
-                val == null || val.isEmpty ? 'No. HP wajib diisi' : null,
-          ),
-          const SizedBox(height: 20),
-          _buildModernInput(
-            label: 'Alamat',
-            initialValue: _bio['alamat']?.toString() ?? '',
-            icon: Icons.location_on_outlined,
-            hint: 'Masukkan alamat lengkap',
-            maxLines: 3,
-            onSaved: (val) => alamat = val!,
-            validator: (val) =>
-                val == null || val.isEmpty ? 'Alamat wajib diisi' : null,
-          ),
-          const SizedBox(height: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          _buildFormSection(
+            title: 'Informasi Dasar',
+            icon: Icons.person_outline,
             children: [
-              Text(
-                'Status Menikah',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
-                  fontSize: 14,
-                ),
+              _buildModernInput(
+                label: 'Email',
+                initialValue: _bio['email'] != null
+                    ? _bio['email']['email'].toString()
+                    : '',
+                icon: Icons.alternate_email,
+                hint: 'cth: nama@email.com',
+                onSaved: (val) => email = val!,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Email wajib diisi' : null,
               ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: stts_nikah,
-                items: [
-                  const DropdownMenuItem(value: 'SINGLE', child: Text('Single / Belum Menikah')),
-                  const DropdownMenuItem(value: 'MENIKAH', child: Text('Menikah')),
-                  const DropdownMenuItem(value: 'JANDA', child: Text('Janda')),
-                  const DropdownMenuItem(value: 'DUDHA', child: Text('Dudha')),
+              const SizedBox(height: 20),
+              _buildModernInput(
+                label: 'No. Handphone',
+                initialValue: _bio['petugas'] != null
+                    ? _bio['petugas']['no_telp'].toString()
+                    : '',
+                icon: Icons.phone_iphone,
+                hint: 'cth: 08123456789',
+                keyboardType: TextInputType.phone,
+                onSaved: (val) => no_telp = val!,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'No. HP wajib diisi' : null,
+              ),
+              const SizedBox(height: 20),
+              _buildModernInput(
+                label: 'Alamat',
+                initialValue: _bio['alamat']?.toString() ?? '',
+                icon: Icons.location_on_outlined,
+                hint: 'Masukkan alamat lengkap',
+                maxLines: 2,
+                onSaved: (val) => alamat = val!,
+                validator: (val) =>
+                    val == null || val.isEmpty ? 'Alamat wajib diisi' : null,
+              ),
+              const SizedBox(height: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Status Menikah',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: stts_nikah,
+                    items: [
+                      const DropdownMenuItem(
+                          value: 'SINGLE', child: Text('Single')),
+                      const DropdownMenuItem(
+                          value: 'MENIKAH', child: Text('Menikah')),
+                      const DropdownMenuItem(
+                          value: 'JANDA', child: Text('Janda')),
+                      const DropdownMenuItem(
+                          value: 'DUDHA', child: Text('Duda')),
+                    ],
+                    onChanged: (val) {
+                      stts_nikah = val!;
+                    },
+                    onSaved: (val) => stts_nikah = val!,
+                    decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.favorite_border,
+                          color: primaryColor, size: 20),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 15),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: Colors.grey[200]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: BorderSide(color: primaryColor, width: 1.5),
+                      ),
+                    ),
+                  ),
                 ],
-                onChanged: (val) {
-                  stts_nikah = val!;
-                },
-                onSaved: (val) => stts_nikah = val!,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.favorite_border, color: primaryColor, size: 20),
-                  filled: true,
-                  fillColor: Colors.grey[50],
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[200]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: primaryColor, width: 1.5),
-                  ),
-                ),
               ),
             ],
           ),
-          if (_bio['kualifikasi_staf'] != null) ...[
-            const SizedBox(height: 30),
-            Row(
+          if (_bio['kualifikasi_staf'] != null)
+            _buildFormSection(
+              title: 'Kualifikasi Klinis',
+              icon: Icons.verified_user_outlined,
               children: [
-                Icon(Icons.verified_user, color: primaryColor, size: 20),
-                const SizedBox(width: 10),
-                const Text(
-                  'Kualifikasi Klinis',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                _buildModernInput(
+                  label: 'Nomor STR',
+                  initialValue: nomor_str,
+                  icon: Icons.badge_outlined,
+                  hint: 'Masukkan Nomor STR',
+                  onSaved: (val) => nomor_str = val!,
+                  suffixIcon: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.upload_file_outlined,
+                          color: primaryColor, size: 20),
+                      onPressed: () => _pickAndUploadBerkas(context, 'STR'),
+                    ),
                   ),
                 ),
+                const SizedBox(height: 20),
+                StatefulBuilder(builder: (context, setModalState) {
+                  return _buildModernInput(
+                    label: 'Tanggal Terbit STR',
+                    controller: TextEditingController(text: tanggal_str),
+                    icon: Icons.calendar_today_outlined,
+                    hint: 'Pilih Tanggal',
+                    readOnly: true,
+                    onTap: () => _selectDate(context, tanggal_str, (val) {
+                      setModalState(() => tanggal_str = val);
+                    }),
+                    onSaved: (val) => tanggal_str = val!,
+                  );
+                }),
+                const SizedBox(height: 20),
+                _buildModernInput(
+                  label: 'Nomor SIP',
+                  initialValue: nomor_sip,
+                  icon: Icons.assignment_outlined,
+                  hint: 'Masukkan Nomor SIP',
+                  onSaved: (val) => nomor_sip = val!,
+                  suffixIcon: Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.upload_file_outlined,
+                          color: primaryColor, size: 20),
+                      onPressed: () => _pickAndUploadBerkas(context, 'SIP'),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                StatefulBuilder(builder: (context, setModalState) {
+                  return _buildModernInput(
+                    label: 'Tanggal Mulai SIP',
+                    controller:
+                        TextEditingController(text: tanggal_izin_praktek),
+                    icon: Icons.event_available_outlined,
+                    hint: 'Pilih Tanggal',
+                    readOnly: true,
+                    onTap: () =>
+                        _selectDate(context, tanggal_izin_praktek, (val) {
+                      setModalState(() => tanggal_izin_praktek = val);
+                    }),
+                    onSaved: (val) => tanggal_izin_praktek = val!,
+                  );
+                }),
+                const SizedBox(height: 20),
+                StatefulBuilder(builder: (context, setModalState) {
+                  return _buildModernInput(
+                    label: 'Tanggal Berakhir SIP',
+                    controller: TextEditingController(text: tanggal_akhir_str),
+                    icon: Icons.event_busy_outlined,
+                    hint: 'Pilih Tanggal',
+                    readOnly: true,
+                    onTap: () => _selectDate(context, tanggal_akhir_str, (val) {
+                      setModalState(() => tanggal_akhir_str = val);
+                    }),
+                    onSaved: (val) => tanggal_akhir_str = val!,
+                  );
+                }),
               ],
             ),
-            const Divider(height: 25),
-            _buildModernInput(
-              label: 'Nomor STR',
-              initialValue: nomor_str,
-              icon: Icons.badge,
-              hint: 'Masukkan Nomor STR',
-              onSaved: (val) => nomor_str = val!,
-            ),
-            const SizedBox(height: 20),
-            StatefulBuilder(builder: (context, setModalState) {
-              return _buildModernInput(
-                label: 'Tanggal Terbit STR',
-                controller: TextEditingController(text: tanggal_str),
-                icon: Icons.calendar_today,
-                hint: 'Pilih Tanggal',
-                readOnly: true,
-                onTap: () => _selectDate(context, tanggal_str, (val) {
-                  setModalState(() => tanggal_str = val);
-                }),
-                onSaved: (val) => tanggal_str = val!,
-              );
-            }),
-            const SizedBox(height: 20),
-            _buildModernInput(
-              label: 'Nomor SIP',
-              initialValue: nomor_sip,
-              icon: Icons.assignment,
-              hint: 'Masukkan Nomor SIP',
-              onSaved: (val) => nomor_sip = val!,
-            ),
-            const SizedBox(height: 20),
-            StatefulBuilder(builder: (context, setModalState) {
-              return _buildModernInput(
-                label: 'Tanggal Mulai SIP',
-                controller: TextEditingController(text: tanggal_izin_praktek),
-                icon: Icons.event_available,
-                hint: 'Pilih Tanggal',
-                readOnly: true,
-                onTap: () => _selectDate(context, tanggal_izin_praktek, (val) {
-                  setModalState(() => tanggal_izin_praktek = val);
-                }),
-                onSaved: (val) => tanggal_izin_praktek = val!,
-              );
-            }),
-            const SizedBox(height: 20),
-            StatefulBuilder(builder: (context, setModalState) {
-              return _buildModernInput(
-                label: 'Tanggal Berakhir SIP',
-                controller: TextEditingController(text: tanggal_akhir_str),
-                icon: Icons.event_busy,
-                hint: 'Pilih Tanggal',
-                readOnly: true,
-                onTap: () => _selectDate(context, tanggal_akhir_str, (val) {
-                  setModalState(() => tanggal_akhir_str = val);
-                }),
-                onSaved: (val) => tanggal_akhir_str = val!,
-              );
-            }),
-          ],
-          const SizedBox(height: 40),
-          SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  _formKey.currentState!.save();
-
-                  if (!EmailValidator.validate(email)) {
-                    Msg.error(context, 'Format Email tidak sesuai');
-                    return;
-                  }
-                  updateProfil();
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                elevation: 5,
-                shadowColor: primaryColor.withOpacity(0.4),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
+          const SizedBox(height: 15),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
+                updateProfil();
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
               ),
-              child: const Text(
-                'Simpan Perubahan',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              elevation: 4,
+              shadowColor: primaryColor.withOpacity(0.4),
+            ),
+            child: const Text(
+              'Simpan Perubahan',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
               ),
             ),
           ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -683,15 +869,17 @@ class _ProfilePageState extends State<ProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[700],
-            fontSize: 14,
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.blueGrey[700],
+              fontSize: 13,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           initialValue: initialValue,
@@ -699,7 +887,11 @@ class _ProfilePageState extends State<ProfilePage> {
           keyboardType: keyboardType,
           readOnly: readOnly,
           onTap: onTap,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+            color: Colors.black87,
+          ),
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: primaryColor, size: 20),
             suffixIcon: suffixIcon,
@@ -708,18 +900,22 @@ class _ProfilePageState extends State<ProfilePage> {
             filled: true,
             fillColor: Colors.grey[50],
             contentPadding:
-                const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide(color: Colors.grey[200]!),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(15),
               borderSide: BorderSide(color: primaryColor, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.red, width: 1),
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(15),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
             ),
           ),
           onSaved: onSaved,
@@ -1449,6 +1645,11 @@ class _ProfilePageState extends State<ProfilePage> {
                         ? Helper.formatDate2(
                             _bio['kualifikasi_staf']['tanggal_akhir_str'])
                         : "-"),
+                if (_bio['latest_sk_kredensial'] != null && _bio['latest_sk_kredensial']['kredensial'] != null)
+                  _buildInfoTile(
+                      Icons.military_tech_outlined,
+                      "Jenjang Kredensial",
+                      _bio['latest_sk_kredensial']['kredensial']['label'] ?? "-"),
               ],
               onAdd: _showEditDialog,
             ),

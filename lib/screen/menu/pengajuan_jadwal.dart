@@ -1005,7 +1005,7 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 2.1, // Adjusted for even larger time text
+                    childAspectRatio: 2.0, // Taller cards for better spacing
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
@@ -1177,10 +1177,10 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                                     size: 12, color: cardColor.withOpacity(0.5)),
                                 const SizedBox(width: 4),
                                 Text(
-                                  "${shift['jam_masuk']} - ${shift['jam_pulang']}",
+                                  "${shift['jam_masuk']?.toString().substring(0, 5) ?? '00:00'} - ${shift['jam_pulang']?.toString().substring(0, 5) ?? '00:00'}",
                                   style: TextStyle(
-                                    fontSize: 12, // Increased from 10
-                                    color: Colors.grey[600],
+                                    fontSize: 14, // Increased for clarity
+                                    color: Colors.blueGrey[800],
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),

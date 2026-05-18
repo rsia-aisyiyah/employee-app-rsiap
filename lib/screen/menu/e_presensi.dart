@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -12,6 +13,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:image/image.dart' as img;
+import 'package:path/path.dart' as p;
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/services/face_detection_service.dart';
@@ -27,10 +31,15 @@ class EPresensiScreen extends StatefulWidget {
   State<EPresensiScreen> createState() => _EPresensiScreenState();
 }
 
-class _EPresensiScreenState extends State<EPresensiScreen> {
+class _EPresensiScreenState extends State<EPresensiScreen>
+    with SingleTickerProviderStateMixin {
   // Service Instances
   final FaceDetectionService _faceDetectionService = FaceDetectionService();
   final LocationService _locationService = LocationService();
+
+  // Animation
+  late AnimationController _scanController;
+  late Animation<double> _scanAnimation;
 
   // Camera
   CameraController? _cameraController;
@@ -39,76 +48,79 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
 
   // State
   bool _isProcessing = false;
-  bool _isFaceDetected = false;
+  String _statusMessage = "Menyiapkan Kamera...";
+  String _livenessInstruction = "Posisikan wajah di dalam bingkai";
   String? _livenessChallenge;
-  String _livenessInstruction = "Posisikan wajah Anda di dalam area";
+  bool _isFaceDetected = false;
   bool _livenessPassed = false;
+  bool _livenessSuccessInFrame = false;
+
+  // UX Enhancement Variables
+  int _countdown = 0;
+  Timer? _stabilizationTimer;
+  bool _isFaceInPosition = false;
   bool _isWithinLocation = false;
+  final Rect _targetRect = Rect.fromCenter(
+    center: const Offset(0.5, 0.45),
+    width: 0.65,
+    height: 0.45,
+  );
+
   bool _isLoading = true;
-  bool _isCompleted = false; // Add completion flag
+  bool _isCompleted = false;
   bool _isJadwalTambahan = false;
-  String _statusMessage = "Memeriksa izin dan lokasi...";
   String _presensiType = 'masuk';
   String? _todayShift;
 
-  // Location Config
   static const double _centerLat = -6.94159449034943;
   static const double _centerLng = 109.65221083435888;
-  static const double _maxRadius = 100; // meters
+  static const double _maxRadius = 100;
   Position? _currentPosition;
 
-  // Timer for cooldown
   Timer? _detectionTimer;
-
-  // Bio / Worker Data
   Map _bio = {};
   final box = GetStorage();
 
   @override
   void initState() {
     super.initState();
+    _scanController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    _scanAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
+    );
     _initialize();
   }
 
   @override
   void dispose() {
+    _scanController.dispose();
+    _stabilizationTimer?.cancel();
+    _detectionTimer?.cancel();
     _cameraController?.dispose();
     _faceDetectionService.dispose();
-    _detectionTimer?.cancel();
     super.dispose();
   }
 
   Future<void> _initialize() async {
     try {
-      // 1. Check Permissions
       await _checkPermissions();
-
-      // 2. Get Bio / NIK
       await _getBio();
-
-      // 3. Get Location & Validate
       await _checkLocation();
-
-      // 3.5. Fetch Today's Shift
       await _fetchTodayShift();
-
-      // 4. Check Status (Determine Check-In or Check-Out)
       await _checkStatus();
 
       if (_isWithinLocation) {
-        // 5. Initialize Camera
         await _initializeCamera();
-
-        // 6. Start Liveness Flow
         setState(() {
           _isLoading = false;
           _statusMessage = "";
           _generateLivenessChallenge();
         });
       } else {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) {
@@ -136,11 +148,7 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
     var res = await Api().getData("/pegawai/${box.read('sub')}");
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
-      if (mounted) {
-        setState(() {
-          _bio = body['data'];
-        });
-      }
+      if (mounted) setState(() => _bio = body['data']);
     }
   }
 
@@ -148,7 +156,6 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
     setState(() => _statusMessage = "Memeriksa lokasi...");
     try {
       _currentPosition = await _locationService.getCurrentPosition();
-
       double distance = Geolocator.distanceBetween(
         _currentPosition!.latitude,
         _currentPosition!.longitude,
@@ -160,8 +167,7 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
         setState(() {
           _isWithinLocation = distance <= _maxRadius;
           if (!_isWithinLocation) {
-            _statusMessage =
-                "Jarak Anda ${(distance).toInt()}m dari kantor. Maksimal ${_maxRadius.toInt()}m.";
+            _statusMessage = "Jarak Anda ${(distance).toInt()}m dari kantor. Maksimal ${_maxRadius.toInt()}m.";
           }
         });
       }
@@ -173,7 +179,6 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
 
   Future<void> _initializeCamera() async {
     cameras = await availableCameras();
-    // Default to front camera
     final frontCamera = cameras.firstWhere(
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
@@ -183,55 +188,45 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
       frontCamera,
       ResolutionPreset.medium,
       enableAudio: false,
-      imageFormatGroup: Platform.isAndroid
-          ? ImageFormatGroup.nv21
-          : ImageFormatGroup.bgra8888,
+      imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
     );
 
     await _cameraController!.initialize();
 
     if (mounted) {
-      setState(() {
-        _isCameraInitialized = true;
-      });
-      // Start Image Stream
+      setState(() => _isCameraInitialized = true);
       _startImageStream();
     }
   }
 
   void _startImageStream() {
-    // Process every 500ms to avoid lag
     int frameCount = 0;
     _cameraController?.startImageStream((CameraImage image) async {
       frameCount++;
-      if (frameCount % 10 != 0) return; // Process every ~10th frame
+      if (frameCount % 10 != 0) return;
       if (_isProcessing || _livenessPassed) return;
 
       _isProcessing = true;
       try {
         final inputImage = _inputImageFromCameraImage(image);
-        if (inputImage == null) return;
-
+        if (inputImage == null || inputImage.metadata == null) return;
         final faces = await _faceDetectionService.processImage(inputImage);
-
-        if (mounted) {
-          await _processFaces(faces);
-        }
+        if (mounted) await _processFaces(faces, inputImage.metadata!.size);
       } catch (e) {
-        print("Error processing image: $e");
+        debugPrint("Error processing image: $e");
       } finally {
         _isProcessing = false;
       }
     });
   }
 
-  Future<void> _processFaces(List<Face> faces) async {
-    if (_livenessPassed) return;
+  Future<void> _processFaces(List<Face> faces, Size imageSize) async {
+    if (_livenessPassed || _countdown > 0 && _isFaceInPosition) return;
 
     if (faces.isEmpty) {
       setState(() {
         _isFaceDetected = false;
-        _livenessInstruction = "Wajah tidak terdeteksi";
+        _livenessInstruction = "Posisikan wajah di dalam bingkai";
       });
       return;
     }
@@ -247,51 +242,91 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
     Face face = faces.first;
     setState(() => _isFaceDetected = true);
 
-    // Liveness Logic
-    bool challengePassed = false;
+    final faceRect = face.boundingBox;
+    final double nx = faceRect.left / imageSize.width;
+    final double ny = faceRect.top / imageSize.height;
+    final double nw = faceRect.width / imageSize.width;
+    final double nh = faceRect.height / imageSize.height;
+    final Rect normalizedFace = Rect.fromLTWH(nx, ny, nw, nh);
 
-    switch (_livenessChallenge) {
-      case 'blink':
-        challengePassed = _faceDetectionService.detectBlink(face);
-        break;
-      case 'smile':
-        challengePassed = _faceDetectionService.detectSmile(face);
-        break;
-      // Add more cases if needed
+    final bool isInPosition = _targetRect.contains(normalizedFace.center) &&
+        normalizedFace.width > 0.25 && 
+        normalizedFace.height > 0.25;
+
+    if (isInPosition != _isFaceInPosition) {
+      setState(() {
+        _isFaceInPosition = isInPosition;
+        if (isInPosition) {
+          String instruction = "";
+          if (_livenessChallenge == 'blink') instruction = "Silakan KEDIPKAN MATA";
+          if (_livenessChallenge == 'smile') instruction = "Silakan TERSENYUM";
+          _livenessInstruction = instruction;
+        } else {
+          _livenessInstruction = "Posisikan wajah di dalam bingkai";
+        }
+      });
     }
 
-    if (challengePassed) {
-      setState(() {
-        _livenessPassed = true;
-        _livenessInstruction = "Liveness Berhasil! Memproses...";
-      });
-
-      // Stop stream and take confirmation picture
-      try {
-        if (_cameraController != null &&
-            _cameraController!.value.isStreamingImages) {
-          await _cameraController!.stopImageStream();
+    if (isInPosition) {
+      if (!_livenessSuccessInFrame) {
+        bool challengePassed = false;
+        switch (_livenessChallenge) {
+          case 'blink':
+            challengePassed = _faceDetectionService.detectBlink(face);
+            break;
+          case 'smile':
+            challengePassed = _faceDetectionService.detectSmile(face);
+            break;
         }
 
-        // Give the camera hardware a short break to transition from stream to photo
-        await Future.delayed(const Duration(milliseconds: 300));
-
-        if (mounted) {
-          _takePictureAndSubmit();
-        }
-      } catch (e) {
-        print("Error stopping stream: $e");
-        if (mounted) {
-          _takePictureAndSubmit(); // Try anyway
+        if (challengePassed) {
+          setState(() {
+            _livenessSuccessInFrame = true;
+            _livenessInstruction = "Liveness OK! Tahan posisi...";
+          });
+          _startCountdown();
         }
       }
     } else {
-      // Update instruction based on challenge
-      String instruction = "";
-      if (_livenessChallenge == 'blink') instruction = "Silakan KEDIPKAN MATA";
-      if (_livenessChallenge == 'smile') instruction = "Silakan TERSENYUM";
+      _resetCountdown();
+      if (_livenessSuccessInFrame) setState(() => _livenessSuccessInFrame = false);
+    }
+  }
 
-      setState(() => _livenessInstruction = instruction);
+  void _startCountdown() {
+    setState(() => _countdown = 3);
+    _stabilizationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) { timer.cancel(); return; }
+      if (_countdown > 1) {
+        setState(() => _countdown--);
+      } else {
+        _resetCountdown();
+        _handleSuccessfulStabilization();
+      }
+    });
+  }
+
+  void _resetCountdown() {
+    _stabilizationTimer?.cancel();
+    _stabilizationTimer = null;
+    if (mounted && _countdown != 0) setState(() => _countdown = 0);
+  }
+
+  Future<void> _handleSuccessfulStabilization() async {
+    if (_livenessPassed) return;
+    setState(() {
+      _livenessPassed = true;
+      _livenessInstruction = "Memproses Presensi...";
+    });
+
+    try {
+      if (_cameraController != null && _cameraController!.value.isStreamingImages) {
+        await _cameraController!.stopImageStream();
+      }
+      await Future.delayed(const Duration(milliseconds: 200));
+      if (mounted) _takePictureAndSubmit();
+    } catch (e) {
+      if (mounted) _takePictureAndSubmit();
     }
   }
 
@@ -300,16 +335,13 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
     _livenessChallenge = challenges[Random().nextInt(challenges.length)];
   }
 
-  // Presensi State
   String _endpoint = '/presensi-online/check-in';
 
-  // ─── Fetch Today's Shift ──────────────────────────────────────
   Future<void> _fetchTodayShift() async {
     try {
       DateTime now = DateTime.now();
       String nik = box.read('sub')?.toString() ?? '';
-      String path =
-          '/sdi/jadwal-pegawai?bulan=${now.month}&tahun=${now.year}&nik=$nik';
+      String path = '/sdi/jadwal-pegawai?bulan=${now.month}&tahun=${now.year}&nik=$nik';
       var res = await Api().getData(path);
       if (res.statusCode == 200) {
         var body = json.decode(res.body);
@@ -319,62 +351,48 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
           String dayKey = 'h${now.day}';
           if (empData['jadwal'] != null && empData['jadwal'][dayKey] != null) {
             String shift = empData['jadwal'][dayKey];
-            if (shift.isNotEmpty && shift != '-') {
-              setState(() => _todayShift = shift);
-            }
+            if (shift.isNotEmpty && shift != '-') setState(() => _todayShift = shift);
           }
         }
       }
     } catch (e) {
-      print('Error fetching shift: $e');
+      debugPrint('Error fetching shift: $e');
     }
   }
 
   Future<void> _checkStatus() async {
     try {
       String statusPath = '/presensi-online/status';
-      if (_bio.isNotEmpty && _bio['nik'] != null) {
-        statusPath += "?nik=${_bio['nik']}";
-      }
-
+      if (_bio.isNotEmpty && _bio['nik'] != null) statusPath += "?nik=${_bio['nik']}";
       final response = await Api().getData(statusPath);
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
-
         final data = body['data'];
         if (data != null && data['status'] != null) {
           final status = data['status'];
-
           if (status == 'checked_in') {
-            // Already checked in, next action is check-out
             setState(() {
               _presensiType = 'pulang';
               _endpoint = '/presensi-online/check-out';
+              _statusMessage = "Silakan scan wajah untuk check-out.";
             });
           } else if (status == 'checked_out') {
-            if (_isJadwalTambahan) {
-              // We are already in additional shift mode, don't show dialog or set completed
-              return;
-            }
-
+            if (_isJadwalTambahan) return;
             setState(() {
               _isCompleted = true;
               _statusMessage = "Anda sudah menyelesaikan presensi hari ini.";
-              _isWithinLocation =
-                  false; // Show message scaffold instead of camera
+              _isWithinLocation = false;
             });
-
             if (data['has_jadwal_tambahan'] == true) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 _showJadwalTambahanConfirmation(data['jadwal_tambahan_shift']);
               });
             }
           }
-          // else status == 'none', default is check-in (already set)
         }
       }
     } catch (e) {
-      print("Error checking status: $e");
+      debugPrint("Error checking status: $e");
     }
   }
 
@@ -385,52 +403,43 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
 
       if (mounted) {
         setState(() {
-          _isLoading = true; // Use the full-screen loading overlay
-          _statusMessage = "Memverifikasi Wajah...";
-          _livenessInstruction = "Mengirim data...";
+          _isLoading = true;
+          _statusMessage = "Mengompres Gambar...";
         });
       }
+
+      final File compressedFile = await _compressImage(imageFile);
+      if (mounted) setState(() => _statusMessage = "Memverifikasi Wajah...");
 
       final body = {
         'nik': _bio['nik']?.toString() ?? '',
         'type': _presensiType == 'masuk' ? 'check_in' : 'check_out',
         'is_tambahan': _isJadwalTambahan ? 'true' : 'false',
-        'latitude':
-            _currentPosition?.latitude.toString() ?? _centerLat.toString(),
-        'longitude':
-            _currentPosition?.longitude.toString() ?? _centerLng.toString(),
+        'latitude': _currentPosition?.latitude.toString() ?? _centerLat.toString(),
+        'longitude': _currentPosition?.longitude.toString() ?? _centerLng.toString(),
         'accuracy': _currentPosition?.accuracy.toString() ?? '0',
       };
 
-      final response = await Api()
-          .postMultipart(body, imageFile, _endpoint, fieldName: 'photo');
-      final json = jsonDecode(response.body);
+      final response = await Api().postMultipart(body, compressedFile, _endpoint, fieldName: 'photo');
+      if (await compressedFile.exists()) await compressedFile.delete();
+      final jsonResponse = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (mounted) {
-          String message = json['message'] ?? "Presensi Berhasil!";
-
-          // Check if this was first-time registration
-          if (json['first_time'] == true) {
-            message = "Wajah berhasil didaftarkan!\n$message";
-          }
-
+          String message = jsonResponse['message'] ?? "Presensi Berhasil!";
           Msg.success(context, message);
-          Navigator.pop(context, true); // Return true to refresh prev screen
+          Navigator.pop(context, true);
         }
       } else {
-        throw json['message'] ?? "Gagal: ${response.statusCode}";
+        throw jsonResponse['message'] ?? "Gagal: ${response.statusCode}";
       }
     } catch (e) {
       if (mounted) {
-        setState(() {
-          _isLoading = false; // Stop loading on error
-        });
-        Msg.error(context, "Gagal memproses: $e");
-
-        // Reset state to retry
+        setState(() => _isLoading = false);
+        Msg.error(context, "Gagal: $e");
         setState(() {
           _livenessPassed = false;
+          _livenessSuccessInFrame = false;
           _generateLivenessChallenge();
           _startImageStream();
         });
@@ -444,92 +453,43 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.info_outline, color: primaryColor),
-            const SizedBox(width: 10),
-            const Text("E-Presensi"),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("Sudah ada data presensi hari ini."),
-            const SizedBox(height: 10),
-            Text(
-              "Tersedia jadwal tambahan: $shift",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text("Apakah Anda akan proses presensi jadwal tambahan?"),
-          ],
-        ),
+        title: const Text("Jadwal Tambahan"),
+        content: Text("Tersedia jadwal tambahan: $shift. Ambil?"),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context); // Close E-Presensi entirely
-            },
-            child: Text("Tidak", style: TextStyle(color: Colors.grey[600])),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Tidak")),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               setState(() {
                 _isJadwalTambahan = true;
                 _isCompleted = false;
-                _isWithinLocation = true; // Re-enable camera check logic
+                _isWithinLocation = true;
               });
-              _initialize(); // Re-initialize to start camera flow for additional schedule
+              _initialize();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text("Ya, Tambahan",
-                style: TextStyle(color: Colors.white)),
+            child: const Text("Ya"),
           ),
         ],
       ),
     );
   }
 
-  // Helper to convert CameraImage to InputImage (Generic boilerplate)
   InputImage? _inputImageFromCameraImage(CameraImage image) {
     if (_cameraController == null) return null;
-
-    final camera = cameras.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.front,
-      orElse: () => cameras.first,
-    );
-
+    final camera = cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.front);
     final sensorOrientation = camera.sensorOrientation;
     InputImageRotation? rotation;
     if (Platform.isIOS) {
       rotation = InputImageRotationValue.fromRawValue(sensorOrientation);
     } else if (Platform.isAndroid) {
-      var rotationCompensation =
-          _orientations[_cameraController!.value.deviceOrientation];
-      if (rotationCompensation == null) return null;
-      if (camera.lensDirection == CameraLensDirection.front) {
-        // front-facing
-        rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
-      } else {
-        // back-facing
-        rotationCompensation =
-            (sensorOrientation - rotationCompensation + 360) % 360;
-      }
-      rotation = InputImageRotationValue.fromRawValue(rotationCompensation);
+      var rotationComp = _orientations[_cameraController!.value.deviceOrientation];
+      if (rotationComp == null) return null;
+      rotationComp = (sensorOrientation + rotationComp) % 360;
+      rotation = InputImageRotationValue.fromRawValue(rotationComp);
     }
-
     if (rotation == null) return null;
-
     final format = InputImageFormatValue.fromRawValue(image.format.raw);
-    if (format == null) return null;
-
-    if (image.planes.isEmpty) return null;
+    if (format == null || image.planes.isEmpty) return null;
 
     return InputImage.fromBytes(
       bytes: _concatenatePlanes(image.planes),
@@ -551,9 +511,7 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
 
   Uint8List _concatenatePlanes(List<Plane> planes) {
     final WriteBuffer allBytes = WriteBuffer();
-    for (Plane plane in planes) {
-      allBytes.putUint8List(plane.bytes);
-    }
+    for (Plane plane in planes) { allBytes.putUint8List(plane.bytes); }
     return allBytes.done().buffer.asUint8List();
   }
 
@@ -562,68 +520,19 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
     if (_isLoading) {
       return Scaffold(
         body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                primaryColor,
-                bgColor,
-              ],
-            ),
-          ),
+          width: double.infinity, height: double.infinity,
+          decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [primaryColor, bgColor])),
           child: SafeArea(
             child: Stack(
               children: [
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        color: Colors.white, size: 30),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
+                Positioned(top: 10, left: 10, child: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30), onPressed: () => Navigator.pop(context))),
                 Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(25),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      ),
+                      Container(padding: const EdgeInsets.all(25), decoration: BoxDecoration(color: Colors.white.withOpacity(0.1), shape: BoxShape.circle), child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)),
                       const SizedBox(height: 30),
-                      Text(
-                        _statusMessage,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Mohon tunggu sebentar...",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.7),
-                          fontSize: 14,
-                        ),
-                      ),
+                      Text(_statusMessage, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -636,178 +545,33 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
 
     if (!_isWithinLocation) {
       return Scaffold(
-        body: Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                primaryColor,
-                bgColor,
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back,
-                        color: Colors.white, size: 30),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(30),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 20,
-                                spreadRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            _isCompleted
-                                ? Icons.check_circle_rounded
-                                : Icons.location_off_rounded,
-                            size: 100,
-                            color:
-                                _isCompleted ? Colors.green : Colors.redAccent,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        Text(
-                          _isCompleted
-                              ? "Presensi Selesai"
-                              : "Peringatan Lokasi",
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 15),
-                        Text(
-                          _statusMessage,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black54,
-                            height: 1.5,
-                          ),
-                        ),
-                        const SizedBox(height: 50),
-                        if (!_isCompleted) ...[
-                          SizedBox(
-                            width: double.infinity,
-                            height: 55,
-                            child: ElevatedButton(
-                              onPressed: _initialize,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                foregroundColor: Colors.white,
-                                elevation: 8,
-                                shadowColor: primaryColor.withOpacity(0.5),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                "Coba Lagi",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 55,
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: primaryColor,
-                                side: BorderSide(color: primaryColor, width: 2),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                "Kembali",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ] else ...[
-                          SizedBox(
-                            width: double.infinity,
-                            height: 55,
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primaryColor,
-                                foregroundColor: Colors.white,
-                                elevation: 8,
-                                shadowColor: primaryColor.withOpacity(0.5),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                              ),
-                              child: const Text(
-                                "Kembali",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(padding: const EdgeInsets.all(16), child: Align(alignment: Alignment.topLeft, child: IconButton(icon: Icon(Icons.close, color: primaryColor), onPressed: () => Navigator.pop(context)))),
+              const Spacer(),
+              Container(padding: const EdgeInsets.all(40), decoration: BoxDecoration(color: primaryColor.withOpacity(0.05), shape: BoxShape.circle), child: Icon(_isCompleted ? Icons.check_circle_rounded : Icons.location_off_rounded, size: 100, color: _isCompleted ? Colors.green : Colors.red)),
+              const SizedBox(height: 32),
+              Text(_isCompleted ? "Selesai!" : "Di Luar Jangkauan", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: primaryColor)),
+              const SizedBox(height: 12),
+              Padding(padding: const EdgeInsets.symmetric(horizontal: 48), child: Text(_statusMessage, textAlign: TextAlign.center, style: TextStyle(color: Colors.black45, fontSize: 16, height: 1.5))),
+              const Spacer(),
+              if (!_isCompleted) Padding(padding: const EdgeInsets.all(32), child: ElevatedButton(onPressed: _initialize, style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.white, minimumSize: const Size(double.infinity, 60), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))), child: const Text("Cek Lokasi Lagi", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)))),
+            ],
           ),
         ),
       );
     }
 
     if (!_isCameraInitialized || _cameraController == null) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(backgroundColor: Colors.black, body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Camera Preview with Scaling Fix
           ClipRect(
             child: SizedBox.expand(
               child: FittedBox(
@@ -820,140 +584,62 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
               ),
             ),
           ),
-
-          // 2. Overlay & Instruction
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _scanAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: FaceOverlayPainter(
+                    isFaceInPosition: _isFaceInPosition,
+                    targetRect: _targetRect,
+                    scanLineY: _scanAnimation.value,
+                  ),
+                );
+              },
+            ),
+          ),
           SafeArea(
             child: Column(
               children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on,
-                                color: Colors.green, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              _presensiType == 'masuk'
-                                  ? "Check In"
-                                  : "Check Out",
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 12),
-                            ),
-                            if (_todayShift != null) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  _todayShift!,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
+                _buildTopBar(),
                 const Spacer(),
+                if (_countdown > 0) _buildCountdownUI(),
+                const Spacer(),
+                _buildInstructionCard(),
+                const SizedBox(height: 48),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                // Face / Liveness Status
-                Container(
-                  margin: const EdgeInsets.only(bottom: 50),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _livenessPassed
-                        ? Colors.green.withOpacity(0.8)
-                        : Colors.black54,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (!_isFaceDetected)
-                        const Text(
-                          "Wajah tidak terdeteksi",
-                          style: TextStyle(
-                              color: Colors.redAccent,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold),
-                        )
-                      else if (_livenessPassed)
-                        const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              "Verifikasi Berhasil",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        )
-                      else
-                        Column(
-                          children: [
-                            Text(
-                              _presensiType == 'masuk'
-                                  ? "CHECK IN"
-                                  : "CHECK OUT",
-                              style: TextStyle(
-                                  color: primaryColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _livenessInstruction,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
-                            if (_livenessChallenge != null)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 8),
-                                child: Text(
-                                  "(Ikuti instruksi di atas)",
-                                  style: TextStyle(
-                                      color: Colors.white70, fontSize: 14),
-                                ),
-                              ),
-                          ],
-                        ),
-                    ],
-                  ),
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            decoration: BoxDecoration(color: Colors.black45, shape: BoxShape.circle, border: Border.all(color: Colors.white12)),
+            child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.black45,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white12),
+              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.circle, color: _isWithinLocation ? Colors.greenAccent : Colors.redAccent, size: 8),
+                const SizedBox(width: 10),
+                Text(
+                  _presensiType.toUpperCase(),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12),
                 ),
               ],
             ),
@@ -962,4 +648,149 @@ class _EPresensiScreenState extends State<EPresensiScreen> {
       ),
     );
   }
+
+  Widget _buildCountdownUI() {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: Colors.greenAccent.withOpacity(0.1),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.greenAccent.withOpacity(0.3), width: 2),
+      ),
+      child: Text(
+        "$_countdown",
+        style: const TextStyle(color: Colors.white, fontSize: 120, fontWeight: FontWeight.w900, shadows: [Shadow(color: Colors.greenAccent, blurRadius: 40)]),
+      ),
+    );
+  }
+
+  Widget _buildInstructionCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 32),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: _isFaceInPosition ? Colors.greenAccent.withOpacity(0.3) : Colors.white10, width: 1.5),
+        boxShadow: [
+          if (_isFaceInPosition) BoxShadow(color: Colors.greenAccent.withOpacity(0.1), blurRadius: 20, spreadRadius: 5),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: (_isFaceInPosition ? Colors.greenAccent : Colors.blueAccent).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _livenessSuccessInFrame ? "STABILISASI" : "VERIFIKASI WAJAH",
+                    style: TextStyle(color: _isFaceInPosition ? Colors.greenAccent : Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 2.5),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _livenessInstruction,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<File> _compressImage(File file) async {
+    try {
+      final bytes = await file.readAsBytes();
+      img.Image? image = img.decodeImage(bytes);
+      if (image == null) return file;
+      if (image.width > 800 || image.height > 800) {
+        image = img.copyResize(image, width: image.width > image.height ? 800 : null, height: image.height > image.width ? 800 : null);
+      }
+      final compressedBytes = img.encodeJpg(image, quality: 85);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File(p.join(tempDir.path, "presensi_${DateTime.now().millisecondsSinceEpoch}.jpg"));
+      return await tempFile.writeAsBytes(compressedBytes);
+    } catch (e) { return file; }
+  }
+}
+
+class FaceOverlayPainter extends CustomPainter {
+  final bool isFaceInPosition;
+  final Rect targetRect;
+  final double scanLineY;
+
+  FaceOverlayPainter({required this.isFaceInPosition, required this.targetRect, this.scanLineY = 0});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final frameWidth = size.width * targetRect.width;
+    final frameHeight = size.height * targetRect.height;
+    final center = Offset(size.width * targetRect.center.dx, size.height * targetRect.center.dy);
+    final frameRect = Rect.fromCenter(center: center, width: frameWidth, height: frameHeight);
+    final rrect = RRect.fromRectAndRadius(frameRect, Radius.circular(frameWidth * 0.3));
+
+    // Dimmed background
+    final bgPaint = Paint()..color = Colors.black.withOpacity(0.8);
+    canvas.drawPath(Path.combine(PathOperation.difference, Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)), Path()..addRRect(rrect)), bgPaint);
+
+    // Subtle glow if face in position
+    if (isFaceInPosition) {
+      final glowPaint = Paint()..color = Colors.greenAccent.withOpacity(0.15)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+      canvas.drawRRect(rrect.inflate(10), glowPaint);
+    }
+
+    // Border
+    final borderPaint = Paint()..color = isFaceInPosition ? Colors.greenAccent.withOpacity(0.8) : Colors.white24..style = PaintingStyle.stroke..strokeWidth = 2.0;
+    canvas.drawRRect(rrect, borderPaint);
+
+    // Modern Scan Beam (Gradient Light)
+    if (isFaceInPosition) {
+      final currentY = frameRect.top + (frameRect.height * scanLineY);
+      final beamHeight = 40.0;
+      final beamRect = Rect.fromLTRB(frameRect.left, currentY - beamHeight, frameRect.right, currentY);
+      
+      final beamPaint = Paint()..shader = ui.Gradient.linear(
+        Offset(0, currentY - beamHeight), Offset(0, currentY),
+        [Colors.greenAccent.withOpacity(0), Colors.greenAccent.withOpacity(0.5)],
+      );
+      
+      canvas.drawRect(beamRect.intersect(frameRect), beamPaint);
+      
+      // Stronger line at the bottom of beam
+      canvas.drawLine(Offset(frameRect.left + 5, currentY), Offset(frameRect.right - 5, currentY), Paint()..color = Colors.greenAccent..strokeWidth = 3.0..strokeCap = StrokeCap.round);
+    }
+
+    // Modern Stylish Corners (Glowing)
+    final cornerPaint = Paint()..color = isFaceInPosition ? Colors.greenAccent : Colors.white54..style = PaintingStyle.stroke..strokeWidth = 5.0..strokeCap = StrokeCap.round;
+    if (isFaceInPosition) cornerPaint.maskFilter = const MaskFilter.blur(BlurStyle.solid, 2);
+    
+    final cl = 40.0; // Corner Length
+    final gap = 0.0; // Gap from corner
+    
+    // Top Left
+    canvas.drawPath(Path()..moveTo(frameRect.left - gap, frameRect.top + cl)..lineTo(frameRect.left - gap, frameRect.top - gap)..lineTo(frameRect.left + cl, frameRect.top - gap), cornerPaint);
+    // Top Right
+    canvas.drawPath(Path()..moveTo(frameRect.right + gap - cl, frameRect.top - gap)..lineTo(frameRect.right + gap, frameRect.top - gap)..lineTo(frameRect.right + gap, frameRect.top + cl), cornerPaint);
+    // Bottom Right
+    canvas.drawPath(Path()..moveTo(frameRect.right + gap, frameRect.bottom + gap - cl)..lineTo(frameRect.right + gap, frameRect.bottom + gap)..lineTo(frameRect.right + gap - cl, frameRect.bottom + gap), cornerPaint);
+    // Bottom Left
+    canvas.drawPath(Path()..moveTo(frameRect.left - gap + cl, frameRect.bottom + gap)..lineTo(frameRect.left - gap, frameRect.bottom + gap)..lineTo(frameRect.left - gap, frameRect.bottom + gap - cl), cornerPaint);
+  }
+
+  @override
+  bool shouldRepaint(FaceOverlayPainter oldDelegate) => true;
 }

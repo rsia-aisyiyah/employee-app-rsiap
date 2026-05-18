@@ -30,14 +30,15 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
   String _selectedMetric = "BOR";
   late TabController _tabController;
 
-  final List<String> _tabs = [
-    "Gabungan",
-    "Anak",
-    "Kandungan",
-    "BYC",
-    "ICU",
-    "Isolasi"
-  ];
+  List<Map<String, String>> get _tabs => [
+        {"id": "Gabungan", "label": "Gabungan"},
+        {"id": "Umum", "label": "Umum (Non-Intensif)"},
+        {"id": "Anak", "label": "Anak"},
+        {"id": "Kandungan", "label": "Kandungan"},
+        {"id": "Bayi", "label": "Bayi"},
+        {"id": "ICU", "label": "ICU"},
+        {"id": "Isolasi", "label": "Isolasi"},
+      ];
 
   @override
   void initState() {
@@ -56,7 +57,7 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
   void _handleTabChange() {
     if (!_tabController.indexIsChanging) {
       setState(() {
-        _activeCategory = _tabs[_tabController.index];
+        _activeCategory = _tabs[_tabController.index]['id']!;
         if (!_isYearlyMode) {
           if (_activeCategory == "Gabungan") {
             _currentData = Map<String, dynamic>.from(_overallData);
@@ -100,6 +101,8 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
           final resData = json.decode(response.body)['data'] ?? {};
           setState(() {
             _yearlyMonths = resData['months'] ?? [];
+            _overallData = resData['overall'] ?? {};
+            _currentData = _overallData;
             _isLoading = false;
           });
         } else {
@@ -121,7 +124,6 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
             _overallData = resData['overall'] ?? {};
             _breakdownData = resData['breakdown'] ?? [];
 
-            // Update current data based on active category
             if (_activeCategory == "Gabungan") {
               _currentData = _overallData;
             } else {
@@ -190,7 +192,7 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
               const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           unselectedLabelStyle:
               const TextStyle(fontWeight: FontWeight.normal, fontSize: 12),
-          tabs: _tabs.map((e) => Tab(text: e)).toList(),
+          tabs: _tabs.map<Widget>((e) => Tab(text: e['label'])).toList(),
         ),
       ),
       body: Column(
@@ -199,7 +201,7 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: _tabs.map((tab) => _buildTabContent(tab)).toList(),
+              children: _tabs.map<Widget>((tab) => _buildTabContent(tab['id']!)).toList(),
             ),
           ),
         ],
@@ -233,6 +235,10 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
                       _buildSecondaryIndicatorsGrid(),
                       const SizedBox(height: 20),
                       _buildDataDetailCard(),
+                      const SizedBox(height: 30),
+                      _buildBorPerKelasSection(),
+                      const SizedBox(height: 30),
+                      _buildBorPerBangsalSection(),
                       const SizedBox(height: 40),
                     ],
                   )),
@@ -247,12 +253,24 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
 
     return Column(
       children: [
+        _buildMainIndicatorCard(),
+        const SizedBox(height: 20),
+        _buildSecondaryIndicatorsGrid(),
+        const SizedBox(height: 20),
+        _buildDataDetailCard(),
+        const SizedBox(height: 30),
+        const Divider(),
+        const SizedBox(height: 20),
         _buildMetricSelector(),
         const SizedBox(height: 15),
         _buildTrendChart(),
         const SizedBox(height: 15),
         _buildChartAnalysis(),
-        const SizedBox(height: 25),
+        const SizedBox(height: 30),
+        _buildBorPerKelasSection(),
+        const SizedBox(height: 30),
+        _buildBorPerBangsalSection(),
+        const SizedBox(height: 30),
         _buildMonthlyList(),
         const SizedBox(height: 40),
       ],
@@ -461,7 +479,7 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
         children: [
           Padding(
             padding: const EdgeInsets.all(20),
-            child: Text("Data Bulanan - $_activeCategory",
+            child: Text("Data Bulanan - ${_tabs.firstWhere((e) => e['id'] == _activeCategory)['label']}",
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
           ),
@@ -509,6 +527,21 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
     if (val < 60) return Colors.orange;
     if (val > 85) return Colors.red;
     return Colors.green;
+  }
+
+  String _formatValue(dynamic value, {int decimals = 0}) {
+    if (value == null) return "0";
+    double val = 0;
+    if (value is int) {
+      val = value.toDouble();
+    } else if (value is double) {
+      val = value;
+    } else if (value is String) {
+      val = double.tryParse(value) ?? 0;
+    }
+    
+    if (decimals == 0) return val.round().toString();
+    return val.toStringAsFixed(decimals);
   }
 
   Widget _TableHeaderCell(String text) {
@@ -731,15 +764,22 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
                 ),
               ),
               Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("$bor%",
-                      style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          color: borColor)),
+                  SizedBox(
+                    width: 100,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text("$bor%",
+                          style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: borColor)),
+                    ),
+                  ),
                   const Text("Okupansi",
                       style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                           color: Colors.grey)),
                 ],
@@ -765,59 +805,249 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
     );
   }
 
+  Widget _buildBorPerKelasSection() {
+    final borPerKelas = _currentData['bor_per_kelas'] as List? ?? [];
+    if (borPerKelas.isEmpty) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("BOR per Kelas Rawat",
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87)),
+        const SizedBox(height: 12),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: 1.6,
+          ),
+          itemCount: borPerKelas.length,
+          itemBuilder: (context, index) {
+            final cl = borPerKelas[index];
+            final bor = (cl['bor'] ?? 0.0).toDouble();
+            final color = _getBorColor(bor);
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  )
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(cl['kelas']?.toString().toUpperCase() ?? "",
+                      style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[600])),
+                  const Spacer(),
+                  Text("${cl['bor']}%",
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black87)),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: LinearProgressIndicator(
+                      value: (bor / 100).clamp(0.0, 1.0),
+                      minHeight: 4,
+                      backgroundColor: Colors.grey[100],
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text("Bed: ${cl['A']}",
+                          style: TextStyle(fontSize: 9, color: Colors.grey[500])),
+                      Text("HP: ${cl['HP']}",
+                          style: TextStyle(fontSize: 9, color: Colors.grey[500])),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBorPerBangsalSection() {
+    final wardOccupancy = _currentData['ward_occupancy'] as List? ?? [];
+    if (wardOccupancy.isEmpty) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("BOR per Bangsal",
+                style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87)),
+            Row(
+              children: [
+                Text("Geser",
+                    style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[400])),
+                const SizedBox(width: 4),
+                Icon(Icons.swipe_left_rounded, size: 18, color: Colors.grey[400]),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: wardOccupancy.length,
+            itemBuilder: (context, index) {
+              final w = wardOccupancy[index];
+              final bor = (w['bor'] ?? 0.0).toDouble();
+              final color = _getBorColor(bor);
+
+              return Container(
+                width: 200,
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(w['label']?.toString() ?? "",
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87)),
+                        ),
+                        const SizedBox(width: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text("${w['bor']}%",
+                              style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  color: color)),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: (bor / 100).clamp(0.0, 1.0),
+                        minHeight: 4,
+                        backgroundColor: Colors.grey[100],
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Bed: ${w['A']}",
+                            style:
+                                TextStyle(fontSize: 9, color: Colors.grey[500])),
+                        Text("HP: ${w['HP']}",
+                            style:
+                                TextStyle(fontSize: 9, color: Colors.grey[500])),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSecondaryIndicatorsGrid() {
     final indicators = _currentData['indicators'] ?? {};
-    final metrics =
-        _currentData['metrics'] ?? _currentData['raw_metrics'] ?? {};
 
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 15,
-      crossAxisSpacing: 15,
-      childAspectRatio: 1.3,
+    return Row(
       children: [
-        _buildSmallIndicatorCard(
-            "AVLOS",
-            "${indicators['avlos'] ?? 0}",
-            "Hari",
-            "Rata-rata rawat",
-            Icons.calendar_month_rounded,
-            Colors.blue,
-            "Rata-rata Rawat"),
-        _buildSmallIndicatorCard(
-            "TOI",
-            "${indicators['toi'] ?? 0}",
-            "Hari",
-            "Tenggang bed",
-            Icons.hourglass_empty_rounded,
-            Colors.orange,
-            "Tenggang Bed"),
-        _buildSmallIndicatorCard(
-            "BTO",
-            "${indicators['bto'] ?? 0}",
-            "Kali",
-            "Frekuensi bed",
-            Icons.sync_rounded,
-            Colors.purple,
-            "Perputaran Bed"),
-        _buildSmallIndicatorCard(
-            "HP",
-            "${metrics['HP'] ?? 0}",
-            "Hari",
-            "Total perawatan",
-            Icons.airline_seat_flat_rounded,
-            Colors.teal,
-            "Volume Layanan"),
+        Expanded(
+          child: _buildSmallIndicatorCard(
+              "AVLOS",
+              _formatValue(indicators['avlos'], decimals: 1),
+              "Hari",
+              Icons.calendar_month_rounded,
+              Colors.blue,
+              "Rerata Lama Rawat"),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildSmallIndicatorCard(
+              "TOI",
+              _formatValue(indicators['toi'], decimals: 2),
+              "Hari",
+              Icons.hourglass_empty_rounded,
+              Colors.orange,
+              "Tenggang Pakai Bed"),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _buildSmallIndicatorCard(
+              "BTO",
+              _formatValue(indicators['bto'], decimals: 2),
+              "Kali",
+              Icons.sync_rounded,
+              Colors.green,
+              "Perputaran Bed"),
+        ),
       ],
     );
   }
 
   Widget _buildSmallIndicatorCard(String title, String value, String unit,
-      String desc, IconData icon, Color color, String standard) {
+      IconData icon, Color color, String standard) {
     return Container(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -829,45 +1059,52 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
         ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            children: [
-              Icon(icon, size: 16, color: color),
-              const SizedBox(width: 6),
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey)),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: color),
           ),
-          const Spacer(),
+          const SizedBox(height: 10),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey)),
+          const SizedBox(height: 5),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(value,
                   style: const TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w900,
                       color: Colors.black87)),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(unit,
-                    style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[400])),
-              ),
+              if (unit.isNotEmpty) ...[
+                const SizedBox(width: 2),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(unit,
+                      style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[400])),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           Text(standard,
+              textAlign: TextAlign.center,
               style: TextStyle(
                   fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                  color: color.withOpacity(0.8))),
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[600])),
         ],
       ),
     );
@@ -878,54 +1115,52 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[200]!),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 2))
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text("Detail Komponen Data",
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.black54)),
-          const SizedBox(height: 15),
-          _buildDetailRow(
-              "Kapasitas Bed (A)", "${raw['A'] ?? 0} Bed", Icons.bed_rounded),
-          const Divider(height: 20),
-          _buildDetailRow("Pasien Keluar (D)", "${raw['D'] ?? 0} Orang",
-              Icons.logout_rounded),
-          const Divider(height: 20),
-          _buildDetailRow("Durasi Periode (t)", "${_period['days'] ?? 0} Hari",
-              Icons.timer_rounded),
+          Expanded(
+            child: _buildRawMetricColumn(
+                "A (Jml Bed)", _formatValue(raw['A'], decimals: 0)),
+          ),
+          Container(height: 30, width: 1, color: Colors.grey[200]),
+          Expanded(
+            child: _buildRawMetricColumn(
+                "HP (Hari Rawat)", _formatValue(raw['HP'], decimals: 0)),
+          ),
+          Container(height: 30, width: 1, color: Colors.grey[200]),
+          Expanded(
+            child: _buildRawMetricColumn(
+                "D (Pasien Keluar)", _formatValue(raw['D'], decimals: 0)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, IconData icon) {
-    return Row(
+  Widget _buildRawMetricColumn(String label, String value) {
+    return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.grey[300]!)),
-          child: Icon(icon, size: 14, color: Colors.grey[600]),
-        ),
-        const SizedBox(width: 12),
         Text(label,
-            style: const TextStyle(fontSize: 12, color: Colors.black87)),
-        const Spacer(),
-        Text(value,
             style: TextStyle(
-                fontSize: 13,
+                fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: primaryColor)),
+                color: Colors.grey[600])),
+        const SizedBox(height: 4),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: Colors.black87)),
       ],
     );
   }
@@ -937,7 +1172,6 @@ class _DashboardStatistikRanapState extends State<DashboardStatistikRanap>
     Map<String, dynamic>? maxData;
     Map<String, dynamic>? minData;
 
-    // Filter to only include months up to current if it's the current year
     bool isCurrentYear = _selectedYear == DateTime.now().year;
     int currentMonth = DateTime.now().month;
 

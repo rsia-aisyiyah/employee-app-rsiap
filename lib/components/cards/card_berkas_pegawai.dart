@@ -29,7 +29,7 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
   String downloadStart = "Mulai Download...";
   String filePath = '';
   double progress = 0;
-  String baseUrl = 'https://sim.rsiaaisyiyah.com/webapps/penggajian/';
+  String baseUrl = 'https://rsiap.my.id/webapps/penggajian/';
   String fileExt = '';
 
   @override
@@ -38,23 +38,7 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
     checkFile();
   }
 
-  Future<void> requestPermission(downloadUrl) async {
-    var storage = await Permission.storage.status;
-    var image = await Permission.mediaLibrary.status;
-    var mediaLocation = await Permission.accessMediaLocation.status;
-
-    if (!storage.isGranted) {
-      await Permission.storage.request();
-    }
-
-    if (!image.isGranted) {
-      await Permission.mediaLibrary.request();
-    }
-
-    if (!mediaLocation.isGranted) {
-      await Permission.accessMediaLocation.request();
-    }
-
+  void requestPermission(downloadUrl) {
     openFile(downloadUrl);
   }
 

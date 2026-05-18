@@ -228,7 +228,23 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        Msg.error(context, body['message'] ?? wrongCredentials);
+        String errorMsg = wrongCredentials;
+        if (body != null) {
+          if (body['errors'] != null && body['errors'] is Map) {
+            var errors = body['errors'] as Map;
+            if (errors.isNotEmpty) {
+              var firstErrorList = errors.values.first;
+              if (firstErrorList is List && firstErrorList.isNotEmpty) {
+                errorMsg = firstErrorList.first.toString();
+              } else if (firstErrorList != null) {
+                errorMsg = firstErrorList.toString();
+              }
+            }
+          } else {
+            errorMsg = body['message'] ?? wrongCredentials;
+          }
+        }
+        Msg.error(context, errorMsg);
       }
     } catch (e) {
       debugPrint("Login error: $e");
@@ -473,11 +489,25 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+          ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           filled: true,
           fillColor: Colors.transparent,
         ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Username tidak boleh kosong';
+          }
+          return null;
+        },
         onSaved: (value) => username = value!,
       ),
     );
@@ -516,11 +546,25 @@ class _LoginScreenState extends State<LoginScreen> {
             borderRadius: BorderRadius.circular(15),
             borderSide: BorderSide.none,
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
+          ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
           filled: true,
           fillColor: Colors.transparent,
         ),
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) {
+            return 'Password tidak boleh kosong';
+          }
+          return null;
+        },
         onSaved: (value) => password = value!,
       ),
     );

@@ -167,12 +167,6 @@ class _SertifikasiState extends State<Sertifikasi> {
     var token = box.read('token');
 
     try {
-      // Check Permissions
-      var status = await Permission.storage.status;
-      if (!status.isGranted) {
-        await Permission.storage.request();
-      }
-
       // Get Directory
       String? dir;
       if (Platform.isAndroid) {

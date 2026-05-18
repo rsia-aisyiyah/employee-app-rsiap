@@ -11,6 +11,8 @@ import 'package:get_storage/get_storage.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:rsia_employee_app/api/firebase_api.dart';
 import 'package:rsia_employee_app/config/colors.dart';
+import 'package:rsia_employee_app/config/string.dart';
+import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/screen/menu/cuti.dart';
 import 'package:rsia_employee_app/screen/menu/e_presensi.dart';
 import 'package:rsia_employee_app/screen/menu/helpdesk_form.dart';
@@ -41,6 +43,7 @@ class _IndexScreenState extends State<IndexScreen>
   bool _isMenuOpen = false;
   List<dynamic> _userMenus = [];
   bool _isMenuLoading = true;
+  Map<String, dynamic>? _selectedSubMenu;
 
   @override
   void initState() {
@@ -73,6 +76,7 @@ class _IndexScreenState extends State<IndexScreen>
         _animationController.forward();
       } else {
         _animationController.reverse();
+        _selectedSubMenu = null;
       }
     });
   }
@@ -290,140 +294,101 @@ class _IndexScreenState extends State<IndexScreen>
                       // Collect visible menu items based on access
                       final List<Map<String, dynamic>> visibleItems = [];
 
-                      if (_hasAccess('menu_presensi_online') ||
-                          _hasAccess('e_presensi') ||
-                          _hasAccess('presensi_online')) {
-                        visibleItems.add({
-                          'icon': Icons.location_on,
-                          'label': 'Presensi',
-                          'color': const Color(0xFFFBC02D),
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const EPresensiScreen(
-                                          title: "Presensi Online",
-                                        )));
-                          },
-                        });
-                      }
+                      bool accPresensi = _hasAccess('menu_presensi_online') || _hasAccess('e_presensi') || _hasAccess('presensi_online');
+                      visibleItems.add({
+                        'icon': Icons.location_on,
+                        'label': 'Presensi',
+                        'color': accPresensi ? const Color(0xFFFBC02D) : Colors.grey[400]!,
+                        'disabled': !accPresensi,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const EPresensiScreen(title: "Presensi Online")));
+                        },
+                      });
 
-                      if (_hasAccess('menu_presensi_dokter') ||
-                          _hasAccess('menu_presensi_online') ||
-                          _hasAccess('e_presensi') ||
-                          _hasAccess('presensi_online')) {
-                        visibleItems.add({
-                          'icon': Icons.medical_services_rounded,
-                          'label': 'Presensi Dokter',
-                          'color': Colors.redAccent,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const PresensiDokter()));
-                          },
-                        });
-                      }
+                      bool accDokter = _hasAccess('menu_presensi_dokter') || accPresensi;
+                      visibleItems.add({
+                        'icon': Icons.medical_services_rounded,
+                        'label': 'Presensi Dokter',
+                        'color': accDokter ? Colors.redAccent : Colors.grey[400]!,
+                        'disabled': !accDokter,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const PresensiDokter()));
+                        },
+                      });
 
-                      if (_hasAccess('menu_lembur')) {
-                        visibleItems.add({
-                          'icon': Icons.more_time_rounded,
-                          'label': 'Lembur',
-                          'color': Colors.cyan,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const LemburScreen(
-                                          title: "Lembur",
-                                        )));
-                          },
-                        });
-                      }
+                      bool accLembur = _hasAccess('menu_lembur');
+                      visibleItems.add({
+                        'icon': Icons.more_time_rounded,
+                        'label': 'Lembur',
+                        'color': accLembur ? Colors.cyan : Colors.grey[400]!,
+                        'disabled': !accLembur,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const LemburScreen(title: "Lembur")));
+                        },
+                      });
 
-                      if (_hasAccess('menu_cuti') || _hasAccess('cuti')) {
-                        visibleItems.add({
-                          'icon': Icons.calendar_month,
-                          'label': 'Cuti',
-                          'color': Colors.blue,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const Cuti(showForm: true)));
-                          },
-                        });
-                      }
+                      bool accCuti = _hasAccess('menu_cuti') || _hasAccess('cuti');
+                      visibleItems.add({
+                        'icon': Icons.calendar_month,
+                        'label': 'Cuti',
+                        'color': accCuti ? Colors.blue : Colors.grey[400]!,
+                        'disabled': !accCuti,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const Cuti(showForm: true)));
+                        },
+                      });
 
-                      if (_hasAccess('menu_pengajuan_jadwal')) {
-                        visibleItems.add({
-                          'icon': Icons.event_note_rounded,
-                          'label': 'Jadwal',
-                          'color': Colors.orange,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const PengajuanJadwal()));
-                          },
-                        });
-                      }
+                      bool accJadwal = _hasAccess('menu_pengajuan_jadwal');
+                      visibleItems.add({
+                        'icon': Icons.event_note_rounded,
+                        'label': 'Jadwal',
+                        'color': accJadwal ? Colors.orange : Colors.grey[400]!,
+                        'disabled': !accJadwal,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const PengajuanJadwal()));
+                        },
+                      });
 
-                      if (_hasAccess('menu_surat_internal')) {
-                        visibleItems.add({
-                          'icon': Icons.domain_rounded,
-                          'label': 'S. Internal',
-                          'color': Colors.teal,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const SuratInternalAddScreen()));
-                          },
-                        });
-                      }
+                      bool accSuratInternal = _hasAccess('menu_surat_internal');
+                      visibleItems.add({
+                        'icon': Icons.domain_rounded,
+                        'label': 'S. Internal',
+                        'color': accSuratInternal ? Colors.teal : Colors.grey[400]!,
+                        'disabled': !accSuratInternal,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SuratInternalAddScreen()));
+                        },
+                      });
 
-                      if (_hasAccess('menu_surat_eksternal')) {
-                        visibleItems.add({
-                          'icon': Icons.public_rounded,
-                          'label': 'S. Eksternal',
-                          'color': Colors.indigo,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const SuratEksternalAddScreen()));
-                          },
-                        });
-                      }
+                      bool accSuratEksternal = _hasAccess('menu_surat_eksternal');
+                      visibleItems.add({
+                        'icon': Icons.public_rounded,
+                        'label': 'S. Eksternal',
+                        'color': accSuratEksternal ? Colors.indigo : Colors.grey[400]!,
+                        'disabled': !accSuratEksternal,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const SuratEksternalAddScreen()));
+                        },
+                      });
 
-                      if (_hasAccess('menu_helpdesk')) {
-                        visibleItems.add({
-                          'icon': Icons.support_agent,
-                          'label': 'Helpdesk',
-                          'color': Colors.redAccent,
-                          'onTap': () {
-                            _toggleMenu();
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const HelpdeskFormScreen()));
-                          },
-                        });
-                      }
+                      bool accHelpdesk = _hasAccess('menu_helpdesk');
+                      visibleItems.add({
+                        'icon': Icons.support_agent,
+                        'label': 'Helpdesk',
+                        'color': accHelpdesk ? Colors.redAccent : Colors.grey[400]!,
+                        'disabled': !accHelpdesk,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpdeskFormScreen()));
+                        },
+                      });
 
                       // Calculate dynamic angles based on item count
                       final int count = visibleItems.length;
@@ -441,17 +406,107 @@ class _IndexScreenState extends State<IndexScreen>
                         children: List.generate(count, (i) {
                           final item = visibleItems[i];
                           final double angle = startAngle - (step * i);
+                          final isSelected = _selectedSubMenu != null && _selectedSubMenu!['label'] == item['label'];
                           return _buildRadialMenuItem(
                             icon: item['icon'] as IconData,
                             label: item['label'] as String,
                             color: item['color'] as Color,
                             angle: angle,
-                            onTap: item['onTap'] as VoidCallback,
+                            isSelected: isSelected,
+                            onTap: () {
+                              if (item['disabled'] == true) {
+                                Msg.warning(context, featureNotAvailableMsg);
+                              } else {
+                                setState(() {
+                                  _selectedSubMenu = item;
+                                });
+                              }
+                            },
                             index: i,
                           );
                         }),
                       );
                     },
+                  ),
+                ),
+
+              // Floating Selected Menu Action Button
+              if (_isMenuOpen)
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                        bottom: (Platform.isIOS ? 90.0 : 70.0) + 75.0), 
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      transitionBuilder: (child, animation) => ScaleTransition(
+                        scale: CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutBack,
+                        ),
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      ),
+                      child: _selectedSubMenu != null
+                          ? GestureDetector(
+                              key: ValueKey(_selectedSubMenu!['label']),
+                              onTap: _selectedSubMenu!['onTap'] as VoidCallback,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 150,
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(25),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: (_selectedSubMenu!['color'] as Color).withOpacity(0.3),
+                                      blurRadius: 10,
+                                      spreadRadius: 1,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                  border: Border.all(
+                                    color: (_selectedSubMenu!['color'] as Color).withOpacity(0.7),
+                                    width: 2.0,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _selectedSubMenu!['icon'] as IconData,
+                                      color: _selectedSubMenu!['color'] as Color,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        _selectedSubMenu!['label'] as String,
+                                        style: TextStyle(
+                                          color: _selectedSubMenu!['color'] as Color,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      color: (_selectedSubMenu!['color'] as Color).withOpacity(0.6),
+                                      size: 12,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(key: ValueKey('empty')),
+                    ),
                   ),
                 ),
             ],
@@ -491,6 +546,7 @@ class _IndexScreenState extends State<IndexScreen>
     required double angle, // in degrees
     required VoidCallback onTap,
     required int index,
+    required bool isSelected,
   }) {
     double radius = 115.0; // Clean circular radius
     double radians = angle * math.pi / 180.0;
@@ -506,17 +562,25 @@ class _IndexScreenState extends State<IndexScreen>
           scale: _expandAnimation,
           child: FadeTransition(
             opacity: _expandAnimation,
-            child: FloatingActionButton.small(
-              heroTag: 'sub-fab-$index',
-              onPressed: onTap,
-              backgroundColor: Colors.white,
-              foregroundColor: color,
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(100),
-                side: BorderSide(color: color.withOpacity(0.2), width: 2),
+            child: AnimatedScale(
+              scale: isSelected ? 1.25 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutBack,
+              child: FloatingActionButton.small(
+                heroTag: 'sub-fab-$index',
+                onPressed: onTap,
+                backgroundColor: isSelected ? color : Colors.white,
+                foregroundColor: isSelected ? Colors.white : color,
+                elevation: isSelected ? 8 : 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(100),
+                  side: BorderSide(
+                    color: isSelected ? Colors.white : color.withOpacity(0.5),
+                    width: isSelected ? 2.0 : 3.0,
+                  ),
+                ),
+                child: Icon(icon, size: 20),
               ),
-              child: Icon(icon, size: 20),
             ),
           ),
         ),
