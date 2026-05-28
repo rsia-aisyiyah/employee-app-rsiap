@@ -248,7 +248,7 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
                               Row(
                                 children: [
                                   _buildTimeInfo(
-                                      "PENGJUAN",
+                                      "PENGAJUAN",
                                       item['durasi_pengajuan']?.toString() ?? "-",
                                       Icons.hourglass_bottom_rounded),
                                   _buildDivider(),
@@ -324,9 +324,11 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
       {bool isHighlight = false}) {
     return Expanded(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             label,
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 9,
               color: Colors.grey[500],
@@ -344,13 +346,18 @@ class _LemburHistoryScreenState extends State<LemburHistoryScreen> {
                 color: isHighlight ? primaryColor : Colors.grey[400],
               ),
               const SizedBox(width: 6),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                  color: isHighlight ? primaryColor : Colors.black87,
-                  letterSpacing: -0.5,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                      color: isHighlight ? primaryColor : Colors.black87,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
                 ),
               ),
             ],

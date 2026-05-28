@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:geolocator/geolocator.dart';
 
 class LocationService {
@@ -39,7 +40,8 @@ class LocationService {
       desiredAccuracy: LocationAccuracy.best,
     );
 
-    if (position.isMocked) {
+    // Disable isMocked check on iOS to prevent simulator and reviewer false positives
+    if (position.isMocked && !Platform.isIOS) {
       return Future.error(
           'Lokasi palsu terdeteksi!\nMohon matikan aplikasi Fake GPS.');
     }

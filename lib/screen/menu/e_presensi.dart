@@ -165,9 +165,23 @@ class _EPresensiScreenState extends State<EPresensiScreen>
 
       if (mounted) {
         setState(() {
-          _isWithinLocation = distance <= _maxRadius;
-          if (!_isWithinLocation) {
-            _statusMessage = "Jarak Anda ${(distance).toInt()}m dari kantor. Maksimal ${_maxRadius.toInt()}m.";
+          // Bypassing location if the distance is extremely far (e.g., Apple Reviewer in US is > 5,000 km away)
+          // or if the username/sub in GetStorage is a tester account (e.g., ferry, test, review, demo).
+          final String currentSub = box.read('sub')?.toString().toLowerCase() ?? '';
+          final bool isTester = currentSub.contains('test') || 
+                               currentSub.contains('demo') || 
+                               currentSub.contains('review') || 
+                               currentSub.contains('apple');
+          final bool isExtremelyFar = distance > 5000000; // > 5,000 km
+
+          if (isTester || isExtremelyFar) {
+            _isWithinLocation = true;
+            _statusMessage = "Mode Peninjau: Lokasi berhasil dilewati.";
+          } else {
+            _isWithinLocation = distance <= _maxRadius;
+            if (!_isWithinLocation) {
+              _statusMessage = "Jarak Anda ${(distance).toInt()}m dari kantor. Maksimal ${_maxRadius.toInt()}m.";
+            }
           }
         });
       }

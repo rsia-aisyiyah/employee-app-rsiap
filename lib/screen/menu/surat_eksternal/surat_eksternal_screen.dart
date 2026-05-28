@@ -65,14 +65,12 @@ class _SuratEksternalScreenState extends State<SuratEksternalScreen> {
   Future<void> _fetchStats() async {
     try {
       final String? userDept = box.read('dep');
-      // Logic for koordinator usually checking role, but following web pattern
-      // we can pass department if not koordinator.
-      // Simplified: current app seems to use 'dep' consistently.
+      final dynamic userRole = box.read('role');
+      final String roleStr = (userRole ?? '').toString();
+      final bool isKoordinator = roleStr.contains('Koordinator Diklat');
 
       String url = "/surat/eksternal/stats";
-      if (userDept != null && userDept != '-' && userDept != 'null') {
-        // check if user has special roles in real implementation
-        // for now we assume standard user filtering by department
+      if (!isKoordinator && userDept != null && userDept != '-' && userDept != 'null' && userDept.isNotEmpty) {
         url += "?departemen=$userDept";
       }
 
@@ -98,6 +96,10 @@ class _SuratEksternalScreenState extends State<SuratEksternalScreen> {
 
     try {
       final String? userDept = box.read('dep');
+      final dynamic userRole = box.read('role');
+      final String roleStr = (userRole ?? '').toString();
+      final bool isKoordinator = roleStr.contains('Koordinator Diklat');
+
       String url = "/surat/eksternal?page=$page&limit=10";
 
       if (_searchQuery.isNotEmpty) {
@@ -119,7 +121,7 @@ class _SuratEksternalScreenState extends State<SuratEksternalScreen> {
       }
 
       // Auto-filter by User's Department if not special role
-      if (userDept != null && userDept != '-' && userDept != 'null') {
+      if (!isKoordinator && userDept != null && userDept != '-' && userDept != 'null' && userDept.isNotEmpty) {
         url += "&departemen=$userDept";
       }
 

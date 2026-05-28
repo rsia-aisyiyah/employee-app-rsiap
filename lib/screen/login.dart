@@ -475,7 +475,7 @@ class _LoginScreenState extends State<LoginScreen> {
       child: TextFormField(
         style: const TextStyle(fontWeight: FontWeight.w600),
         maxLength: 10,
-        keyboardType: TextInputType.number,
+        keyboardType: TextInputType.text,
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
           LengthLimitingTextInputFormatter(10),

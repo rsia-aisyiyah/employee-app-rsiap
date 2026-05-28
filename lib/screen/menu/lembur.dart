@@ -509,17 +509,77 @@ class _LemburScreenState extends State<LemburScreen> {
 
     if (!_isWithinLocation) {
       return Scaffold(
-        body: Center(
+        backgroundColor: Colors.white,
+        body: SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.location_off_rounded,
-                  size: 100, color: Colors.redAccent),
-              const SizedBox(height: 20),
-              Text(_statusMessage,
-                  textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
-              const SizedBox(height: 30),
-              ElevatedButton(onPressed: _initialize, child: Text("Coba Lagi")),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    icon: Icon(Icons.close, color: primaryColor),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.all(40),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.05),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.location_off_rounded,
+                  size: 100,
+                  color: Colors.redAccent,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Text(
+                "Di Luar Jangkauan",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 48),
+                child: Text(
+                  _statusMessage,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.black45,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.all(32),
+                child: ElevatedButton(
+                  onPressed: _initialize,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 60),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    "Coba Lagi",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -527,9 +587,23 @@ class _LemburScreenState extends State<LemburScreen> {
     }
 
     if (!_isCameraInitialized || _cameraController == null) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator()),
+        body: Stack(
+          children: [
+            Positioned(
+              top: 40,
+              left: 20,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          ],
+        ),
       );
     }
 

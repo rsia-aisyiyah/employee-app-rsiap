@@ -180,7 +180,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 hint: "Username / NIK",
                 icon: Icons.person_outline,
                 onSaved: (v) => username = v!,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
               ),
               const SizedBox(height: 20),
               _buildTextField(

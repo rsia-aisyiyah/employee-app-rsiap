@@ -362,13 +362,16 @@ class _PegawaiSearchModalState extends State<_PegawaiSearchModal> {
     try {
       final box = GetStorage();
       String? depCode = box.read('dep');
+      final dynamic userRole = box.read('role');
+      final String roleStr = (userRole ?? '').toString();
+      final bool isKoordinator = roleStr.contains('Koordinator Diklat');
 
       String endpoint = '/pegawai';
       if (query.isNotEmpty) {
         endpoint += '/search?q=$query';
       }
 
-      if (depCode != null && depCode.isNotEmpty && depCode != 'null') {
+      if (!isKoordinator && depCode != null && depCode.isNotEmpty && depCode != 'null') {
         endpoint += endpoint.contains('?') ? '&' : '?';
         endpoint += 'filter[departemen]=$depCode';
       }
