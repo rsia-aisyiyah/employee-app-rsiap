@@ -48,6 +48,7 @@ class _IndexScreenState extends State<IndexScreen>
   @override
   void initState() {
     super.initState();
+    _getBioAndSubscribeIT();
     _initializeFirebase();
     _checkForUpdate();
 
@@ -88,18 +89,23 @@ class _IndexScreenState extends State<IndexScreen>
   }
 
   Future<void> _initializeFirebase() async {
-    await Firebase.initializeApp();
-    await FirebaseApi().initNotif(context);
-    final List<String> topics = ['sub', 'role', 'dep', 'jbtn'];
-    for (var topic in topics) {
-      var val = box.read(topic);
-      if (val != null) {
-        await FirebaseMessaging.instance.subscribeToTopic(val.toString());
+    try {
+      await Firebase.initializeApp();
+      await FirebaseApi().initNotif(context);
+      final List<String> topics = ['sub', 'role', 'dep', 'jbtn'];
+      for (var topic in topics) {
+        var val = box.read(topic);
+        if (val != null) {
+          try {
+            await FirebaseMessaging.instance.subscribeToTopic(val.toString());
+          } catch (e) {
+            print('⚠️ Error subscribing to topic $topic: $e');
+          }
+        }
       }
+    } catch (e) {
+      print('❌ Firebase initialization failed: $e');
     }
-
-    // Explicitly fetch Bio to ensure we have the latest Dept/Jabatan for IT subscription
-    await _getBioAndSubscribeIT();
   }
 
   Future<void> _getBioAndSubscribeIT() async {
@@ -145,8 +151,12 @@ class _IndexScreenState extends State<IndexScreen>
               jabatan.contains('TEKNOLOGI');
 
           if (isUserIT) {
-            await FirebaseMessaging.instance.subscribeToTopic('it');
-            print('✅ Successfully Subscribed to IT topic from API data');
+            try {
+              await FirebaseMessaging.instance.subscribeToTopic('it');
+              print('✅ Successfully Subscribed to IT topic from API data');
+            } catch (fbErr) {
+              print('⚠️ Could not subscribe to IT topic: $fbErr');
+            }
           } else {
             print('ℹ️ Not an IT user (via API), skipping IT topic');
           }
