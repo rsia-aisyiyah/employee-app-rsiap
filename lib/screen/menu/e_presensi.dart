@@ -583,7 +583,7 @@ class _EPresensiScreenState extends State<EPresensiScreen>
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           ClipRect(
@@ -636,24 +636,44 @@ class _EPresensiScreenState extends State<EPresensiScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            decoration: BoxDecoration(color: Colors.black45, shape: BoxShape.circle, border: Border.all(color: Colors.white12)),
-            child: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(context)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.black45,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white12),
-              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 10)],
+              border: Border.all(color: Colors.black12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ],
             ),
             child: Row(
               children: [
-                Icon(Icons.circle, color: _isWithinLocation ? Colors.greenAccent : Colors.redAccent, size: 8),
+                Icon(Icons.circle, color: _isWithinLocation ? Colors.green : Colors.red, size: 8),
                 const SizedBox(width: 10),
                 Text(
                   _presensiType.toUpperCase(),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12),
+                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12),
                 ),
               ],
             ),
@@ -683,17 +703,27 @@ class _EPresensiScreenState extends State<EPresensiScreen>
       margin: const EdgeInsets.symmetric(horizontal: 32),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: _isFaceInPosition ? Colors.greenAccent.withOpacity(0.3) : Colors.white10, width: 1.5),
+        border: Border.all(
+          color: _isFaceInPosition ? Colors.green.shade400 : Colors.black12,
+          width: 1.5,
+        ),
         boxShadow: [
-          if (_isFaceInPosition) BoxShadow(color: Colors.greenAccent.withOpacity(0.1), blurRadius: 20, spreadRadius: 5),
+          BoxShadow(
+            color: _isFaceInPosition
+                ? Colors.green.withOpacity(0.15)
+                : Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(32),
         child: BackdropFilter(
-          filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
             child: Column(
@@ -702,12 +732,17 @@ class _EPresensiScreenState extends State<EPresensiScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: (_isFaceInPosition ? Colors.greenAccent : Colors.blueAccent).withOpacity(0.1),
+                    color: (_isFaceInPosition ? Colors.green : Colors.blue).withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     _livenessSuccessInFrame ? "STABILISASI" : "VERIFIKASI WAJAH",
-                    style: TextStyle(color: _isFaceInPosition ? Colors.greenAccent : Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 2.5),
+                    style: TextStyle(
+                      color: _isFaceInPosition ? Colors.green.shade700 : Colors.blue.shade700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.5,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -716,7 +751,7 @@ class _EPresensiScreenState extends State<EPresensiScreen>
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.visible,
-                  style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+                  style: const TextStyle(color: Colors.black87, fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
                 ),
               ],
             ),
@@ -749,60 +784,113 @@ class FaceOverlayPainter extends CustomPainter {
 
   FaceOverlayPainter({required this.isFaceInPosition, required this.targetRect, this.scanLineY = 0});
 
+  Path _getFacePath(Rect rect) {
+    final double w = rect.width;
+    final double h = rect.height;
+    final double x = rect.left;
+    final double y = rect.top;
+
+    final path = Path();
+    // Start at top center of the oval
+    path.moveTo(x + w * 0.5, y);
+
+    // Top-right curve (forehead)
+    path.cubicTo(
+      x + w * 0.85, y,
+      x + w * 0.98, y + h * 0.22,
+      x + w * 0.95, y + h * 0.48,
+    );
+
+    // Bottom-right curve (jawline)
+    path.cubicTo(
+      x + w * 0.90, y + h * 0.72,
+      x + w * 0.72, y + h * 1.0,
+      x + w * 0.50, y + h * 1.0,
+    );
+
+    // Bottom-left curve (jawline)
+    path.cubicTo(
+      x + w * 0.28, y + h * 1.0,
+      x + w * 0.10, y + h * 0.72,
+      x + w * 0.05, y + h * 0.48,
+    );
+
+    // Top-left curve (forehead)
+    path.cubicTo(
+      x + w * 0.02, y + h * 0.22,
+      x + w * 0.15, y,
+      x + w * 0.50, y,
+    );
+
+    path.close();
+    return path;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final frameWidth = size.width * targetRect.width;
-    final frameHeight = size.height * targetRect.height;
+    // Kunci aspect ratio 1:1.25 agar bentuk oval tetap bulat proporsional di semua layar HP
+    final frameHeight = frameWidth * 1.25;
     final center = Offset(size.width * targetRect.center.dx, size.height * targetRect.center.dy);
     final frameRect = Rect.fromCenter(center: center, width: frameWidth, height: frameHeight);
-    final rrect = RRect.fromRectAndRadius(frameRect, Radius.circular(frameWidth * 0.3));
+    
+    final facePath = _getFacePath(frameRect);
 
-    // Dimmed background
-    final bgPaint = Paint()..color = Colors.black.withOpacity(0.8);
-    canvas.drawPath(Path.combine(PathOperation.difference, Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)), Path()..addRRect(rrect)), bgPaint);
+    // Background mask (solid white)
+    final bgPaint = Paint()..color = Colors.white;
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
+        facePath,
+      ),
+      bgPaint,
+    );
 
     // Subtle glow if face in position
     if (isFaceInPosition) {
-      final glowPaint = Paint()..color = Colors.greenAccent.withOpacity(0.15)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-      canvas.drawRRect(rrect.inflate(10), glowPaint);
+      final glowPaint = Paint()
+        ..color = Colors.greenAccent.withOpacity(0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 8.0
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      canvas.drawPath(facePath, glowPaint);
     }
 
     // Border
-    final borderPaint = Paint()..color = isFaceInPosition ? Colors.greenAccent.withOpacity(0.8) : Colors.white24..style = PaintingStyle.stroke..strokeWidth = 2.0;
-    canvas.drawRRect(rrect, borderPaint);
+    final borderPaint = Paint()
+      ..color = isFaceInPosition ? Colors.greenAccent : Colors.grey.shade400
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+    canvas.drawPath(facePath, borderPaint);
 
-    // Modern Scan Beam (Gradient Light)
+    // Modern Scan Beam (Gradient Light) clipped inside the face outline
     if (isFaceInPosition) {
       final currentY = frameRect.top + (frameRect.height * scanLineY);
       final beamHeight = 40.0;
       final beamRect = Rect.fromLTRB(frameRect.left, currentY - beamHeight, frameRect.right, currentY);
       
-      final beamPaint = Paint()..shader = ui.Gradient.linear(
-        Offset(0, currentY - beamHeight), Offset(0, currentY),
-        [Colors.greenAccent.withOpacity(0), Colors.greenAccent.withOpacity(0.5)],
-      );
+      final beamPaint = Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, currentY - beamHeight), Offset(0, currentY),
+          [Colors.greenAccent.withOpacity(0), Colors.greenAccent.withOpacity(0.4)],
+        );
       
+      canvas.save();
+      canvas.clipPath(facePath);
       canvas.drawRect(beamRect.intersect(frameRect), beamPaint);
       
       // Stronger line at the bottom of beam
-      canvas.drawLine(Offset(frameRect.left + 5, currentY), Offset(frameRect.right - 5, currentY), Paint()..color = Colors.greenAccent..strokeWidth = 3.0..strokeCap = StrokeCap.round);
+      canvas.drawLine(
+        Offset(frameRect.left, currentY),
+        Offset(frameRect.right, currentY),
+        Paint()
+          ..color = Colors.greenAccent
+          ..strokeWidth = 2.0
+          ..strokeCap = StrokeCap.round
+      );
+      canvas.restore();
     }
-
-    // Modern Stylish Corners (Glowing)
-    final cornerPaint = Paint()..color = isFaceInPosition ? Colors.greenAccent : Colors.white54..style = PaintingStyle.stroke..strokeWidth = 5.0..strokeCap = StrokeCap.round;
-    if (isFaceInPosition) cornerPaint.maskFilter = const MaskFilter.blur(BlurStyle.solid, 2);
-    
-    final cl = 40.0; // Corner Length
-    final gap = 0.0; // Gap from corner
-    
-    // Top Left
-    canvas.drawPath(Path()..moveTo(frameRect.left - gap, frameRect.top + cl)..lineTo(frameRect.left - gap, frameRect.top - gap)..lineTo(frameRect.left + cl, frameRect.top - gap), cornerPaint);
-    // Top Right
-    canvas.drawPath(Path()..moveTo(frameRect.right + gap - cl, frameRect.top - gap)..lineTo(frameRect.right + gap, frameRect.top - gap)..lineTo(frameRect.right + gap, frameRect.top + cl), cornerPaint);
-    // Bottom Right
-    canvas.drawPath(Path()..moveTo(frameRect.right + gap, frameRect.bottom + gap - cl)..lineTo(frameRect.right + gap, frameRect.bottom + gap)..lineTo(frameRect.right + gap - cl, frameRect.bottom + gap), cornerPaint);
-    // Bottom Left
-    canvas.drawPath(Path()..moveTo(frameRect.left - gap + cl, frameRect.bottom + gap)..lineTo(frameRect.left - gap, frameRect.bottom + gap)..lineTo(frameRect.left - gap, frameRect.bottom + gap - cl), cornerPaint);
   }
 
   @override

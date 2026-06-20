@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -27,7 +28,7 @@ class PresensiDokter extends StatefulWidget {
   State<PresensiDokter> createState() => _PresensiDokterState();
 }
 
-class _PresensiDokterState extends State<PresensiDokter> {
+class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProviderStateMixin {
   // Service Instances
   final FaceDetectionService _faceDetectionService = FaceDetectionService();
   final LocationService _locationService = LocationService();
@@ -36,6 +37,14 @@ class _PresensiDokterState extends State<PresensiDokter> {
   CameraController? _cameraController;
   List<CameraDescription> cameras = [];
   bool _isCameraInitialized = false;
+
+  // Animation
+  late AnimationController _scanController;
+  late Animation<double> _scanAnimation;
+
+  // Face Detection Position
+  bool _isFaceInPosition = false;
+  final Rect _targetRect = const Rect.fromLTWH(0.2, 0.15, 0.6, 0.5);
 
   // State
   bool _isLoading = true;
@@ -67,12 +76,18 @@ class _PresensiDokterState extends State<PresensiDokter> {
   @override
   void initState() {
     super.initState();
+    _scanController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+    _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_scanController);
     _fetchShiftsAndData();
   }
 
   @override
   void dispose() {
     _cameraController?.dispose();
+    _scanController.dispose();
     _faceDetectionService.dispose();
     super.dispose();
   }
@@ -1013,12 +1028,13 @@ class _PresensiDokterState extends State<PresensiDokter> {
   Widget _buildFaceScanScreen() {
     if (!_isCameraInitialized || _cameraController == null) {
       return const Scaffold(
-          backgroundColor: Colors.black,
-          body: Center(child: CircularProgressIndicator()));
+        backgroundColor: Colors.white,
+        body: Center(child: CircularProgressIndicator(color: Colors.teal)),
+      );
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           ClipRect(
@@ -1033,81 +1049,27 @@ class _PresensiDokterState extends State<PresensiDokter> {
               ),
             ),
           ),
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _scanAnimation,
+              builder: (context, child) {
+                return CustomPaint(
+                  painter: FaceOverlayPainter(
+                    isFaceInPosition: _isFaceInPosition,
+                    targetRect: _targetRect,
+                    scanLineY: _scanAnimation.value,
+                  ),
+                );
+              },
+            ),
+          ),
           SafeArea(
             child: Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.location_on,
-                                color: Colors.green, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              _presensiType == 'masuk'
-                                  ? "Check In"
-                                  : "Check Out",
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 12),
-                            ),
-                            const SizedBox(width: 8),
-                            if (_todayShift != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  _todayShift!,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildTopBar(),
                 const Spacer(),
-                Container(
-                  margin: const EdgeInsets.only(bottom: 50),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: _livenessPassed
-                        ? Colors.green.withOpacity(0.8)
-                        : Colors.black54,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Text(
-                    !_isFaceDetected
-                        ? "Wajah tidak terdeteksi"
-                        : _livenessInstruction,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
+                _buildInstructionCard(),
+                const SizedBox(height: 48),
               ],
             ),
           ),
@@ -1116,7 +1078,138 @@ class _PresensiDokterState extends State<PresensiDokter> {
     );
   }
 
-  // --- Liveness & Stream Logic (Reused from EPresensi) ---
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.black12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                )
+              ],
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.circle, color: Colors.green, size: 8),
+                const SizedBox(width: 10),
+                Text(
+                  _presensiType == 'masuk' ? "CHECK IN DOKTER" : "CHECK OUT DOKTER",
+                  style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12),
+                ),
+                if (_todayShift != null) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      _todayShift!,
+                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstructionCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 32),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: _isFaceInPosition ? Colors.green.shade400 : Colors.black12,
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _isFaceInPosition
+                ? Colors.green.withOpacity(0.15)
+                : Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: (_isFaceInPosition ? Colors.green : Colors.blue).withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _livenessPassed ? "MEMPROSES" : "VERIFIKASI WAJAH",
+                    style: TextStyle(
+                      color: _isFaceInPosition ? Colors.green.shade700 : Colors.blue.shade700,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  !_isFaceDetected ? "Posisikan wajah Anda di dalam bingkai" : _livenessInstruction,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.visible,
+                  style: const TextStyle(color: Colors.black87, fontSize: 22, fontWeight: FontWeight.w800, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Liveness & Stream Logic ---
 
   void _startImageStream() {
     int frameCount = 0;
@@ -1128,9 +1221,9 @@ class _PresensiDokterState extends State<PresensiDokter> {
       _isProcessing = true;
       try {
         final inputImage = _inputImageFromCameraImage(image);
-        if (inputImage == null) return;
+        if (inputImage == null || inputImage.metadata == null) return;
         final faces = await _faceDetectionService.processImage(inputImage);
-        if (mounted) await _processFaces(faces);
+        if (mounted) await _processFaces(faces, inputImage.metadata!.size);
       } catch (e) {
         print("Error processing image: $e");
       } finally {
@@ -1139,18 +1232,20 @@ class _PresensiDokterState extends State<PresensiDokter> {
     });
   }
 
-  Future<void> _processFaces(List<Face> faces) async {
+  Future<void> _processFaces(List<Face> faces, Size imageSize) async {
     if (_livenessPassed) return;
     if (faces.isEmpty) {
       setState(() {
         _isFaceDetected = false;
-        _livenessInstruction = "Wajah tidak terdeteksi";
+        _isFaceInPosition = false;
+        _livenessInstruction = "Posisikan wajah Anda di dalam bingkai";
       });
       return;
     }
     if (faces.length > 1) {
       setState(() {
         _isFaceDetected = false;
+        _isFaceInPosition = false;
         _livenessInstruction = "Hanya satu wajah diperbolehkan";
       });
       return;
@@ -1158,6 +1253,33 @@ class _PresensiDokterState extends State<PresensiDokter> {
 
     Face face = faces.first;
     setState(() => _isFaceDetected = true);
+
+    final faceRect = face.boundingBox;
+    final double nx = faceRect.left / imageSize.width;
+    final double ny = faceRect.top / imageSize.height;
+    final double nw = faceRect.width / imageSize.width;
+    final double nh = faceRect.height / imageSize.height;
+    final Rect normalizedFace = Rect.fromLTWH(nx, ny, nw, nh);
+
+    final bool isInPosition = _targetRect.contains(normalizedFace.center) &&
+        normalizedFace.width > 0.25 && 
+        normalizedFace.height > 0.25;
+
+    if (isInPosition != _isFaceInPosition) {
+      setState(() {
+        _isFaceInPosition = isInPosition;
+        if (isInPosition) {
+          String instruction = "";
+          if (_livenessChallenge == 'blink') instruction = "Silakan KEDIPKAN MATA";
+          if (_livenessChallenge == 'smile') instruction = "Silakan TERSENYUM";
+          _livenessInstruction = instruction;
+        } else {
+          _livenessInstruction = "Posisikan wajah Anda di dalam bingkai";
+        }
+      });
+    }
+
+    if (!_isFaceInPosition) return;
 
     bool challengePassed = false;
     switch (_livenessChallenge) {
@@ -1185,11 +1307,6 @@ class _PresensiDokterState extends State<PresensiDokter> {
       } catch (e) {
         if (mounted) _takePictureAndSubmit();
       }
-    } else {
-      String instruction = _livenessChallenge == 'blink'
-          ? "Silakan KEDIPKAN MATA"
-          : "Silakan TERSENYUM";
-      setState(() => _livenessInstruction = instruction);
     }
   }
 
@@ -1295,4 +1412,124 @@ class _PresensiDokterState extends State<PresensiDokter> {
     }
     return allBytes.done().buffer.asUint8List();
   }
+}
+
+class FaceOverlayPainter extends CustomPainter {
+  final bool isFaceInPosition;
+  final Rect targetRect;
+  final double scanLineY;
+
+  FaceOverlayPainter({required this.isFaceInPosition, required this.targetRect, this.scanLineY = 0});
+
+  Path _getFacePath(Rect rect) {
+    final double w = rect.width;
+    final double h = rect.height;
+    final double x = rect.left;
+    final double y = rect.top;
+
+    final path = Path();
+    // Start at top center of the oval
+    path.moveTo(x + w * 0.5, y);
+
+    // Top-right curve (forehead)
+    path.cubicTo(
+      x + w * 0.85, y,
+      x + w * 0.98, y + h * 0.22,
+      x + w * 0.95, y + h * 0.48,
+    );
+
+    // Bottom-right curve (jawline)
+    path.cubicTo(
+      x + w * 0.90, y + h * 0.72,
+      x + w * 0.72, y + h * 1.0,
+      x + w * 0.50, y + h * 1.0,
+    );
+
+    // Bottom-left curve (jawline)
+    path.cubicTo(
+      x + w * 0.28, y + h * 1.0,
+      x + w * 0.10, y + h * 0.72,
+      x + w * 0.05, y + h * 0.48,
+    );
+
+    // Top-left curve (forehead)
+    path.cubicTo(
+      x + w * 0.02, y + h * 0.22,
+      x + w * 0.15, y,
+      x + w * 0.50, y,
+    );
+
+    path.close();
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final frameWidth = size.width * targetRect.width;
+    final center = Offset(size.width * targetRect.center.dx, size.height * targetRect.center.dy);
+    // Lock aspect ratio to 1:1.25 (width:height) to prevent stretching on tall screen devices
+    final frameHeight = frameWidth * 1.25;
+    final frameRect = Rect.fromCenter(center: center, width: frameWidth, height: frameHeight);
+    
+    final facePath = _getFacePath(frameRect);
+
+    // Background mask (solid white)
+    final bgPaint = Paint()..color = Colors.white;
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
+        facePath,
+      ),
+      bgPaint,
+    );
+
+    // Subtle glow if face in position
+    if (isFaceInPosition) {
+      final glowPaint = Paint()
+        ..color = Colors.greenAccent.withOpacity(0.3)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 8.0
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+      canvas.drawPath(facePath, glowPaint);
+    }
+
+    // Border
+    final borderPaint = Paint()
+      ..color = isFaceInPosition ? Colors.greenAccent : Colors.grey.shade400
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+    canvas.drawPath(facePath, borderPaint);
+
+    // Modern Scan Beam (Gradient Light) clipped inside the face outline
+    if (isFaceInPosition) {
+      final currentY = frameRect.top + (frameRect.height * scanLineY);
+      final beamHeight = 40.0;
+      final beamRect = Rect.fromLTRB(frameRect.left, currentY - beamHeight, frameRect.right, currentY);
+      
+      final beamPaint = Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, currentY - beamHeight), Offset(0, currentY),
+          [Colors.greenAccent.withOpacity(0), Colors.greenAccent.withOpacity(0.4)],
+        );
+      
+      canvas.save();
+      canvas.clipPath(facePath);
+      canvas.drawRect(beamRect.intersect(frameRect), beamPaint);
+      
+      // Stronger line at the bottom of beam
+      canvas.drawLine(
+        Offset(frameRect.left, currentY),
+        Offset(frameRect.right, currentY),
+        Paint()
+          ..color = Colors.greenAccent
+          ..strokeWidth = 2.0
+          ..strokeCap = StrokeCap.round
+      );
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(FaceOverlayPainter oldDelegate) => true;
 }

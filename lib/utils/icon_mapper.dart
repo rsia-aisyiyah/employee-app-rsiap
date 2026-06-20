@@ -158,6 +158,18 @@ class IconMapper {
       case 'indikator_ranap':
         return Icons.query_stats_rounded;
 
+      // Akreditasi (parent menu)
+      case 'akreditasi':
+      case 'menu_akreditasi':
+      case 'snars':
+      case 'akred':
+        return Icons.verified_rounded;
+
+      // Instrumen Akreditasi (sub menu — daftar standar & EP)
+      case 'instrumen_akreditasi':
+      case 'menu_instrumen_akreditasi':
+        return Icons.checklist_rounded;
+
       // Aset & Fasilitas
       case 'maintenance':
       case 'pemeliharaan':

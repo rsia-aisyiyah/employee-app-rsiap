@@ -27,6 +27,7 @@ import 'package:rsia_employee_app/screen/menu/permintaan_perbaikan.dart';
 import 'package:rsia_employee_app/screen/menu/perbaikan_service.dart';
 import 'package:rsia_employee_app/screen/menu/inventaris_mutasi.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
+import 'package:rsia_employee_app/screen/menu/akreditasi/akreditasi_home_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -110,6 +111,11 @@ class MenuNavigator {
       case 'mood_checkin':
       case 'menu_mood_checkin':
         return const MoodCheckinScreen();
+      case 'menu_akreditasi':
+      case 'akreditasi':
+      case 'instrumen_akreditasi':
+      case 'menu_instrumen_akreditasi':
+        return const AkreditasiHomeScreen();
       case 'menu_berkas_pegawai':
         return null;
       default:

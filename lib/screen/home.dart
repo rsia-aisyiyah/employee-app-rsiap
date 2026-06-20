@@ -90,33 +90,41 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _getBio() async {
-    var res = await Api().getData("/pegawai/${box.read('sub')}");
-    var body = json.decode(res.body);
+    try {
+      var res = await Api().getData("/pegawai/${box.read('sub')}");
+      var body = json.decode(res.body);
 
-    if (res.statusCode == 200) {
-      if (mounted) {
-        setState(() {
-          _bio = body['data'];
-        });
+      if (res.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _bio = body['data'];
+          });
+        }
       }
+    } catch (e) {
+      print("DEBUG BIO: Error fetching bio: $e");
     }
   }
 
   Future<void> _getJadwal() async {
-    var res = await Api().getData("/pegawai/${box.read('sub')}/jadwal");
-    var body = json.decode(res.body);
-    if (res.statusCode == 200) {
-      if (mounted) {
-        setState(() {
-          if (body['data'] is List) {
-            _jadwal = body['data'].isNotEmpty
-                ? body['data'][0]['jam_masuk'] ?? {}
-                : {};
-          } else {
-            _jadwal = body['data']['jam_masuk'] ?? {};
-          }
-        });
+    try {
+      var res = await Api().getData("/pegawai/${box.read('sub')}/jadwal");
+      var body = json.decode(res.body);
+      if (res.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            if (body['data'] is List) {
+              _jadwal = body['data'].isNotEmpty
+                  ? body['data'][0]['jam_masuk'] ?? {}
+                  : {};
+            } else {
+              _jadwal = body['data']['jam_masuk'] ?? {};
+            }
+          });
+        }
       }
+    } catch (e) {
+      print("DEBUG JADWAL: Error fetching jadwal: $e");
     }
   }
 
@@ -145,15 +153,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _getMenus() async {
-    var res =
-        await Api().getData("/menu-management/user-menus?platform=mobile");
-    var body = json.decode(res.body);
-    if (res.statusCode == 200) {
-      if (mounted) {
-        setState(() {
-          _menus = body['data'] ?? [];
-        });
+    try {
+      var res =
+          await Api().getData("/menu-management/user-menus?platform=mobile");
+      var body = json.decode(res.body);
+      if (res.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _menus = body['data'] ?? [];
+          });
+        }
       }
+    } catch (e) {
+      print("DEBUG MENUS: Error fetching menus: $e");
     }
   }
 
@@ -287,30 +299,72 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(width: 10),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2.5),
-            ),
-            child: Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.2),
-                image: _bio['photo'] != null
-                    ? DecorationImage(
-                        image: CachedNetworkImageProvider(
-                            photoUrl + _bio['photo'].toString()),
-                        fit: BoxFit.cover,
-                        alignment: Alignment.topCenter,
-                      )
-                    : null,
+          Stack(
+            alignment: Alignment.bottomCenter,
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2.5),
+                ),
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.2),
+                    image: _bio['photo'] != null
+                        ? DecorationImage(
+                            image: CachedNetworkImageProvider(
+                                photoUrl + _bio['photo'].toString()),
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                          )
+                        : null,
+                  ),
+                  child: _bio['photo'] == null
+                      ? const Icon(Icons.person, color: Colors.white, size: 35)
+                      : null,
+                ),
               ),
-              child: _bio['photo'] == null
-                  ? const Icon(Icons.person, color: Colors.white, size: 35)
-                  : null,
-            ),
+              Positioned(
+                top: -2,
+                right: -2, // Intersects the circular border at the top-right
+                child: GestureDetector(
+                  onTap: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MoodCheckinScreen()),
+                    );
+                    _getMoodStatus();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      _moodDone && _todayMood != null
+                          ? _moodOptions.firstWhere(
+                              (o) => o['value'] == _todayMood,
+                              orElse: () => {'emoji': '😶'},
+                            )['emoji']
+                          : '😶', // Blank emoticon placeholder
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -564,17 +618,13 @@ class _HomePageState extends State<HomePage> {
           _buildTopSection(),
           _buildAttendanceStatus(),
           Transform.translate(
-            offset: const Offset(0, -25), // Shift mood banner up
-            child: _buildMoodBanner(),
-          ),
-          Transform.translate(
-            offset: const Offset(0, -20), // Shift title up
+            offset: const Offset(0, -10), // Shift title up slightly (adds spacing from top card)
             child: const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 5),
               child: Text(
                 "Layanan Kepegawaian",
                 style: TextStyle(
-                  fontSize: 16, // Slightly smaller
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
@@ -583,7 +633,7 @@ class _HomePageState extends State<HomePage> {
           ),
           Expanded(
             child: Transform.translate(
-              offset: const Offset(0, -20), // Shift grid up
+              offset: const Offset(0, -10), // Shift grid up slightly (matches title offset)
               child: RefreshIndicator(
                 onRefresh: _initialize,
                 color: primaryColor,
