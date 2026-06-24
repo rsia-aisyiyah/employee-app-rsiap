@@ -64,9 +64,9 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
   String? _todayShift;
 
   // Location Config
-  static const double _centerLat = -6.94159449034943;
-  static const double _centerLng = 109.65221083435888;
-  static const double _maxRadius = 100; // meters
+  double _centerLat = -6.941626450136709;
+  double _centerLng = 109.65246501663937;
+  double _maxRadius = 30; // meters
   Position? _currentPosition;
 
   // User Data
@@ -193,22 +193,30 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final data = body['data'];
-        if (data != null && data['status'] != null) {
-          final status = data['status'];
-          if (status == 'checked_in') {
-            _presensiType = 'pulang';
-            _endpoint = '/presensi-online/check-out';
-          } else if (status == 'checked_out') {
-            if (!_isJadwalTambahan) {
-              setState(() {
-                _isScheduleSelected = false;
-                _todayShift = null;
-              });
-              _showJadwalTambahanConfirmation();
-            } else {
-              _isCompleted = true;
-              _statusMessage = "Anda sudah menyelesaikan presensi hari ini.";
+        if (data != null) {
+          if (data['status'] != null) {
+            final status = data['status'];
+            if (status == 'checked_in') {
+              _presensiType = 'pulang';
+              _endpoint = '/presensi-online/check-out';
+            } else if (status == 'checked_out') {
+              if (!_isJadwalTambahan) {
+                setState(() {
+                  _isScheduleSelected = false;
+                  _todayShift = null;
+                });
+                _showJadwalTambahanConfirmation();
+              } else {
+                _isCompleted = true;
+                _statusMessage = "Anda sudah menyelesaikan presensi hari ini.";
+              }
             }
+          }
+
+          if (data['config'] != null) {
+            _centerLat = data['config']['center_lat'] ?? _centerLat;
+            _centerLng = data['config']['center_lng'] ?? _centerLng;
+            _maxRadius = (data['config']['radius'] ?? _maxRadius).toDouble();
           }
         }
       }

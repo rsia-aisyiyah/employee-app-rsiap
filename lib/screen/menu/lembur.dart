@@ -61,9 +61,9 @@ class _LemburScreenState extends State<LemburScreen> with SingleTickerProviderSt
   );
 
   // Location Config (Will be updated from API)
-  double _centerLat = -6.94159449034943;
-  double _centerLng = 109.65221083435888;
-  double _maxRadius = 100; // meters
+  double _centerLat = -6.941626450136709;
+  double _centerLng = 109.65246501663937;
+  double _maxRadius = 30; // meters
   Position? _currentPosition;
 
   // Timer for cooldown

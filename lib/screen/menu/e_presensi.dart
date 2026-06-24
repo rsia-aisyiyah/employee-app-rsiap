@@ -72,9 +72,9 @@ class _EPresensiScreenState extends State<EPresensiScreen>
   String _presensiType = 'masuk';
   String? _todayShift;
 
-  static const double _centerLat = -6.94159449034943;
-  static const double _centerLng = 109.65221083435888;
-  static const double _maxRadius = 100;
+  double _centerLat = -6.941626450136709;
+  double _centerLng = 109.65246501663937;
+  double _maxRadius = 30;
   Position? _currentPosition;
 
   Timer? _detectionTimer;
@@ -108,9 +108,9 @@ class _EPresensiScreenState extends State<EPresensiScreen>
     try {
       await _checkPermissions();
       await _getBio();
+      await _checkStatus();
       await _checkLocation();
       await _fetchTodayShift();
-      await _checkStatus();
 
       if (_isWithinLocation) {
         await _initializeCamera();
@@ -382,26 +382,34 @@ class _EPresensiScreenState extends State<EPresensiScreen>
       if (response.statusCode == 200) {
         final body = jsonDecode(response.body);
         final data = body['data'];
-        if (data != null && data['status'] != null) {
-          final status = data['status'];
-          if (status == 'checked_in') {
-            setState(() {
-              _presensiType = 'pulang';
-              _endpoint = '/presensi-online/check-out';
-              _statusMessage = "Silakan scan wajah untuk check-out.";
-            });
-          } else if (status == 'checked_out') {
-            if (_isJadwalTambahan) return;
-            setState(() {
-              _isCompleted = true;
-              _statusMessage = "Anda sudah menyelesaikan presensi hari ini.";
-              _isWithinLocation = false;
-            });
-            if (data['has_jadwal_tambahan'] == true) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                _showJadwalTambahanConfirmation(data['jadwal_tambahan_shift']);
+        if (data != null) {
+          if (data['status'] != null) {
+            final status = data['status'];
+            if (status == 'checked_in') {
+              setState(() {
+                _presensiType = 'pulang';
+                _endpoint = '/presensi-online/check-out';
+                _statusMessage = "Silakan scan wajah untuk check-out.";
               });
+            } else if (status == 'checked_out') {
+              if (_isJadwalTambahan) return;
+              setState(() {
+                _isCompleted = true;
+                _statusMessage = "Anda sudah menyelesaikan presensi hari ini.";
+                _isWithinLocation = false;
+              });
+              if (data['has_jadwal_tambahan'] == true) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  _showJadwalTambahanConfirmation(data['jadwal_tambahan_shift']);
+                });
+              }
             }
+          }
+
+          if (data['config'] != null) {
+            _centerLat = data['config']['center_lat'] ?? _centerLat;
+            _centerLng = data['config']['center_lng'] ?? _centerLng;
+            _maxRadius = (data['config']['radius'] ?? _maxRadius).toDouble();
           }
         }
       }
