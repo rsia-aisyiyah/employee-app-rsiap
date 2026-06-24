@@ -111,6 +111,7 @@ class IconMapper {
       case 'pelatihan':
         return Icons.school_outlined;
       case 'membership':
+      case 'card_membership':
       case 'sertifikasi':
       case 'licence':
         return Icons.card_membership_outlined;
