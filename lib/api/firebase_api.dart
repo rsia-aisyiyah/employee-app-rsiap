@@ -91,7 +91,7 @@ void _showLocalNotification(RemoteMessage message) {
         priority: Priority.high,
         playSound: true,
         enableVibration: true,
-        icon: '@drawable/ic_notification',
+        icon: '@mipmap/launcher_icon',
         // Heads-up display (peek) agar notif muncul di atas layar
         fullScreenIntent: false,
         styleInformation: BigTextStyleInformation(body),
@@ -112,7 +112,7 @@ Future<void> initLocalNotification() async {
     requestBadgePermission: true,
     requestSoundPermission: true,
   );
-  const android = AndroidInitializationSettings('@drawable/ic_notification');
+  const android = AndroidInitializationSettings('@mipmap/launcher_icon');
   const settings = InitializationSettings(iOS: iOS, android: android);
 
   await _localNotification.initialize(
