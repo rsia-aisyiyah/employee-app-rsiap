@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:rsia_employee_app/utils/menu_navigator.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -37,6 +38,24 @@ Future<void> handleBackgroundMessage(RemoteMessage message) async {
 Future<void> handleNotificationAction(
     String route, Map<String, dynamic> data) async {
   print("Handle Notification Action : jumping to route $route");
+
+  String routeKey = route;
+  if (routeKey.startsWith('/')) {
+    routeKey = routeKey.substring(1);
+  }
+
+  // Attempt to resolve custom widget via MenuNavigator first
+  final BuildContext? context = navigatorKey.currentContext;
+  if (context != null) {
+    final widget = MenuNavigator.getWidget(routeKey);
+    if (widget != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => widget),
+      );
+      return;
+    }
+  }
 
   navigatorKey.currentState?.pushNamed(route, arguments: data);
 }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart'; // Ensure intl is added to pubspec.yaml
+import 'package:intl/intl.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
@@ -28,27 +28,25 @@ class _SertifikasiState extends State<Sertifikasi> {
   bool isLoading = true;
   List dataSertifikasi = [];
 
+  // Search & Filter State
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+  String _selectedYear = "Semua";
+
   @override
   void initState() {
     super.initState();
     _fetchData();
   }
 
-  Future<void> _fetchData() async {
-    // Assuming 'sub' stores the NIK or ID needed. API expects NIK in URL.
-    // If 'sub' is ID, we might need NIK. Let's assume 'sub' is sufficient or we get NIK from profile first.
-    // For now, let's try using the stored 'username' or fetch profile to get NIK if needed.
-    // Assuming box.read('sub') gives the ID/NIK used in consistent manner. (Checking profile.dart: /pegawai/{sub} works, so let's try that first or assume we have 'nik' stored).
-    // Actually profile.dart reads 'sub' (ID) then fetches profile to get 'nik'.
-    // To be safe, we should fetch profile or if NIK is stored.
-    // Let's assume we can use the same endpoint pattern as others or fetch profile first if needed.
-    // WAIT: API route is /diklat/pegawai/{nik}. 'sub' is usually the ID (e.g. 123).
-    // Let's check if we have NIK. If not, we might need to fetch profile first.
-    // Quick fix: Fetch profile simplified or check if we can store NIK.
-    // For now, I'll fetch the profile briefly to get NIK if I can't find it.
-    // BUT, let's try to fetch user details first to be safe.
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _refreshController.dispose();
+    super.dispose();
+  }
 
-    // fetching user details to get NIK
+  Future<void> _fetchData() async {
     var sub = box.read('sub');
 
     var resUser = await Api().getData("/pegawai/$sub");
@@ -62,7 +60,7 @@ class _SertifikasiState extends State<Sertifikasi> {
         var body = json.decode(res.body);
         if (mounted) {
           setState(() {
-            dataSertifikasi = body['data'];
+            dataSertifikasi = body['data'] ?? [];
             isLoading = false;
           });
         }
@@ -85,67 +83,289 @@ class _SertifikasiState extends State<Sertifikasi> {
     _refreshController.refreshCompleted();
   }
 
+  // Get dynamic list of years present in the certificates
+  List<String> get yearsList {
+    Set<String> years = {'Semua'};
+    for (var item in dataSertifikasi) {
+      var tgl = item['kegiatan']?['tgl_mulai'];
+      if (tgl != null && tgl.toString().length >= 4) {
+        String yr = tgl.toString().substring(0, 4);
+        years.add(yr);
+      }
+    }
+    var sorted = years.toList();
+    // Sort descending with 'Semua' at index 0
+    sorted.sort((a, b) {
+      if (a == 'Semua') return -1;
+      if (b == 'Semua') return 1;
+      return b.compareTo(a);
+    });
+    return sorted;
+  }
+
+  // Get filtered data based on search query and selected year
+  List get filteredData {
+    if (_searchQuery.isEmpty && _selectedYear == "Semua") {
+      return dataSertifikasi;
+    }
+    return dataSertifikasi.where((item) {
+      var kegiatan = item['kegiatan'] ?? {};
+      String nama = (kegiatan['nama_kegiatan'] ?? '').toString().toLowerCase();
+      String nomor = (kegiatan['nomor'] ?? '').toString().toLowerCase();
+      String tempat = (kegiatan['tempat'] ?? '').toString().toLowerCase();
+      String penyelenggara = (kegiatan['penyelenggara'] ?? '').toString().toLowerCase();
+      String tglMulai = (kegiatan['tgl_mulai'] ?? '').toString();
+
+      bool matchesSearch = _searchQuery.isEmpty ||
+          nama.contains(_searchQuery.toLowerCase()) ||
+          nomor.contains(_searchQuery.toLowerCase()) ||
+          tempat.contains(_searchQuery.toLowerCase()) ||
+          penyelenggara.contains(_searchQuery.toLowerCase());
+
+      bool matchesYear = true;
+      if (_selectedYear != "Semua") {
+        matchesYear = tglMulai.startsWith(_selectedYear);
+      }
+
+      return matchesSearch && matchesYear;
+    }).toList();
+  }
+
+  String _detectBadge(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('webinar')) return 'Webinar';
+    if (t.contains('workshop')) return 'Workshop';
+    if (t.contains('pelatihan') || t.contains('training')) return 'Pelatihan';
+    if (t.contains('seminar')) return 'Seminar';
+    if (t.contains('sosialisasi')) return 'Sosialisasi';
+    if (t.contains('bimtek')) return 'Bimtek';
+    if (t.contains('baitul arqom') || t.contains('arqom')) return 'Keagamaan';
+    return 'Diklat';
+  }
+
+  Color _getBadgeColor(String badge) {
+    switch (badge) {
+      case 'Webinar': return Colors.purple;
+      case 'Workshop': return Colors.teal;
+      case 'Pelatihan': return Colors.blue;
+      case 'Seminar': return Colors.orange;
+      case 'Sosialisasi': return Colors.green;
+      case 'Bimtek': return Colors.indigo;
+      case 'Keagamaan': return Colors.brown;
+      default: return Colors.blueGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final listToShow = filteredData;
+    final years = yearsList;
+
     return Scaffold(
       backgroundColor: bgColor,
       body: Stack(
         children: [
-          // Header Background
+          // Header Background with subtle gradient
           Container(
-            height: MediaQuery.of(context).size.height *
-                0.35, // Adjust height as needed
+            height: 290,
             decoration: BoxDecoration(
-              color: primaryColor,
-              borderRadius: const BorderRadius.only(
-                bottomRight: Radius.circular(30),
-                bottomLeft: Radius.circular(30),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  primaryColor,
+                  primaryColor.withOpacity(0.85),
+                ],
               ),
+              borderRadius: const BorderRadius.only(
+                bottomRight: Radius.circular(32),
+                bottomLeft: Radius.circular(32),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                )
+              ],
             ),
           ),
           SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Custom App Bar
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: Row(
                     children: [
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_ios,
-                            color: Colors.white),
+                        icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
                       ),
-                      const Text(
-                        "Sertifikasi & Diklat",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      const Expanded(
+                        child: Text(
+                          "Sertifikasi & Diklat",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
+
+                // Search, Stats and Filters Area
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search Bar
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.08),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              _searchQuery = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Cari nama, nomor, tempat, dll...",
+                            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                            prefixIcon: Icon(Icons.search, color: primaryColor),
+                            suffixIcon: _searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: Icon(Icons.clear, color: Colors.grey[600], size: 18),
+                                    onPressed: () {
+                                      setState(() {
+                                        _searchController.clear();
+                                        _searchQuery = "";
+                                      });
+                                    },
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Horizontal Year Chips
+                      if (dataSertifikasi.isNotEmpty)
+                        SizedBox(
+                          height: 38,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: years.length,
+                            itemBuilder: (context, index) {
+                              final yr = years[index];
+                              final isSelected = _selectedYear == yr;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedYear = yr;
+                                    });
+                                  },
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? Colors.white : Colors.white.withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      yr,
+                                      style: TextStyle(
+                                        color: isSelected ? primaryColor : Colors.white,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+
+                      const SizedBox(height: 12),
+
+                      // Results Info / Stats
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Ditemukan: ${listToShow.length} Sertifikat",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (_searchQuery.isNotEmpty || _selectedYear != 'Semua')
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = "";
+                                  _selectedYear = "Semua";
+                                });
+                              },
+                              child: const Text(
+                                "Reset Filter",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // List of Certificates
                 Expanded(
                   child: isLoading
                       ? const SkeletonList(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 10),
-                          cardHeight: 120)
+                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          cardHeight: 120,
+                        )
                       : SmartRefresher(
                           controller: _refreshController,
                           onRefresh: _fetchData,
-                          child: dataSertifikasi.isEmpty
+                          child: listToShow.isEmpty
                               ? _buildEmptyState()
                               : ListView.builder(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 10),
-                                  itemCount: dataSertifikasi.length,
+                                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                                  itemCount: listToShow.length,
                                   itemBuilder: (context, index) {
-                                    return _buildSertifikatCard(
-                                        dataSertifikasi[index]);
+                                    return _buildSertifikatCard(listToShow[index]);
                                   },
                                 ),
                         ),
@@ -159,15 +379,11 @@ class _SertifikasiState extends State<Sertifikasi> {
   }
 
   Future<void> _openCertificate(String filename) async {
-    // New Proxy Endpoint
     String baseUrl = '$apiUrl/diklat/download/';
     String url = "$baseUrl$filename";
-
-    // Get Token
     var token = box.read('token');
 
     try {
-      // Get Directory
       String? dir;
       if (Platform.isAndroid) {
         dir = (await getExternalStorageDirectory())?.path;
@@ -207,11 +423,23 @@ class _SertifikasiState extends State<Sertifikasi> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.card_membership, size: 80, color: Colors.grey[300]),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.card_membership_rounded, size: 60, color: Colors.grey[400]),
+          ),
           const SizedBox(height: 16),
           Text(
             "Belum ada data sertifikasi",
-            style: TextStyle(color: Colors.grey[600], fontSize: 16),
+            style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Coba ubah kata kunci pencarian atau filter tahun",
+            style: TextStyle(color: Colors.grey[400], fontSize: 12),
           ),
         ],
       ),
@@ -243,60 +471,91 @@ class _SertifikasiState extends State<Sertifikasi> {
       } catch (_) {}
     }
 
+    String badge = _detectBadge(namaKegiatan);
+    Color badgeColor = _getBadgeColor(badge);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.04),
             blurRadius: 15,
-            offset: const Offset(0, 5),
-            spreadRadius: 2,
+            offset: const Offset(0, 6),
+            spreadRadius: 1,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header Section: Icon + Title
+          // Header Section: Icon + Title + Category Badge
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Gold / Amber certificate badge
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.amber.shade200.withOpacity(0.5), width: 1.5),
                   ),
-                  child: Icon(Icons.workspace_premium,
-                      color: primaryColor, size: 24),
+                  child: Icon(Icons.workspace_premium_rounded,
+                      color: Colors.amber.shade700, size: 26),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        namaKegiatan,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              namaKegiatan,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                                height: 1.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Dynamic category badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              badge,
+                              style: TextStyle(
+                                color: badgeColor,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 6),
                       Text(
                         nomor,
                         style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[500],
-                            fontStyle: FontStyle.italic),
+                          fontSize: 12,
+                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w500,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -310,20 +569,20 @@ class _SertifikasiState extends State<Sertifikasi> {
           // Divider
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Divider(color: Colors.grey[200], height: 20),
+            child: Divider(color: Colors.grey[100], height: 16, thickness: 1),
           ),
 
           // Details Section
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
             child: Column(
               children: [
                 _buildDetailRow(
-                    Icons.calendar_today_outlined, "Tanggal", periode),
-                const SizedBox(height: 8),
-                _buildDetailRow(Icons.place_outlined, "Tempat", tempat),
-                const SizedBox(height: 8),
-                _buildDetailRow(Icons.verified_user_outlined, "Penyelenggara",
+                    Icons.calendar_today_rounded, "Tanggal", periode),
+                const SizedBox(height: 10),
+                _buildDetailRow(Icons.place_rounded, "Tempat", tempat),
+                const SizedBox(height: 10),
+                _buildDetailRow(Icons.verified_rounded, "Penyelenggara",
                     kegiatan['penyelenggara'] ?? '-'),
               ],
             ),
@@ -333,40 +592,42 @@ class _SertifikasiState extends State<Sertifikasi> {
           if (data['berkas'] != null && data['berkas'] != '') ...[
             Container(
               decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.05),
-                  borderRadius:
-                      const BorderRadius.vertical(bottom: Radius.circular(15))),
+                color: primaryColor.withOpacity(0.04),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                border: Border.fromBorderSide(
+                  BorderSide(color: primaryColor.withOpacity(0.05), width: 1)
+                ),
+              ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: () {
                     _openCertificate(data['berkas']);
                   },
-                  borderRadius:
-                      const BorderRadius.vertical(bottom: Radius.circular(15)),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.description_outlined,
-                            size: 16, color: primaryColor),
+                        Icon(Icons.download_rounded, size: 16, color: primaryColor),
                         const SizedBox(width: 8),
                         Text(
-                          "Lihat Sertifikat",
+                          "Lihat & Unduh Sertifikat",
                           style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13),
-                        )
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_ios_rounded, size: 11, color: primaryColor),
                       ],
                     ),
                   ),
                 ),
               ),
             )
-          ] else ...[
-            const SizedBox(height: 6),
           ]
         ],
       ),
@@ -377,24 +638,26 @@ class _SertifikasiState extends State<Sertifikasi> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 14, color: Colors.grey[400]),
-        const SizedBox(width: 8),
+        Container(
+          margin: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 14, color: Colors.blueGrey.shade300),
+        ),
+        const SizedBox(width: 10),
         SizedBox(
-          width: 70, // Fixed width for labels alignment
+          width: 85,
           child: Text(
             label,
-            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 12, color: Colors.grey[500], fontWeight: FontWeight.w500),
           ),
         ),
         Expanded(
           child: Text(
             value,
             style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w500),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+              fontSize: 12,
+              color: Colors.grey[800],
+              fontWeight: FontWeight.w600,
+            ),
           ),
         )
       ],
