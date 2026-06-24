@@ -30,42 +30,48 @@ class LogoutScreen extends StatelessWidget {
     }
   }
 
-  Future unsubscribeFromTopic() async {
-    String token;
-    var firebaseMessaging = FirebaseMessaging.instance;
-    token = (await firebaseMessaging.getToken())!;
-
-    String url = "https://iid.googleapis.com/iid/info/$token?details=true";
-    var res = await http.get(Uri.parse(url), headers: {
-      "Authorization": "Bearer ${ApiConfig.fsk}",
-    });
-
-    if (res.statusCode == 200) {
-      var body = jsonDecode(res.body);
-      Map<String, dynamic> subscribedTopics = body['rel']['topics'];
-
-      subscribedTopics.forEach((key, value) async {
-        await Future.delayed(Duration(milliseconds: 10));
-        await FirebaseMessaging.instance.unsubscribeFromTopic(key);
-        debugPrint("Unsubscribed from topic: $key");
-      });
-
-      firebaseMessaging.deleteToken();
+  Future<bool> unsubscribeFromTopic() async {
+    try {
+      final box = GetStorage();
+      final List<String> keys = ['sub', 'role', 'dep', 'jbtn'];
+      for (var key in keys) {
+        var val = box.read(key);
+        if (val != null && val.toString().isNotEmpty) {
+          debugPrint("Unsubscribing from topic: ${val.toString()}");
+          try {
+            await FirebaseMessaging.instance.unsubscribeFromTopic(val.toString());
+          } catch (e) {
+            debugPrint("Error unsubscribing from topic ${val.toString()}: $e");
+          }
+        }
+      }
+      debugPrint("Unsubscribing from topic: it");
+      try {
+        await FirebaseMessaging.instance.unsubscribeFromTopic('it');
+      } catch (e) {
+        debugPrint("Error unsubscribing from topic it: $e");
+      }
+      
+      debugPrint("Deleting FCM token...");
       await FirebaseMessaging.instance.deleteToken();
-
       return true;
-    } else {
+    } catch (e) {
+      debugPrint("Error in unsubscribeFromTopic: $e");
       return false;
     }
+  }
+
+  Future<void> handleLogout() async {
+    await unsubscribeFromTopic();
+    await doLogout();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: FutureBuilder(
-        future: Future.wait([unsubscribeFromTopic(), doLogout()]),
+        future: handleLogout(),
         builder: (context, snapshot) {
-          // if 2 od  them finished
           if (snapshot.connectionState == ConnectionState.done) {
             // show loading 2 second then navigate to login
             Future.delayed(Duration(seconds: 2), () {
