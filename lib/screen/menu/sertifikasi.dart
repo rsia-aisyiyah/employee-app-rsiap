@@ -246,7 +246,7 @@ class _SertifikasiState extends State<Sertifikasi> {
           children: [
             // Header Background with subtle gradient
             Container(
-              height: 290,
+              height: 330,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -397,6 +397,15 @@ class _SertifikasiState extends State<Sertifikasi> {
                                                     color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
                                                     width: 1,
                                                   ),
+                                                  boxShadow: isSelected
+                                                      ? [
+                                                          BoxShadow(
+                                                            color: Colors.black.withOpacity(0.08),
+                                                            blurRadius: 8,
+                                                            offset: const Offset(0, 3),
+                                                          )
+                                                        ]
+                                                      : null,
                                                 ),
                                                 child: Text(
                                                   yr,
@@ -419,13 +428,33 @@ class _SertifikasiState extends State<Sertifikasi> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        "Ditemukan: ${listToShow.length} Sertifikat",
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                      Row(
+                                        children: [
+                                          const Text(
+                                            "Hasil Pencarian",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              "${listToShow.length} Sertifikat",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       if (_searchQuery.isNotEmpty || _selectedYear != 'Semua')
                                         GestureDetector(
@@ -436,13 +465,26 @@ class _SertifikasiState extends State<Sertifikasi> {
                                               _selectedYear = "Semua";
                                             });
                                           },
-                                          child: const Text(
-                                            "Reset Filter",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              decoration: TextDecoration.underline,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: Colors.redAccent.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(color: Colors.redAccent.withOpacity(0.3), width: 1),
+                                            ),
+                                            child: const Row(
+                                              children: [
+                                                Icon(Icons.refresh, color: Colors.white, size: 12),
+                                                SizedBox(width: 4),
+                                                Text(
+                                                  "Reset",
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),
@@ -482,13 +524,33 @@ class _SertifikasiState extends State<Sertifikasi> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                              child: Text(
-                                "Daftar Pengajuan: ${dataPengajuan.length} Dokumen",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              child: Row(
+                                children: [
+                                  const Text(
+                                    "Daftar Pengajuan",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      "${dataPengajuan.length} Dokumen",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             Expanded(

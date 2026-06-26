@@ -248,14 +248,14 @@ class _DiklatPengajuanFormState extends State<DiklatPengajuanForm> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: primaryColor.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.blue.shade100),
+                  border: Border.all(color: primaryColor.withOpacity(0.15)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_outline_rounded, color: Colors.blue.shade700, size: 20),
+                    Icon(Icons.info_outline_rounded, color: primaryColor, size: 20),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
@@ -394,11 +394,12 @@ class _DiklatPengajuanFormState extends State<DiklatPengajuanForm> {
                 onPressed: isSubmitting ? null : _submitForm,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
+                  shadowColor: primaryColor.withOpacity(0.3),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  elevation: 2,
+                  elevation: 4,
                 ),
                 child: isSubmitting
                     ? const SizedBox(
@@ -420,14 +421,34 @@ class _DiklatPengajuanFormState extends State<DiklatPengajuanForm> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: primaryColor,
-        letterSpacing: 0.5,
-      ),
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 16,
+          decoration: BoxDecoration(
+            color: primaryColor,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.blueGrey[800],
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            height: 1,
+            color: Colors.grey.shade200,
+          ),
+        ),
+      ],
     );
   }
 

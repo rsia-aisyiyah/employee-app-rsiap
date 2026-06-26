@@ -2,12 +2,11 @@ import 'dart:convert';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
-import 'package:rsia_employee_app/config/api.dart';
 import 'package:rsia_employee_app/screen/login.dart';
+import 'package:rsia_employee_app/utils/secure_storage_helper.dart';
 
 class LogoutScreen extends StatelessWidget {
   const LogoutScreen({super.key});
@@ -15,19 +14,25 @@ class LogoutScreen extends StatelessWidget {
   Future<bool> doLogout() async {
     final box = GetStorage();
 
-    var res = await Api().postRequest('/auth/logout');
-
-    if (res.statusCode == 200) {
-      final data = jsonDecode(res.body);
-      if (data['status'] == 'success') {
-        box.erase();
-        return true;
+    try {
+      var res = await Api().getData('/user/auth/logout');
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data['success'] == true) {
+          debugPrint("Logout successful on server");
+        }
       } else {
-        return false;
+        debugPrint("Logout server returned status code: ${res.statusCode}");
       }
-    } else {
-      return false;
+    } catch (e) {
+      debugPrint("Error during server logout API call: $e");
+    } finally {
+      await box.erase();
+      await SecureStorageHelper.deleteCredentials();
+      debugPrint("Local session and biometric credentials erased");
     }
+
+    return true;
   }
 
   Future<bool> unsubscribeFromTopic() async {
