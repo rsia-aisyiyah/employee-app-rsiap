@@ -378,6 +378,15 @@ class _ApprovalJadwalState extends State<ApprovalJadwal> {
           ),
           const SizedBox(width: 10),
           InkWell(
+            onTap: () => _showHistoryLogsSheet(),
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+              child: Icon(Icons.history, color: Colors.grey[600], size: 20),
+            ),
+          ),
+          const SizedBox(width: 10),
+          InkWell(
             onTap: () => setState(() => _showFilters = !_showFilters),
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -806,5 +815,322 @@ class _ApprovalJadwalState extends State<ApprovalJadwal> {
     if (lower.contains('cuti')) return Colors.red[700]!;
     if (lower == '-' || lower == '') return Colors.grey[400]!;
     return primaryColor;
+  }
+
+  void _showHistoryLogsSheet() {
+    int logPage = 1;
+    List logs = [];
+    bool isLogsLoading = true;
+    bool hasMoreLogs = true;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            
+            Future<void> fetchModalLogs({bool isRefresh = false}) async {
+              if (isRefresh) {
+                logPage = 1;
+                logs.clear();
+                hasMoreLogs = true;
+              }
+              if (!hasMoreLogs) return;
+              
+              setModalState(() => isLogsLoading = true);
+              try {
+                String url = '/sdi/jadwal-pegawai/log?bulan=$selectedMonth&tahun=$selectedYear&page=$logPage';
+                if (selectedDept != null && selectedDept != 'all') {
+                  url += '&departemen=$selectedDept';
+                }
+                
+                var res = await Api().getData(url);
+                if (res.statusCode == 200) {
+                  var body = json.decode(res.body);
+                  var paginatedData = body['data'] ?? {};
+                  var newLogs = paginatedData['data'] ?? [];
+                  
+                  setModalState(() {
+                    logs.addAll(newLogs);
+                    logPage++;
+                    if (newLogs.length < 100) {
+                      hasMoreLogs = false;
+                    }
+                  });
+                }
+              } catch (e) {
+                debugPrint("Error fetching logs: $e");
+              } finally {
+                setModalState(() => isLogsLoading = false);
+              }
+            }
+            
+            // Run initial fetch
+            if (logs.isEmpty && hasMoreLogs && isLogsLoading) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                fetchModalLogs();
+              });
+            }
+
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Riwayat Perubahan Jadwal",
+                              style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1E293B)),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Periode: ${months[selectedMonth - 1]} $selectedYear",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.refresh, color: primaryColor),
+                          onPressed: () => fetchModalLogs(isRefresh: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: isLogsLoading && logs.isEmpty
+                        ? Center(
+                            child: CircularProgressIndicator(
+                              color: primaryColor,
+                            ),
+                          )
+                        : logs.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.history_toggle_off,
+                                      size: 48,
+                                      color: Colors.grey[350],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      "Belum ada riwayat perubahan jadwal",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[500],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : NotificationListener<ScrollNotification>(
+                                onNotification: (ScrollNotification scrollInfo) {
+                                  if (!isLogsLoading &&
+                                      scrollInfo.metrics.pixels ==
+                                          scrollInfo.metrics.maxScrollExtent) {
+                                    fetchModalLogs();
+                                  }
+                                  return true;
+                                },
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 20,
+                                    vertical: 10,
+                                  ),
+                                  itemCount: logs.length + (hasMoreLogs ? 1 : 0),
+                                  itemBuilder: (context, index) {
+                                    if (index == logs.length) {
+                                      return const Padding(
+                                        padding: EdgeInsets.all(15.0),
+                                        child: Center(
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    
+                                    var log = logs[index];
+                                    var dateText = log['created_at'] != null
+                                        ? DateFormat('dd MMM yyyy, HH:mm').format(
+                                            DateTime.parse(log['created_at']),
+                                          )
+                                        : '-';
+                                    
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: Colors.grey[200]!,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.01),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          )
+                                        ]
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  log['pegawai']?['nama'] ?? 'N/A',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 12.5,
+                                                    color: Color(0xFF1E293B),
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              Text(
+                                                "Tgl ${log['tanggal']}",
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 11,
+                                                  color: primaryColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              _buildMiniShiftBadge(
+                                                log['shift_sebelumnya'] ?? '-',
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Icon(
+                                                Icons.arrow_forward,
+                                                size: 14,
+                                                color: Colors.grey,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              _buildMiniShiftBadge(
+                                                log['shift_baru'] ?? '-',
+                                                isNew: true,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Divider(
+                                            height: 1,
+                                            color: Colors.grey[100],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  "Oleh: ${log['penulis']?['nama'] ?? log['oleh_nik']}",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey[500],
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                              Text(
+                                                dateText,
+                                                style: TextStyle(
+                                                  fontSize: 9,
+                                                  color: Colors.grey[400],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildMiniShiftBadge(String shift, {bool isNew = false}) {
+    Color bg = isNew ? const Color(0xFFE0F2FE) : Colors.grey[100]!;
+    Color fg = isNew ? const Color(0xFF0369A1) : Colors.grey[600]!;
+    
+    if (shift.toLowerCase().contains('pagi')) {
+      bg = const Color(0xFFE0F2FE); fg = const Color(0xFF0369A1);
+    } else if (shift.toLowerCase().contains('siang')) {
+      bg = const Color(0xFFFEF9C3); fg = const Color(0xFF854D0E);
+    } else if (shift.toLowerCase().contains('malam')) {
+      bg = const Color(0xFFDBEAFE); fg = const Color(0xFF1E3A8A);
+    } else if (shift.toLowerCase().contains('cuti')) {
+      bg = const Color(0xFFFCE7F3); fg = const Color(0xFFBE185D);
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        shift,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: fg,
+        ),
+      ),
+    );
   }
 }
