@@ -44,7 +44,7 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
 
   // Face Detection Position
   bool _isFaceInPosition = false;
-  final Rect _targetRect = const Rect.fromLTWH(0.15, 0.125, 0.7, 0.55);
+  final Rect _targetRect = const Rect.fromLTWH(0.15, 0.22, 0.7, 0.52);
 
   // State
   bool _isLoading = true;
