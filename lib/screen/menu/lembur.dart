@@ -55,9 +55,9 @@ class _LemburScreenState extends State<LemburScreen> with SingleTickerProviderSt
 
   bool _isFaceInPosition = false;
   final Rect _targetRect = Rect.fromCenter(
-    center: const Offset(0.5, 0.45),
-    width: 0.65,
-    height: 0.45,
+    center: const Offset(0.5, 0.48),
+    width: 0.7,
+    height: 0.52,
   );
 
   // Location Config (Will be updated from API)

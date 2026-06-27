@@ -61,9 +61,9 @@ class _EPresensiScreenState extends State<EPresensiScreen>
   bool _isFaceInPosition = false;
   bool _isWithinLocation = false;
   final Rect _targetRect = Rect.fromCenter(
-    center: const Offset(0.5, 0.45),
-    width: 0.65,
-    height: 0.45,
+    center: const Offset(0.5, 0.48),
+    width: 0.7,
+    height: 0.52,
   );
 
   bool _isLoading = true;
