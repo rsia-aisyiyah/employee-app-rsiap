@@ -242,88 +242,103 @@ class _SertifikasiState extends State<Sertifikasi> {
           icon: const Icon(Icons.add, color: Colors.white),
           label: const Text("Ajukan Sertifikat", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         ),
-        body: Stack(
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header Background with subtle gradient
+            // Header Container wrapping the SafeArea to cover the Status Bar
             Container(
-              height: 330,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
                     primaryColor,
-                    primaryColor.withOpacity(0.85),
+                    primaryColor.withOpacity(0.95),
                   ],
                 ),
-                borderRadius: const BorderRadius.only(
-                  bottomRight: Radius.circular(32),
-                  bottomLeft: Radius.circular(32),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(0.2),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  )
-                ],
               ),
-            ),
-            SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Custom App Bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            "Sertifikasi & Diklat",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+              child: SafeArea(
+                bottom: false,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Custom App Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
+                          ),
+                          const Expanded(
+                            child: Text(
+                              "Sertifikasi & Diklat",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // TabBar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: TabBar(
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.white.withOpacity(0.6),
-                      indicatorColor: Colors.white,
-                      indicatorWeight: 3,
-                      tabs: const [
-                        Tab(text: "Sertifikat Aktif"),
-                        Tab(text: "Status Pengajuan"),
-                      ],
+                    // TabBar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: TabBar(
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.white.withOpacity(0.6),
+                        indicatorColor: Colors.white,
+                        indicatorWeight: 3,
+                        tabs: const [
+                          Tab(text: "Sertifikat Aktif"),
+                          Tab(text: "Status Pengajuan"),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            ),
 
-                  // TabBarView Content
-                  Expanded(
-                    child: TabBarView(
-                      children: [
+            // TabBarView Content
+            Expanded(
+              child: SafeArea(
+                top: false,
+                child: TabBarView(
+                  children: [
                         // --- TAB 1: SERTIFIKAT AKTIF ---
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             // Search, Stats and Filters Area
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    primaryColor.withOpacity(0.95),
+                                    primaryColor.withOpacity(0.85),
+                                  ],
+                                ),
+                                borderRadius: const BorderRadius.only(
+                                  bottomRight: Radius.circular(32),
+                                  bottomLeft: Radius.circular(32),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  )
+                                ],
+                              ),
+                              padding: const EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 16.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -522,8 +537,29 @@ class _SertifikasiState extends State<Sertifikasi> {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    primaryColor.withOpacity(0.95),
+                                    primaryColor.withOpacity(0.85),
+                                  ],
+                                ),
+                                borderRadius: const BorderRadius.only(
+                                  bottomRight: Radius.circular(32),
+                                  bottomLeft: Radius.circular(32),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.2),
+                                    blurRadius: 15,
+                                    offset: const Offset(0, 8),
+                                  )
+                                ],
+                              ),
+                              padding: const EdgeInsets.fromLTRB(20.0, 12.0, 20.0, 16.0),
                               child: Row(
                                 children: [
                                   const Text(
@@ -578,11 +614,9 @@ class _SertifikasiState extends State<Sertifikasi> {
                       ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
       ),
     );
   }
@@ -630,57 +664,104 @@ class _SertifikasiState extends State<Sertifikasi> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.card_membership_rounded,
+                size: 64,
+                color: primaryColor,
+              ),
             ),
-            child: Icon(Icons.card_membership_rounded, size: 60, color: Colors.grey[400]),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Belum ada data sertifikasi",
-            style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Coba ubah kata kunci pencarian atau filter tahun",
-            style: TextStyle(color: Colors.grey[400], fontSize: 12),
-          ),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              "Belum Ada Sertifikat",
+              style: TextStyle(
+                color: Colors.blueGrey[800],
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Coba ubah kata kunci pencarian atau filter tahun untuk menemukan sertifikat Anda.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.blueGrey[500],
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyPengajuanState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.note_alt_rounded,
+                size: 64,
+                color: primaryColor,
+              ),
             ),
-            child: Icon(Icons.note_alt_rounded, size: 60, color: Colors.grey[400]),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Belum ada pengajuan",
-            style: TextStyle(color: Colors.grey[600], fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Semua pengajuan sertifikat eksternal mandiri akan tampil di sini",
-            style: TextStyle(color: Colors.grey[400], fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-        ],
+            const SizedBox(height: 24),
+            Text(
+              "Belum Ada Pengajuan",
+              style: TextStyle(
+                color: Colors.blueGrey[800],
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Semua pengajuan sertifikat eksternal mandiri Anda akan tampil di sini.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.blueGrey[500],
+                fontSize: 13,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -44,7 +44,7 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
 
   // Face Detection Position
   bool _isFaceInPosition = false;
-  final Rect _targetRect = const Rect.fromLTWH(0.2, 0.15, 0.6, 0.5);
+  final Rect _targetRect = const Rect.fromLTWH(0.15, 0.125, 0.7, 0.55);
 
   // State
   bool _isLoading = true;
@@ -1033,6 +1033,66 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
     }
   }
 
+  Future<void> _changeShift() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: primaryColor),
+            const SizedBox(width: 8),
+            const Text("Ganti Shift"),
+          ],
+        ),
+        content: const Text(
+            "Apakah Anda yakin ingin mengganti shift presensi hari ini?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              
+              if (_cameraController != null) {
+                try {
+                  if (_cameraController!.value.isStreamingImages) {
+                    await _cameraController!.stopImageStream();
+                  }
+                } catch (e) {
+                  debugPrint("Error stopping image stream: $e");
+                }
+                try {
+                  await _cameraController!.dispose();
+                } catch (e) {
+                  debugPrint("Error disposing camera controller: $e");
+                }
+                _cameraController = null;
+              }
+              
+              setState(() {
+                _isCameraInitialized = false;
+                _isScheduleSelected = false;
+                _todayShift = null;
+                _isFaceInPosition = false;
+                _isFaceDetected = false;
+                _livenessPassed = false;
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text("Ya, Ganti", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFaceScanScreen() {
     if (!_isCameraInitialized || _cameraController == null) {
       return const Scaffold(
@@ -1075,6 +1135,7 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
             child: Column(
               children: [
                 _buildTopBar(),
+                _buildShiftBanner(),
                 const Spacer(),
                 _buildInstructionCard(),
                 const SizedBox(height: 48),
@@ -1132,24 +1193,72 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
                   _presensiType == 'masuk' ? "CHECK IN DOKTER" : "CHECK OUT DOKTER",
                   style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 12),
                 ),
-                if (_todayShift != null) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: primaryColor,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      _todayShift!,
-                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildShiftBanner() {
+    if (_todayShift == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: GestureDetector(
+        onTap: _changeShift,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primaryColor.withOpacity(0.3), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.schedule_rounded, color: primaryColor, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                "Shift Aktif: $_todayShift",
+                style: TextStyle(
+                  color: Colors.blueGrey[900],
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      "Ganti",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.edit_rounded, color: primaryColor, size: 12),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
