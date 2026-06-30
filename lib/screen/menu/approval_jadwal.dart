@@ -93,7 +93,7 @@ class _ApprovalJadwalState extends State<ApprovalJadwal> {
 
   Future<void> _fetchEmployees() async {
     try {
-      String url = '/sdi/jadwal-pegawai?bulan=$selectedMonth&tahun=$selectedYear';
+      String url = '/sdi/jadwal-pegawai?bulan=$selectedMonth&tahun=$selectedYear&mode=approval';
       if (selectedDept != null && selectedDept != 'all') {
         url += '&departemen=$selectedDept';
       }
