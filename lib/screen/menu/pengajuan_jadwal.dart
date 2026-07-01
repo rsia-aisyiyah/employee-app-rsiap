@@ -229,6 +229,34 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
     return count;
   }
 
+  double _getShiftDuration(String? shift) {
+    if (shift == null || shift.isEmpty || shift == '-' || shift.toLowerCase().contains('libur') || shift.toLowerCase().contains('cuti')) {
+      return 0.0;
+    }
+    String lower = shift.toLowerCase();
+    
+    // Exact mapping to match CodeIgniter JS (v_konten_jadwal.php)
+    if (lower == 'pagi1' || lower == 'pagi2' || lower == 'pagi9' || lower == 'midle pagi4') {
+      return 6.0;
+    }
+    if (lower == 'midle pagi2') {
+      return 5.0; // matching CI count20 * 5
+    }
+    if (lower == 'midle pagi5') {
+      return 12.0;
+    }
+    if (lower == 'siang' || lower == 'siang9' || lower == 'midle siang1') {
+      return 6.0;
+    }
+    if (lower.contains('malam')) {
+      return 10.0;
+    }
+    if (lower.contains('pagi') || lower.contains('siang') || lower.contains('midle')) {
+      return 7.0;
+    }
+    return 7.0;
+  }
+
   Map<String, dynamic> _getEmployeeStats(Map emp) {
     int pagi = 0, siang = 0, malam = 0, cuti = 0, libur = 0, totalShift = 0;
     double totalHours = 0;
@@ -245,26 +273,21 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
 
       String lower = shift.toLowerCase();
       if (lower.contains('pagi')) {
-        pagi++;
-        totalHours += 7;
-        totalShift++;
+        pagi++; totalHours += _getShiftDuration(shift); totalShift++;
       } else if (lower.contains('siang')) {
-        siang++;
-        totalHours += 7;
-        totalShift++;
+        siang++; totalHours += _getShiftDuration(shift); totalShift++;
       } else if (lower.contains('malam')) {
-        malam++;
-        totalHours += 10;
-        totalShift++;
+        malam++; totalHours += _getShiftDuration(shift); totalShift++;
       } else if (lower.contains('cuti')) {
         cuti++;
       } else if (lower.contains('libur')) {
         libur++;
       } else {
-        totalShift++;
-        totalHours += 7;
+        totalShift++; totalHours += _getShiftDuration(shift);
       }
     }
+
+    double wajib = 173.0 - (cuti * 7.0);
 
     return {
       "P": pagi,
@@ -274,7 +297,8 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
       "L": libur,
       "C": cuti,
       "H": totalHours,
-      "O": totalHours - 173
+      "WJ": wajib,
+      "O": totalHours - wajib
     };
   }
 
@@ -614,7 +638,7 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                         _buildStatsCell(stats['L'].toString()),
                         _buildStatsCell(stats['C'].toString()),
                         _buildStatsCell("${stats['H'].toInt()} Jam"),
-                        _buildStatsCell("173 Jam", isBold: true),
+                        _buildStatsCell("${stats['WJ'].toInt()} Jam", isBold: true),
                         _buildStatsCell("${stats['O'].toInt()} Jam",
                             color: stats['O'] >= 0
                                 ? Colors.green[700]
