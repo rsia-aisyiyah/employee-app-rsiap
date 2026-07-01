@@ -145,7 +145,7 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
   Future<void> _fetchEmployees() async {
     try {
       String url =
-          '/sdi/jadwal-pegawai?bulan=$selectedMonth&tahun=$selectedYear&mode=edit';
+          '/sdi/jadwal-pegawai?bulan=$selectedMonth&tahun=$selectedYear';
       if (selectedDept != null && selectedDept != 'all') {
         url += '&departemen=$selectedDept';
       }
