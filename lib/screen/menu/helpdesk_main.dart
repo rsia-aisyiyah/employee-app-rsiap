@@ -508,7 +508,17 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
   }
 
   Widget _buildTicketCard(Map ticket) {
-    String status = (ticket['status'] ?? 'WAITING').toString().toUpperCase();
+    Map? linkedTicket = ticket['ticket'];
+
+    String status = 'WAITING';
+    if (activeTab == 1) {
+      status = (ticket['status'] ?? 'Open').toString().toUpperCase();
+    } else if (linkedTicket != null) {
+      status = (linkedTicket['status'] ?? 'Open').toString().toUpperCase();
+    } else {
+      status = (ticket['status'] ?? 'WAITING').toString().toUpperCase();
+    }
+
     Color statusColor = _getStatusColor(status);
     IconData statusIcon = _getStatusIcon(status);
 
@@ -617,7 +627,67 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
                           ),
                         ],
                       ),
-                      if (ticket['no_tiket'] != null) ...[
+                      
+                      // Linked Ticket Details (Technician, Category, Solution) for Non-IT users
+                      if (linkedTicket != null) ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Icon(Icons.engineering_outlined,
+                                size: 14, color: Colors.grey[400]),
+                            const SizedBox(width: 6),
+                            Text(
+                              "Teknisi: ${linkedTicket['teknisi']?['nama'] ?? 'Menunggu teknisi'}",
+                              style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                        if (linkedTicket['kategori'] != null) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.category_outlined,
+                                  size: 14, color: Colors.grey[400]),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Kategori: ${linkedTicket['kategori']}${linkedTicket['sub_kategori'] != null ? ' - ' + linkedTicket['sub_kategori'] : ''}",
+                                style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (linkedTicket['solusi'] != null && linkedTicket['solusi'].toString().isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          const Divider(height: 1),
+                          const SizedBox(height: 10),
+                          Text(
+                            "Solusi IT:",
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey[400],
+                                fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            linkedTicket['solusi'].toString(),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.green,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ],
+
+                      String? ticketNumber = activeTab == 1 
+                          ? ticket['no_tiket']?.toString()
+                          : (linkedTicket != null ? linkedTicket['no_tiket']?.toString() : null);
+
+                      if (ticketNumber != null) ...[
                         const SizedBox(height: 10),
                         Row(
                           children: [
@@ -625,7 +695,7 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
                                 size: 14, color: primaryColor.withOpacity(0.5)),
                             const SizedBox(width: 6),
                             Text(
-                              ticket['no_tiket'].toString(),
+                              ticketNumber,
                               style: TextStyle(
                                   color: primaryColor,
                                   fontSize: 13,
@@ -739,10 +809,47 @@ class _ManagementBottomSheetState extends State<_ManagementBottomSheet> {
   DateTime? selectedFinishDateTime;
   final TextEditingController _finishTimeController = TextEditingController();
 
+  Map<String, List<String>> categories = {};
+  List<String> subCategories = [];
+  String? selectedCategory;
+  String? selectedSubCategory;
+  bool isLoadingCategories = false;
+
   String _formatDate(String date) {
     if (date == "null" || date == "") return "-";
     DateTime dt = DateTime.parse(date);
     return DateFormat('dd/MM/yyyy HH:mm').format(dt.toLocal());
+  }
+
+  Future<void> _fetchCategories() async {
+    setState(() => isLoadingCategories = true);
+    try {
+      var res = await Api().getData('/helpdesk/kategori');
+      var body = json.decode(res.body);
+      if (res.statusCode == 200 && body['data'] != null) {
+        Map<String, dynamic> rawCats = body['data'];
+        Map<String, List<String>> parsedCats = {};
+        rawCats.forEach((key, val) {
+          if (val is List) {
+            parsedCats[key] = List<String>.from(val.map((item) => item.toString()));
+          }
+        });
+        setState(() {
+          categories = parsedCats;
+          if (selectedCategory != null && categories.containsKey(selectedCategory)) {
+            subCategories = categories[selectedCategory]!;
+          } else {
+            subCategories = [];
+          }
+          isLoadingCategories = false;
+        });
+      } else {
+        setState(() => isLoadingCategories = false);
+      }
+    } catch (e) {
+      debugPrint("Error fetching categories: $e");
+      setState(() => isLoadingCategories = false);
+    }
   }
 
   @override
@@ -752,9 +859,14 @@ class _ManagementBottomSheetState extends State<_ManagementBottomSheet> {
     _solutionController.text = widget.ticket['solusi'] ?? '';
     selectedTechnicianNik = widget.ticket['nik_teknisi'];
     selectedTechnicianName = widget.ticket['teknisi']?['nama'];
+    selectedCategory = widget.ticket['kategori']?.toString();
+    selectedSubCategory = widget.ticket['sub_kategori']?.toString();
+    
     if (selectedTechnicianName != null) {
       _techSearchController.text = selectedTechnicianName!;
     }
+
+    _fetchCategories();
 
     if (widget.ticket['jam_selesai'] != null) {
       try {
@@ -849,6 +961,8 @@ class _ManagementBottomSheetState extends State<_ManagementBottomSheet> {
         'status': selectedStatus,
         'nik_teknisi': selectedTechnicianNik,
         'solusi': _solutionController.text,
+        'kategori': selectedCategory,
+        'sub_kategori': selectedSubCategory,
         'jam_selesai': selectedFinishDateTime != null
             ? selectedFinishDateTime!.toIso8601String()
             : (selectedStatus == 'Selesai'
@@ -949,6 +1063,77 @@ class _ManagementBottomSheetState extends State<_ManagementBottomSheet> {
                 ),
               ),
             ),
+            const SizedBox(height: 25),
+            const Text(
+              "Kategori Kendala (IT)",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+            isLoadingCategories
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(10.0),
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        hint: const Text("Pilih Kategori Utama..."),
+                        value: selectedCategory,
+                        isExpanded: true,
+                        items: categories.keys
+                            .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                            .toList(),
+                        onChanged: (v) {
+                          setState(() {
+                            selectedCategory = v;
+                            selectedSubCategory = null;
+                            subCategories = categories[v] ?? [];
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+            if (selectedCategory != null) ...[
+              const SizedBox(height: 20),
+              const Text(
+                "Sub-Kategori Kendala",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    hint: const Text("Pilih Sub Kategori..."),
+                    value: selectedSubCategory,
+                    isExpanded: true,
+                    items: subCategories
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (v) {
+                      setState(() {
+                        selectedSubCategory = v;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ],
             if (selectedStatus == 'Selesai') ...[
               const SizedBox(height: 25),
               const Text(
