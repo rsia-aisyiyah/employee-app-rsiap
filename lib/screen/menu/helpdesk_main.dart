@@ -683,11 +683,7 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
                         ],
                       ],
 
-                      String? ticketNumber = activeTab == 1 
-                          ? ticket['no_tiket']?.toString()
-                          : (linkedTicket != null ? linkedTicket['no_tiket']?.toString() : null);
-
-                      if (ticketNumber != null) ...[
+                      if (activeTab == 1 ? (ticket['no_tiket'] != null) : (linkedTicket != null && linkedTicket['no_tiket'] != null)) ...[
                         const SizedBox(height: 10),
                         Row(
                           children: [
@@ -695,7 +691,9 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
                                 size: 14, color: primaryColor.withOpacity(0.5)),
                             const SizedBox(width: 6),
                             Text(
-                              ticketNumber,
+                              activeTab == 1 
+                                  ? ticket['no_tiket'].toString()
+                                  : linkedTicket!['no_tiket'].toString(),
                               style: TextStyle(
                                   color: primaryColor,
                                   fontSize: 13,
