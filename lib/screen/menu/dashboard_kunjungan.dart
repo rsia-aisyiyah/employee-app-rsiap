@@ -568,7 +568,12 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
   Widget _buildModeButton(String mode, String label, IconData icon) {
     bool isActive = _mode == mode;
     return InkWell(
-      onTap: () => setState(() => _mode = mode),
+      onTap: () {
+        if (_mode != mode) {
+          setState(() => _mode = mode);
+          _loadData();
+        }
+      },
       borderRadius: BorderRadius.circular(15),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
