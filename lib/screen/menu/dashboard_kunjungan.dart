@@ -244,13 +244,30 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    "Klik ikon di samping untuk mengatur filter",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        "Klik ikon ",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Icon(
+                        Icons.tune,
+                        color: Colors.white.withOpacity(0.9),
+                        size: 14,
+                      ),
+                      Text(
+                        " untuk mengatur filter",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.85),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
