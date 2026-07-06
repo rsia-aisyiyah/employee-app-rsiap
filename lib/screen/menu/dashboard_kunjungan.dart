@@ -232,11 +232,23 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                       letterSpacing: 0.5,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    "Monitoring & Analisa Kunjungan",
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
+                    _mode == 'harian'
+                        ? "Periode: ${_tglAwalController.text} s/d ${_tglAkhirController.text}"
+                        : "Periode: Tahun $_selectedYear",
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    "Klik ikon di samping untuk mengatur filter",
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.65),
+                      fontSize: 9.5,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
