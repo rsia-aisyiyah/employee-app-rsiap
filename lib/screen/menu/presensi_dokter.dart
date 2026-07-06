@@ -66,7 +66,7 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
   // Location Config
   double _centerLat = -6.941626450136709;
   double _centerLng = 109.65246501663937;
-  double _maxRadius = 30; // meters
+  double _maxRadius = 50; // meters
   Position? _currentPosition;
 
   // User Data

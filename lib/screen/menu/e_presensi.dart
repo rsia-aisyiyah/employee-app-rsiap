@@ -74,7 +74,7 @@ class _EPresensiScreenState extends State<EPresensiScreen>
 
   double _centerLat = -6.941626450136709;
   double _centerLng = 109.65246501663937;
-  double _maxRadius = 30;
+  double _maxRadius = 50;
   Position? _currentPosition;
 
   Timer? _detectionTimer;
