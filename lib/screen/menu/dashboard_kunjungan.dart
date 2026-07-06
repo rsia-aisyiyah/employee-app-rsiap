@@ -239,16 +239,17 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                         : "Periode: Tahun $_selectedYear",
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     "Klik ikon di samping untuk mengatur filter",
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.65),
-                      fontSize: 9.5,
-                      fontStyle: FontStyle.italic,
+                      color: Colors.white.withOpacity(0.85),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
