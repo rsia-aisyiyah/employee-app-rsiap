@@ -586,6 +586,8 @@ class _DashboardBedState extends State<DashboardBed> {
             ...classes.entries.map((entry) {
               String className = entry.key;
               List beds = entry.value;
+              final emptyCount = beds.where((b) => b['status_kamar'] != 'ISI').length;
+              final filledCount = beds.where((b) => b['status_kamar'] == 'ISI').length;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -605,13 +607,13 @@ class _DashboardBedState extends State<DashboardBed> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          className,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                            color: Colors.grey[800],
-                            letterSpacing: 0.2,
-                          ),
+                           className,
+                           style: TextStyle(
+                             fontWeight: FontWeight.w800,
+                             fontSize: 13,
+                             color: Colors.grey[800],
+                             letterSpacing: 0.2,
+                           ),
                         ),
                         const SizedBox(width: 10),
                         Text(
@@ -624,6 +626,34 @@ class _DashboardBedState extends State<DashboardBed> {
                           style: TextStyle(
                             fontSize: 11,
                             color: Colors.grey[500],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "•",
+                          style: TextStyle(color: Colors.grey[300]),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "Kosong: $emptyCount",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "•",
+                          style: TextStyle(color: Colors.grey[300]),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          "Isi: $filledCount",
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.redAccent,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
