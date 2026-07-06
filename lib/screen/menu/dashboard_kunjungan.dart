@@ -232,7 +232,7 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                       letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                   const SizedBox(height: 6),
                   Text(
                     _mode == 'harian'
                         ? "Periode: ${_tglAwalController.text} s/d ${_tglAkhirController.text}"
@@ -243,31 +243,43 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Text(
-                        "Klik ikon ",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.15),
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Klik ikon ",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                      Icon(
-                        Icons.tune,
-                        color: Colors.white.withOpacity(0.9),
-                        size: 14,
-                      ),
-                      Text(
-                        " untuk mengatur filter",
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
+                        const Icon(
+                          Icons.tune,
+                          color: Colors.white,
+                          size: 13,
                         ),
-                      ),
-                    ],
+                        Text(
+                          " untuk mengatur filter",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
