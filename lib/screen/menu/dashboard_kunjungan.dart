@@ -20,6 +20,7 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
   final TextEditingController _tglAwalController = TextEditingController();
   final TextEditingController _tglAkhirController = TextEditingController();
   String _statusLanjut = 'all';
+  String _tglRanap = 'keluar';
   String _selectedPoli = 'all';
   String _selectedDokter = 'all';
   String _selectedPoliName = 'Semua Unit/Poli';
@@ -49,7 +50,7 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
     try {
       String queryParams;
       String filterParams =
-          "&status_lanjut=$_statusLanjut&kd_poli=$_selectedPoli&kd_dokter=$_selectedDokter";
+          "&status_lanjut=$_statusLanjut&kd_poli=$_selectedPoli&kd_dokter=$_selectedDokter&tgl_ranap=$_tglRanap";
 
       if (_mode == 'tahunan') {
         queryParams = "?mode=tahunan&tahun=$_selectedYear$filterParams";
@@ -303,6 +304,10 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                           ),
                         ],
                       ),
+                      if (_statusLanjut == 'Ranap' || _statusLanjut == 'all') ...[
+                        const SizedBox(height: 12),
+                        _buildBasisRanapDropdown(),
+                      ],
                       const SizedBox(height: 12),
 
                       // Dokter Selection
@@ -365,6 +370,47 @@ class _DashboardKunjunganState extends State<DashboardKunjungan> {
                 onChanged: (val) {
                   if (val != null) {
                     setState(() => _statusLanjut = val);
+                    _loadData();
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBasisRanapDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.25)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.date_range_rounded, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _tglRanap,
+                dropdownColor: primaryColor,
+                isExpanded: true,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold),
+                items: const [
+                  DropdownMenuItem(value: 'keluar', child: Text("Tgl Keluar (Discharge)")),
+                  DropdownMenuItem(value: 'masuk', child: Text("Tgl Masuk (Admission)")),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _tglRanap = val);
                     _loadData();
                   }
                 },
