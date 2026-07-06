@@ -3237,6 +3237,7 @@ class _DetailPasienSheetState extends State<_DetailPasienSheet> {
           items: const [
             DropdownMenuItem(value: 'all', child: Text("Semua Perina")),
             DropdownMenuItem(value: 'BBL', child: Text("BBL")),
+            DropdownMenuItem(value: 'BBL Perawatan', child: Text("BBL Perawatan")),
             DropdownMenuItem(value: 'Perawatan', child: Text("Perawatan")),
           ],
           onChanged: (v) {
@@ -3414,12 +3415,15 @@ class _DetailPasienSheetState extends State<_DetailPasienSheet> {
   }
 
   Widget _buildAsalPasienBadge(String t) {
-    Color bg = Colors.blue[50]!;
-    Color text = Colors.blue[700]!;
+    Color bg = Colors.grey[50]!;
+    Color text = Colors.grey[700]!;
 
     if (t == 'BBL') {
       bg = Colors.teal[50]!;
       text = Colors.teal[700]!;
+    } else if (t == 'BBL Perawatan') {
+      bg = Colors.blue[50]!;
+      text = Colors.blue[700]!;
     } else if (t == 'Perawatan') {
       bg = Colors.orange[50]!;
       text = Colors.orange[700]!;
