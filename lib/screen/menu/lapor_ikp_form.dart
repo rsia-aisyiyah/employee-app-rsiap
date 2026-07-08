@@ -95,6 +95,11 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   final TextEditingController _tindakanController = TextEditingController();
   String tindakanOleh = 'Petugas'; // Petugas, Tim
 
+  // Auto grading state variables
+  String? autoGradingValue; // biru, hijau, kuning, merah
+  String? autoGradingLabel; // Rendah, Moderat, Tinggi, Ekstrim
+  bool isCalculatingGrading = false;
+
   @override
   void initState() {
     super.initState();
@@ -131,6 +136,41 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       Msg.error(context, "Terjadi kesalahan koneksi master data: $e");
     } finally {
       setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _fetchAutoGrading() async {
+    if (selectedJenisInsidenId == null || selectedUnitId == null || selectedDampak == null) {
+      return;
+    }
+
+    setState(() {
+      isCalculatingGrading = true;
+      autoGradingValue = null;
+      autoGradingLabel = null;
+    });
+
+    try {
+      var queryParams = "?jenis_insiden_id=$selectedJenisInsidenId&unit_id=$selectedUnitId&dampak_insiden=$selectedDampak";
+      var res = await Api().getData('/sdi/ikp/grading$queryParams');
+      
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        if (body['success'] == true) {
+          setState(() {
+            autoGradingValue = body['data']['warna']; // biru, hijau, kuning, merah
+            autoGradingLabel = body['data']['grading']; // Rendah, Moderat, Tinggi, Ekstrim
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching auto grading: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          isCalculatingGrading = false;
+        });
+      }
     }
   }
 
@@ -884,7 +924,10 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                   child: Text(u['nama_unit'] ?? '-'),
                 );
               }).toList(),
-              onChanged: (val) => setState(() => selectedUnitId = val),
+              onChanged: (val) {
+                setState(() => selectedUnitId = val);
+                _fetchAutoGrading();
+              },
             ),
           ),
         ),
@@ -961,6 +1004,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         _buildInputLabel("Dampak Cedera (Tingkat Keparahan / Severity) *"),
         const SizedBox(height: 10),
         _buildDampakCards(),
+        _buildAutoGradingSection(),
         const SizedBox(height: 25),
         _buildInputLabel("Tindakan Awal yang Dilakukan Pasca Kejadian *"),
         const SizedBox(height: 8),
@@ -1186,7 +1230,10 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       children: masterJenisInsiden.map((j) {
         bool isSelected = selectedJenisInsidenId == j['id'];
         return GestureDetector(
-          onTap: () => setState(() => selectedJenisInsidenId = j['id']),
+          onTap: () {
+            setState(() => selectedJenisInsidenId = j['id']);
+            _fetchAutoGrading();
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             margin: const EdgeInsets.only(bottom: 8),
@@ -1234,7 +1281,10 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         bool isSelected = selectedDampak == d['value'];
         Color c = d['color'];
         return GestureDetector(
-          onTap: () => setState(() => selectedDampak = d['value']),
+          onTap: () {
+            setState(() => selectedDampak = d['value']);
+            _fetchAutoGrading();
+          },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             margin: const EdgeInsets.only(bottom: 8),
@@ -1271,6 +1321,139 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           ),
         );
       }).toList(),
+    );
+  }
+
+  Widget _buildAutoGradingSection() {
+    if (selectedJenisInsidenId == null || selectedUnitId == null || selectedDampak == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (isCalculatingGrading) {
+      return Container(
+        margin: const EdgeInsets.only(top: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Row(
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.grey)),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              "Menghitung grading risiko otomatis...",
+              style: TextStyle(color: Colors.grey[600], fontSize: 13, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (autoGradingValue == null || autoGradingLabel == null) {
+      return const SizedBox.shrink();
+    }
+
+    Color bgColor;
+    Color borderColor;
+    Color textColor;
+    IconData iconData;
+
+    switch (autoGradingValue) {
+      case 'biru':
+        bgColor = const Color(0xFFE3F2FD);
+        borderColor = const Color(0xFF90CAF9);
+        textColor = const Color(0xFF0D47A1);
+        iconData = Icons.info_outline_rounded;
+        break;
+      case 'hijau':
+        bgColor = const Color(0xFFE8F5E9);
+        borderColor = const Color(0xFFA5D6A7);
+        textColor = const Color(0xFF1B5E20);
+        iconData = Icons.check_circle_outline_rounded;
+        break;
+      case 'kuning':
+        bgColor = const Color(0xFFFFFDE7);
+        borderColor = const Color(0xFFFFE082);
+        textColor = const Color(0xFFF57F17);
+        iconData = Icons.warning_amber_rounded;
+        break;
+      case 'merah':
+        bgColor = const Color(0xFFFFEBEE);
+        borderColor = const Color(0xFFEF9A9A);
+        textColor = const Color(0xFFB71C1C);
+        iconData = Icons.error_outline_rounded;
+        break;
+      default:
+        bgColor = const Color(0xFFF5F5F5);
+        borderColor = const Color(0xFFE0E0E0);
+        textColor = const Color(0xFF424242);
+        iconData = Icons.help_outline_rounded;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: borderColor, width: 1.2),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.6),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(iconData, color: textColor, size: 18),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Auto Grading Sistem",
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.4,
+                      color: textColor.withOpacity(0.85),
+                    ),
+                    children: [
+                      const TextSpan(text: "Berdasarkan data yang telah diinput (jenis insiden, unit, dan dampak insiden). Sistem memberikan grading insiden ini sebagai "),
+                      TextSpan(
+                        text: autoGradingLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const TextSpan(text: "."),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
