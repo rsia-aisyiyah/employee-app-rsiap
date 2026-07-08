@@ -583,32 +583,21 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
 
   Widget _buildMatrixView() {
     int days = DateTime(selectedYear, selectedMonth + 1, 0).day;
+    double bodyHeight = (filteredEmployees.length * cellHeight).clamp(100.0, 450.0);
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
       children: [
-        // FIXED COLUMN (NAMES)
-        SizedBox(
-          width: nameColumnWidth,
-          child: Column(
-            children: [
-              _buildNameCell("Nama Pegawai / Departemen", isHeader: true),
-              ...filteredEmployees.map((emp) =>
-                  _buildNameCell(emp['nama'], subtitle: emp['departemen'])),
-            ],
-          ),
-        ),
-        // SCROLLABLE MATRIX + STATS
-        Expanded(
-          child: SingleChildScrollView(
-            controller: _hGridScrollController,
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: (cellWidth * days) + (statsColumnWidth * 9),
-              child: Column(
-                children: [
-                  // Dates + Stats Header
-                  Row(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildNameCell("Nama Pegawai / Departemen", isHeader: true),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: _hHeaderScrollController,
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: (cellWidth * days) + (statsColumnWidth * 9),
+                  child: Row(
                     children: [
                       ...List.generate(days, (i) => _buildDateHeader(i + 1)),
                       _buildStatsHeader("P"),
@@ -622,34 +611,65 @@ class _PengajuanJadwalState extends State<PengajuanJadwal> {
                       _buildStatsHeader("Lebih"),
                     ],
                   ),
-                  // Matrix + Stats Rows
-                  ...filteredEmployees.map((emp) {
-                    var stats = _getEmployeeStats(emp);
-                    return Row(
-                      children: [
-                        ...List.generate(days, (dayIndex) {
-                          int day = dayIndex + 1;
-                          return _buildShiftCell(emp, day);
-                        }),
-                        _buildStatsCell(stats['P'].toString()),
-                        _buildStatsCell(stats['S'].toString()),
-                        _buildStatsCell(stats['M'].toString()),
-                        _buildStatsCell(stats['T'].toString(), isBold: true),
-                        _buildStatsCell(stats['L'].toString()),
-                        _buildStatsCell(stats['C'].toString()),
-                        _buildStatsCell("${stats['H'].toInt()} Jam"),
-                        _buildStatsCell("${stats['WJ'].toInt()} Jam", isBold: true),
-                        _buildStatsCell("${stats['O'].toInt()} Jam",
-                            color: stats['O'] >= 0
-                                ? Colors.green[700]
-                                : Colors.red[700],
-                            isBold: true),
-                      ],
-                    );
-                  }),
-                ],
+                ),
               ),
             ),
+          ],
+        ),
+        SizedBox(
+          height: bodyHeight,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: nameColumnWidth,
+                child: SingleChildScrollView(
+                  controller: _vNameScrollController,
+                  child: Column(
+                    children: filteredEmployees.map((emp) =>
+                        _buildNameCell(emp['nama'], subtitle: emp['departemen'])).toList(),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: _vGridScrollController,
+                  child: SingleChildScrollView(
+                    controller: _hGridScrollController,
+                    scrollDirection: Axis.horizontal,
+                    child: SizedBox(
+                      width: (cellWidth * days) + (statsColumnWidth * 9),
+                      child: Column(
+                        children: filteredEmployees.map((emp) {
+                          var stats = _getEmployeeStats(emp);
+                          return Row(
+                            children: [
+                              ...List.generate(days, (dayIndex) {
+                                int day = dayIndex + 1;
+                                return _buildShiftCell(emp, day);
+                              }),
+                              _buildStatsCell(stats['P'].toString()),
+                              _buildStatsCell(stats['S'].toString()),
+                              _buildStatsCell(stats['M'].toString()),
+                              _buildStatsCell(stats['T'].toString(), isBold: true),
+                              _buildStatsCell(stats['L'].toString()),
+                              _buildStatsCell(stats['C'].toString()),
+                              _buildStatsCell("${stats['H'].toInt()} Jam"),
+                              _buildStatsCell("${stats['WJ'].toInt()} Jam", isBold: true),
+                              _buildStatsCell("${stats['O'].toInt()} Jam",
+                                  color: stats['O'] >= 0
+                                      ? Colors.green[700]
+                                      : Colors.red[700],
+                                  isBold: true),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
