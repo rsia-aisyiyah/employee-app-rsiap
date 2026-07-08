@@ -21,6 +21,7 @@ import 'package:rsia_employee_app/screen/menu/pengajuan_jadwal.dart';
 import 'package:rsia_employee_app/screen/menu/surat_eksternal/surat_eksternal_add_screen.dart';
 import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_add_screen.dart';
 import 'package:rsia_employee_app/screen/menu/presensi_dokter.dart';
+import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
 import 'package:animations/animations.dart';
 
 import '../config/config.dart';
@@ -397,6 +398,18 @@ class _IndexScreenState extends State<IndexScreen>
                         'onTap': () {
                           _toggleMenu();
                           Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpdeskFormScreen()));
+                        },
+                      });
+
+                      bool accIkp = _hasAccess('lapor-ikp') || _hasAccess('menu_lapor_ikp') || _hasAccess('lapor_ikp');
+                      visibleItems.add({
+                        'icon': Icons.warning_amber_rounded,
+                        'label': 'Lapor IKP',
+                        'color': accIkp ? Colors.orange[800]! : Colors.grey[400]!,
+                        'disabled': !accIkp,
+                        'onTap': () {
+                          _toggleMenu();
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => const LaporIkpFormScreen()));
                         },
                       });
 

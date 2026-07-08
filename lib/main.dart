@@ -12,6 +12,7 @@ import 'package:rsia_employee_app/screen/logout.dart';
 import 'package:rsia_employee_app/screen/menu/undangan.dart';
 import 'package:rsia_employee_app/screen/profile.dart';
 import 'package:rsia_employee_app/screen/menu/helpdesk_main.dart';
+import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
 // import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get_storage/get_storage.dart';
 
@@ -99,6 +100,7 @@ class MyApp extends StatelessWidget {
         '/logout': (context) => const LogoutScreen(),
         '/undangan': (context) => const Undangan(),
         '/helpdesk_main': (context) => const HelpdeskMainScreen(),
+        '/lapor-ikp': (context) => const LaporIkpFormScreen(),
       },
     );
   }
