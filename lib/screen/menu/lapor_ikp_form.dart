@@ -554,7 +554,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 decoration: BoxDecoration(
                   color: isPasien ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
@@ -576,13 +576,18 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                       size: 16,
                       color: isPasien ? primaryColor : Colors.grey[600],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Pasien",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isPasien ? primaryColor : Colors.grey[600],
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        "Pasien",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isPasien ? primaryColor : Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
@@ -606,7 +611,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                 decoration: BoxDecoration(
                   color: !isPasien ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
@@ -628,13 +633,18 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                       size: 16,
                       color: !isPasien ? primaryColor : Colors.grey[600],
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Keluarga / Staf / Pengunjung",
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: !isPasien ? primaryColor : Colors.grey[600],
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        "Keluarga / Staf / Pengunjung",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: !isPasien ? primaryColor : Colors.grey[600],
+                        ),
                       ),
                     ),
                   ],
