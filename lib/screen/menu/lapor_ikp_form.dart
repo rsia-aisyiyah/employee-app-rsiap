@@ -1230,6 +1230,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       children: masterJenisInsiden.map((j) {
         bool isSelected = selectedJenisInsidenId == j['id'];
         return GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () {
             setState(() => selectedJenisInsidenId = j['id']);
             _fetchAutoGrading();
@@ -1281,6 +1282,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         bool isSelected = selectedDampak == d['value'];
         Color c = d['color'];
         return GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: () {
             setState(() => selectedDampak = d['value']);
             _fetchAutoGrading();
