@@ -1326,7 +1326,53 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
 
   Widget _buildAutoGradingSection() {
     if (selectedJenisInsidenId == null || selectedUnitId == null || selectedDampak == null) {
-      return const SizedBox.shrink();
+      return Container(
+        margin: const EdgeInsets.only(top: 20),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey[200]!, width: 1.2),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.help_outline_rounded, color: Colors.grey[600], size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Auto Grading Sistem",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Anda sepertinya belum mengisi data insiden dengan benar (jenis insiden, unit, dan dampak insiden). Auto Grading sistem belum dapat memberikan grading insiden ini.",
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.4,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     if (isCalculatingGrading) {
