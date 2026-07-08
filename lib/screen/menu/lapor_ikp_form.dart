@@ -1074,18 +1074,22 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       onTap: enabled ? onTap : null,
       child: Container(
         height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 15),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: _buildInputBoxDecoration(enabled: enabled),
         child: Row(
           children: [
             Icon(icon, color: enabled ? primaryColor : Colors.grey[400], size: 18),
-            const SizedBox(width: 10),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: enabled ? const Color(0xFF2D3142) : Colors.grey[500],
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: enabled ? const Color(0xFF2D3142) : Colors.grey[500],
+                ),
               ),
             ),
           ],
