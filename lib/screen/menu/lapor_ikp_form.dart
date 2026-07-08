@@ -379,53 +379,81 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
 
   Widget _buildStepperTracker() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 30),
-      color: Colors.white,
+      margin: const EdgeInsets.fromLTRB(20, 15, 20, 10),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey[100]!),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildStepIndicator(1, "Identitas", _currentStep >= 1),
+          _buildStepIndicator(1, "Identitas", _currentStep > 1, _currentStep == 1),
           _buildStepLine(_currentStep >= 2),
-          _buildStepIndicator(2, "Detail", _currentStep >= 2),
+          _buildStepIndicator(2, "Detail", _currentStep > 2, _currentStep == 2),
           _buildStepLine(_currentStep >= 3),
-          _buildStepIndicator(3, "Tindakan", _currentStep >= 3),
+          _buildStepIndicator(3, "Tindakan", _currentStep > 3, _currentStep == 3),
         ],
       ),
     );
   }
 
-  Widget _buildStepIndicator(int stepNum, String title, bool isActive) {
+  Widget _buildStepIndicator(int stepNum, String title, bool isCompleted, bool isActive) {
     return Column(
       children: [
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          width: 32,
-          height: 32,
+          width: isActive ? 38 : 32,
+          height: isActive ? 38 : 32,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: isActive ? primaryColor : Colors.grey[200],
+            color: isCompleted
+                ? const Color(0xFF10B981)
+                : (isActive ? primaryColor : Colors.white),
             shape: BoxShape.circle,
             border: Border.all(
-              color: isActive ? primaryColor : Colors.grey[300]!,
-              width: 1.5,
+              color: isActive
+                  ? primaryColor
+                  : (isCompleted ? const Color(0xFF10B981) : Colors.grey[300]!),
+              width: isActive ? 3 : 1.5,
             ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.25),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 3),
+                    )
+                  ]
+                : [],
           ),
-          child: Text(
-            stepNum.toString(),
-            style: TextStyle(
-              color: isActive ? Colors.white : Colors.grey[600],
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          child: isCompleted
+              ? const Icon(Icons.done_rounded, color: Colors.white, size: 16)
+              : Text(
+                  stepNum.toString(),
+                  style: TextStyle(
+                    color: isActive ? Colors.white : Colors.grey[500],
+                    fontSize: isActive ? 13 : 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 6),
         Text(
           title,
           style: TextStyle(
-            color: isActive ? primaryColor : Colors.grey[500],
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            color: isActive ? primaryColor : (isCompleted ? const Color(0xFF10B981) : Colors.grey[500]),
+            fontSize: 11,
+            fontWeight: isActive || isCompleted ? FontWeight.bold : FontWeight.normal,
           ),
         ),
       ],
@@ -434,10 +462,14 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
 
   Widget _buildStepLine(bool isActive) {
     return Expanded(
-      child: Container(
-        height: 2,
-        margin: const EdgeInsets.only(bottom: 15),
-        color: isActive ? primaryColor : Colors.grey[200],
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        height: 3,
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: isActive ? primaryColor : Colors.grey[200],
+          borderRadius: BorderRadius.circular(2),
+        ),
       ),
     );
   }
@@ -942,23 +974,50 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   }
 
   Widget _buildNavigationButtons() {
+    double bottomPadding = MediaQuery.of(context).padding.bottom;
     return Container(
-      padding: const EdgeInsets.all(20),
-      color: Colors.white,
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 15,
+        bottom: bottomPadding > 0 ? bottomPadding + 10 : 20,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+        border: Border(
+          top: BorderSide(color: Colors.grey[100]!, width: 1),
+        ),
+      ),
       child: Row(
         children: [
           if (_currentStep > 1) ...[
             Expanded(
               child: SizedBox(
                 height: 48,
-                child: OutlinedButton(
+                child: TextButton(
                   onPressed: isLoading ? null : _prevStep,
-                  style: OutlinedButton.styleFrom(
+                  style: TextButton.styleFrom(
                     foregroundColor: primaryColor,
-                    side: BorderSide(color: primaryColor),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: primaryColor.withOpacity(0.08),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
                   ),
-                  child: const Text("KEMBALI", style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text(
+                    "KEMBALI",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -974,18 +1033,28 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 2,
+                  shadowColor: primaryColor.withOpacity(0.3),
                 ),
                 child: isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : Text(
                         _currentStep == 3 ? "KIRIM LAPORAN" : "LANJUT",
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          letterSpacing: 0.5,
+                        ),
                       ),
               ),
             ),
