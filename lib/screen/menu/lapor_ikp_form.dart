@@ -16,6 +16,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   int _currentStep = 1;
   bool isLoading = false;
   bool isSearchingPasien = false;
+  bool isPasien = true; // true if victim is a patient, false if non-patient
 
   // Master Data
   List masterJenisInsiden = [];
@@ -226,11 +227,13 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   void _nextStep() {
     if (_currentStep == 1) {
       if (_nmPasienController.text.isEmpty ||
+          _tglLahirController.text.isEmpty ||
           selectedJk == null ||
+          (isPasien && _noRmController.text.isEmpty) ||
           tglPasienMasuk == null ||
           tglInsiden == null ||
           waktuInsiden == null) {
-        Msg.warning(context, "Mohon lengkapi seluruh data pasien dan waktu.");
+        Msg.warning(context, "Mohon lengkapi seluruh data korban dan waktu.");
         return;
       }
       setState(() => _currentStep = 2);
@@ -526,73 +529,203 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   }
 
   // --- STEP 1: IDENTITAS PASIEN & WAKTU ---
+  Widget _buildVictimTypeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  isPasien = true;
+                  selectedKorbanInsiden = 'pasien';
+                  selectedPasien = null;
+                  _searchPasienController.clear();
+                  searchResults.clear();
+                  _noRmController.clear();
+                  _nmPasienController.clear();
+                  _tglLahirController.clear();
+                  selectedJk = null;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isPasien ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: isPasien
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : [],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.person,
+                      size: 16,
+                      color: isPasien ? primaryColor : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Pasien",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isPasien ? primaryColor : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  isPasien = false;
+                  selectedKorbanInsiden = 'lainnya';
+                  selectedPasien = null;
+                  _searchPasienController.clear();
+                  searchResults.clear();
+                  _noRmController.clear();
+                  _nmPasienController.clear();
+                  _tglLahirController.clear();
+                  selectedJk = 'L';
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: !isPasien ? Colors.white : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: !isPasien
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : [],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.group,
+                      size: 16,
+                      color: !isPasien ? primaryColor : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Keluarga / Lainnya",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: !isPasien ? primaryColor : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStep1View() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputLabel("Cari Pasien (SIMRS)"),
+        _buildInputLabel("Kategori Korban"),
         const SizedBox(height: 8),
-        Container(
-          decoration: _buildInputBoxDecoration(),
-          child: TextField(
-            controller: _searchPasienController,
-            onChanged: _searchPasien,
-            style: const TextStyle(fontSize: 14),
-            decoration: InputDecoration(
-              hintText: "Ketik No. RM atau nama pasien...",
-              hintStyle: TextStyle(color: Colors.grey[300], fontSize: 13),
-              prefixIcon: Icon(Icons.search, color: primaryColor, size: 20),
-              suffixIcon: isSearchingPasien
-                  ? const Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2)),
-                    )
-                  : null,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(vertical: 14),
-            ),
-          ),
-        ),
-        if (searchResults.isNotEmpty) ...[
+        _buildVictimTypeSelector(),
+        const SizedBox(height: 20),
+        if (isPasien) ...[
+          _buildInputLabel("Cari Pasien (SIMRS)"),
           const SizedBox(height: 8),
           Container(
-            constraints: const BoxConstraints(maxHeight: 180),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))
-              ],
-            ),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: searchResults.length,
-              padding: EdgeInsets.zero,
-              itemBuilder: (context, index) {
-                var item = searchResults[index];
-                return ListTile(
-                  title: Text(item['nm_pasien'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  subtitle: Text("RM: ${item['no_rkm_medis'] ?? '-'} | Lahir: ${item['tgl_lahir'] ?? '-'}", style: const TextStyle(fontSize: 11)),
-                  trailing: const Icon(Icons.chevron_right, size: 16),
-                  onTap: () => _selectPasien(item),
-                );
-              },
+            decoration: _buildInputBoxDecoration(),
+            child: TextField(
+              controller: _searchPasienController,
+              onChanged: _searchPasien,
+              style: const TextStyle(fontSize: 14),
+              decoration: InputDecoration(
+                hintText: "Ketik No. RM atau nama pasien...",
+                hintStyle: TextStyle(color: Colors.grey[300], fontSize: 13),
+                prefixIcon: Icon(Icons.search, color: primaryColor, size: 20),
+                suffixIcon: isSearchingPasien
+                    ? const Padding(
+                        padding: EdgeInsets.all(12.0),
+                        child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2)),
+                      )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              ),
             ),
           ),
+          if (searchResults.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 180),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.05), blurRadius: 8, offset: const Offset(0, 3))
+                ],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: searchResults.length,
+                padding: EdgeInsets.zero,
+                itemBuilder: (context, index) {
+                  var item = searchResults[index];
+                  return ListTile(
+                    title: Text(item['nm_pasien'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                    subtitle: Text("RM: ${item['no_rkm_medis'] ?? '-'} | Lahir: ${item['tgl_lahir'] ?? '-'}", style: const TextStyle(fontSize: 11)),
+                    trailing: const Icon(Icons.chevron_right, size: 16),
+                    onTap: () => _selectPasien(item),
+                  );
+                },
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
         ],
-        const SizedBox(height: 20),
-        _buildInputLabel("Nama Pasien *"),
+        _buildInputLabel(isPasien ? "Nama Pasien *" : "Nama Lengkap Korban *"),
         const SizedBox(height: 8),
-        _buildFormTextField(_nmPasienController, "Ketik Nama Pasien secara manual jika tidak ada di SIMRS"),
+        _buildFormTextField(
+          _nmPasienController,
+          isPasien ? "Akan otomatis terisi dari pencarian SIMRS" : "Ketik Nama Lengkap Korban secara manual",
+          enabled: !isPasien,
+        ),
         const SizedBox(height: 15),
-        _buildInputLabel("No. Rekam Medis (RM)"),
-        const SizedBox(height: 8),
-        _buildFormTextField(_noRmController, "Kosongkan jika bukan pasien RS (pengunjung/staf)"),
-        const SizedBox(height: 15),
+        if (isPasien) ...[
+          _buildInputLabel("No. Rekam Medis (RM) *"),
+          const SizedBox(height: 8),
+          _buildFormTextField(_noRmController, "Akan otomatis terisi dari SIMRS", enabled: false),
+          const SizedBox(height: 15),
+        ],
         Row(
           children: [
             Expanded(
@@ -601,7 +734,39 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                 children: [
                   _buildInputLabel("Tanggal Lahir *"),
                   const SizedBox(height: 8),
-                  _buildFormTextField(_tglLahirController, "YYYY-MM-DD"),
+                  isPasien
+                      ? _buildFormTextField(_tglLahirController, "Akan terisi otomatis", enabled: false)
+                      : _buildTimePickerButton(
+                          label: _tglLahirController.text.isEmpty
+                              ? "Pilih Tanggal Lahir"
+                              : _tglLahirController.text,
+                          icon: Icons.cake_outlined,
+                          onTap: () async {
+                            DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime(1990),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime.now(),
+                              builder: (context, child) {
+                                return Theme(
+                                  data: Theme.of(context).copyWith(
+                                    colorScheme: ColorScheme.light(
+                                      primary: primaryColor,
+                                      onPrimary: Colors.white,
+                                      onSurface: Colors.black87,
+                                    ),
+                                  ),
+                                  child: child!,
+                                );
+                              },
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _tglLahirController.text = DateFormat('yyyy-MM-dd').format(picked);
+                              });
+                            }
+                          },
+                        ),
                 ],
               ),
             ),
@@ -612,22 +777,14 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                 children: [
                   _buildInputLabel("Jenis Kelamin *"),
                   const SizedBox(height: 8),
-                  Container(
-                    height: 50,
-                    padding: const EdgeInsets.symmetric(horizontal: 15),
-                    decoration: _buildInputBoxDecoration(),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: selectedJk,
-                        hint: Text("Pilih JK", style: TextStyle(color: Colors.grey[400], fontSize: 13)),
-                        isExpanded: true,
-                        items: const [
-                          DropdownMenuItem(value: 'L', child: Text("Laki-laki")),
-                          DropdownMenuItem(value: 'P', child: Text("Perempuan")),
-                        ],
-                        onChanged: (val) => setState(() => selectedJk = val),
-                      ),
-                    ),
+                  _buildMappedDropdown(
+                    value: selectedJk ?? 'L',
+                    enabled: !isPasien,
+                    options: const {
+                      'L': 'Laki-laki',
+                      'P': 'Perempuan',
+                    },
+                    onChanged: (val) => setState(() => selectedJk = val),
                   ),
                 ],
               ),
@@ -895,12 +1052,13 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     );
   }
 
-  Widget _buildFormTextField(TextEditingController controller, String hint) {
+  Widget _buildFormTextField(TextEditingController controller, String hint, {bool enabled = true}) {
     return Container(
-      decoration: _buildInputBoxDecoration(),
+      decoration: _buildInputBoxDecoration(enabled: enabled),
       child: TextField(
         controller: controller,
-        style: const TextStyle(fontSize: 14),
+        enabled: enabled,
+        style: TextStyle(fontSize: 14, color: enabled ? const Color(0xFF2D3142) : Colors.grey[500]),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey[300], fontSize: 13),
@@ -911,18 +1069,25 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     );
   }
 
-  Widget _buildTimePickerButton({required String label, required IconData icon, required VoidCallback onTap}) {
+  Widget _buildTimePickerButton({required String label, required IconData icon, required VoidCallback onTap, bool enabled = true}) {
     return InkWell(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Container(
         height: 50,
         padding: const EdgeInsets.symmetric(horizontal: 15),
-        decoration: _buildInputBoxDecoration(),
+        decoration: _buildInputBoxDecoration(enabled: enabled),
         child: Row(
           children: [
-            Icon(icon, color: primaryColor, size: 18),
+            Icon(icon, color: enabled ? primaryColor : Colors.grey[400], size: 18),
             const SizedBox(width: 10),
-            Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: enabled ? const Color(0xFF2D3142) : Colors.grey[500],
+              ),
+            ),
           ],
         ),
       ),
@@ -949,11 +1114,12 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     required String value,
     required Map<String, String> options,
     required ValueChanged<String?> onChanged,
+    bool enabled = true,
   }) {
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 15),
-      decoration: _buildInputBoxDecoration(),
+      decoration: _buildInputBoxDecoration(enabled: enabled),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
@@ -964,20 +1130,22 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
               child: Text(entry.value),
             );
           }).toList(),
-          onChanged: onChanged,
+          onChanged: enabled ? onChanged : null,
         ),
       ),
     );
   }
 
-  BoxDecoration _buildInputBoxDecoration() {
+  BoxDecoration _buildInputBoxDecoration({bool enabled = true}) {
     return BoxDecoration(
-      color: Colors.white,
+      color: enabled ? Colors.white : Colors.grey[100],
       borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: Colors.grey[200]!, width: 1),
-      boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 3))
-      ],
+      border: Border.all(color: enabled ? Colors.grey[200]! : Colors.grey[300]!, width: 1),
+      boxShadow: enabled
+          ? [
+              BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 3))
+            ]
+          : [],
     );
   }
 
