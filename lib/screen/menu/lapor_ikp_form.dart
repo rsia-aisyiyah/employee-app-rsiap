@@ -979,29 +979,57 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           ),
         ),
         const SizedBox(height: 15),
-        _buildInputLabel("Tindakan Dilakukan Oleh"),
+        _buildInputLabel("Tindakan Dilakukan Oleh *"),
         const SizedBox(height: 8),
-        Row(
+        Column(
           children: [
-            Expanded(
-              child: RadioListTile<String>(
-                title: const Text("Petugas", style: TextStyle(fontSize: 13)),
-                value: "Petugas",
-                groupValue: tindakanOleh,
-                activeColor: primaryColor,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (val) => setState(() => tindakanOleh = val!),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text("Dokter", style: TextStyle(fontSize: 13)),
+                    value: "Dokter",
+                    groupValue: tindakanOleh,
+                    activeColor: primaryColor,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => tindakanOleh = val!),
+                  ),
+                ),
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text("Tim", style: TextStyle(fontSize: 13)),
+                    value: "Tim",
+                    groupValue: tindakanOleh,
+                    activeColor: primaryColor,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => tindakanOleh = val!),
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: RadioListTile<String>(
-                title: const Text("Tim", style: TextStyle(fontSize: 13)),
-                value: "Tim",
-                groupValue: tindakanOleh,
-                activeColor: primaryColor,
-                contentPadding: EdgeInsets.zero,
-                onChanged: (val) => setState(() => tindakanOleh = val!),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text("Perawat", style: TextStyle(fontSize: 13)),
+                    value: "Perawat",
+                    groupValue: tindakanOleh,
+                    activeColor: primaryColor,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => tindakanOleh = val!),
+                  ),
+                ),
+                Expanded(
+                  child: RadioListTile<String>(
+                    title: const Text("Petugas", style: TextStyle(fontSize: 13)),
+                    value: "Petugas",
+                    groupValue: tindakanOleh,
+                    activeColor: primaryColor,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => tindakanOleh = val!),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
