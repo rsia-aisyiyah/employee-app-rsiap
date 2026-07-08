@@ -636,7 +636,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        "Keluarga / Staf / Pengunjung",
+                        "Selain Pasien",
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
