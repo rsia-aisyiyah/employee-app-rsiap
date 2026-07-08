@@ -35,23 +35,60 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   DateTime? tglInsiden;
   TimeOfDay? waktuInsiden;
 
+  // Option Mappings matching backend/Filament schema
+  final Map<String, String> jenisPelaporOptions = {
+    'karyawan': 'Karyawan (Dokter, Perawat, dll)',
+    'pengunjung': 'Pengunjung',
+    'pasien': 'Pasien',
+    'keluarga': 'Keluarga / Pendamping Pasien',
+    'lainnya': 'Lainnya',
+  };
+
+  final Map<String, String> korbanInsidenOptions = {
+    'pasien': 'Pasien',
+    'lainnya': 'Lainnya',
+  };
+
+  final Map<String, String> layananInsidenOptions = {
+    'ranap': 'Rawat Inap',
+    'ralan': 'Rawat Jalan',
+    'ugd': 'UGD / IGD',
+    'lainnya': 'Lainnya',
+  };
+
+  final Map<String, String> kasusOptions = {
+    'Penyakit-Dalam-dan-Subspesialiasinya': 'Penyakit Dalam dan Subspesialiasinya',
+    'Anak-dan-Subspesialiasinya': 'Anak dan Subspesialiasinya',
+    'Bedah-dan-Subspesialiasinya': 'Bedah dan Subspesialiasinya',
+    'Obstetri-Gynekologi-dan-Subspesialiasinya': 'Obstetri Gynekologi dan Subspesialiasinya',
+    'THT-dan-Subspesialiasinya': 'THT dan Subspesialiasinya',
+    'Mata-dan-Subspesialiasinya': 'Mata dan Subspesialiasinya',
+    'Saraf-dan-Subspesialiasinya': 'Saraf dan Subspesialiasinya',
+    'Anastesi-dan-Subspesialiasinya': 'Anastesi dan Subspesialiasinya',
+    'Kulit-Kelamin-dan-Subspesialiasinya': 'Kulit & Kelamin dan Subspesialiasinya',
+    'Jantung-dan-Subspesialiasinya': 'Jantung dan Subspesialiasinya',
+    'Paru-dan-Subspesialiasinya': 'Paru dan Subspesialiasinya',
+    'Jiwa-dan-Subspesialiasinya': 'Jiwa dan Subspesialiasinya',
+    'Orthopedi-dan-Subspesialiasinya': 'Orthopedi dan Subspesialiasinya'
+  };
+
   // Step 2: Incident Details
   int? selectedJenisInsidenId;
   final TextEditingController _insidenController = TextEditingController();
   final TextEditingController _kronologiController = TextEditingController();
   final TextEditingController _tempatController = TextEditingController();
   int? selectedUnitId;
-  String selectedJenisPelapor = 'Karyawan';
+  String selectedJenisPelapor = 'karyawan';
   String? selectedJenisPelaporLainnya;
-  String selectedKorbanInsiden = 'Pasien';
+  String selectedKorbanInsiden = 'pasien';
   String? selectedKorbanInsidenLainnya;
-  String selectedLayananInsiden = 'Medis';
+  String selectedLayananInsiden = 'ranap';
   String? selectedLayananInsidenLainnya;
   List<String> selectedKasusInsiden = [];
   String? selectedKasusInsidenLainnya;
 
   // Step 3: Severity & Action
-  String? selectedDampak; // Biru, Hijau, Kuning, Merah
+  String? selectedDampak; // tidak signifikan, minor, moderat, mayor, katastropik
   int pernahTerjadi = 0; // 0: Tidak, 1: Ya
   String selectedStatusPelapor = 'Staf'; // Staf, Pj, Koor
   final TextEditingController _tindakanController = TextEditingController();
@@ -202,8 +239,9 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           _insidenController.text.isEmpty ||
           _kronologiController.text.isEmpty ||
           _tempatController.text.isEmpty ||
-          selectedUnitId == null) {
-        Msg.warning(context, "Mohon lengkapi seluruh detail laporan insiden.");
+          selectedUnitId == null ||
+          selectedKasusInsiden.isEmpty) {
+        Msg.warning(context, "Mohon lengkapi seluruh detail laporan insiden termasuk kasus penyakit.");
         return;
       }
       setState(() => _currentStep = 3);
@@ -696,26 +734,63 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         const SizedBox(height: 20),
         _buildInputLabel("Orang Pertama yang Melaporkan"),
         const SizedBox(height: 8),
-        _buildStringDropdown(
+        _buildMappedDropdown(
           value: selectedJenisPelapor,
-          items: ['Karyawan', 'Dokter', 'Pasien', 'Keluarga Pasien', 'Lainnya'],
+          options: jenisPelaporOptions,
           onChanged: (val) => setState(() => selectedJenisPelapor = val!),
         ),
         const SizedBox(height: 15),
         _buildInputLabel("Korban Insiden"),
         const SizedBox(height: 8),
-        _buildStringDropdown(
+        _buildMappedDropdown(
           value: selectedKorbanInsiden,
-          items: ['Pasien', 'Karyawan', 'Pengunjung', 'Lainnya'],
+          options: korbanInsidenOptions,
           onChanged: (val) => setState(() => selectedKorbanInsiden = val!),
         ),
         const SizedBox(height: 15),
         _buildInputLabel("Layanan Terkait Insiden"),
         const SizedBox(height: 8),
-        _buildStringDropdown(
+        _buildMappedDropdown(
           value: selectedLayananInsiden,
-          items: ['Medis', 'Keperawatan', 'Farmasi', 'Laboratorium', 'Radiologi', 'Gizi', 'Sarana Prasarana', 'Administrasi'],
+          options: layananInsidenOptions,
           onChanged: (val) => setState(() => selectedLayananInsiden = val!),
+        ),
+        const SizedBox(height: 20),
+        _buildInputLabel("Insiden Terjadi Pada Pasien (Kasus Penyakit / Spesialisasi) *"),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: kasusOptions.entries.map((entry) {
+            bool isSelected = selectedKasusInsiden.contains(entry.key);
+            return FilterChip(
+              label: Text(
+                entry.value,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? Colors.white : Colors.black87,
+                ),
+              ),
+              selected: isSelected,
+              selectedColor: primaryColor,
+              checkmarkColor: Colors.white,
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: isSelected ? primaryColor : Colors.grey[200]!),
+              ),
+              onSelected: (bool selected) {
+                setState(() {
+                  if (selected) {
+                    selectedKasusInsiden.add(entry.key);
+                  } else {
+                    selectedKasusInsiden.remove(entry.key);
+                  }
+                });
+              },
+            );
+          }).toList(),
         ),
       ],
     );
@@ -870,6 +945,31 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     );
   }
 
+  Widget _buildMappedDropdown({
+    required String value,
+    required Map<String, String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      height: 50,
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      decoration: _buildInputBoxDecoration(),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          items: options.entries.map((entry) {
+            return DropdownMenuItem(
+              value: entry.key,
+              child: Text(entry.value),
+            );
+          }).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
   BoxDecoration _buildInputBoxDecoration() {
     return BoxDecoration(
       color: Colors.white,
@@ -922,10 +1022,11 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
 
   Widget _buildDampakCards() {
     List<Map<String, dynamic>> dampaks = [
-      {'label': 'Biru (Tidak Cedera)', 'value': 'Biru', 'color': Colors.blue},
-      {'label': 'Hijau (Cedera Ringan)', 'value': 'Hijau', 'color': Colors.green},
-      {'label': 'Kuning (Cedera Sedang)', 'value': 'Kuning', 'color': Colors.amber[700]},
-      {'label': 'Merah (Cedera Berat/Kematian)', 'value': 'Merah', 'color': Colors.red},
+      {'label': 'Tidak Cedera (Tidak Signifikan - Biru)', 'value': 'tidak signifikan', 'color': Colors.blue},
+      {'label': 'Cedera Ringan (Minor - Hijau)', 'value': 'minor', 'color': Colors.green},
+      {'label': 'Cedera Sedang (Moderat - Kuning)', 'value': 'moderat', 'color': Colors.amber[700]},
+      {'label': 'Cedera Berat (Mayor - Oranye)', 'value': 'mayor', 'color': Colors.orange[800]},
+      {'label': 'Kematian (Katastropik - Merah)', 'value': 'katastropik', 'color': Colors.red},
     ];
 
     return Column(
