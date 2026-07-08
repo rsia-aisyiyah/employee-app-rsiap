@@ -52,6 +52,7 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
 
   final ScrollController _hHeaderScrollController = ScrollController();
   final ScrollController _hGridScrollController = ScrollController();
+  final ScrollController _hMatrixHeaderScrollController = ScrollController();
   final ScrollController _vNameScrollController = ScrollController();
   final ScrollController _vGridScrollController = ScrollController();
 
@@ -60,14 +61,33 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
     super.initState();
     _fetchInitialData();
 
-    _hHeaderScrollController.addListener(() {
-      if (_hHeaderScrollController.offset != _hGridScrollController.offset) {
-        _hGridScrollController.jumpTo(_hHeaderScrollController.offset);
+    _hMatrixHeaderScrollController.addListener(() {
+      double offset = _hMatrixHeaderScrollController.offset;
+      if (_hGridScrollController.hasClients && _hGridScrollController.offset != offset) {
+        _hGridScrollController.jumpTo(offset);
+      }
+      if (_hHeaderScrollController.hasClients && _hHeaderScrollController.offset != offset) {
+        _hHeaderScrollController.jumpTo(offset);
       }
     });
+
     _hGridScrollController.addListener(() {
-      if (_hGridScrollController.offset != _hHeaderScrollController.offset) {
-        _hHeaderScrollController.jumpTo(_hGridScrollController.offset);
+      double offset = _hGridScrollController.offset;
+      if (_hMatrixHeaderScrollController.hasClients && _hMatrixHeaderScrollController.offset != offset) {
+        _hMatrixHeaderScrollController.jumpTo(offset);
+      }
+      if (_hHeaderScrollController.hasClients && _hHeaderScrollController.offset != offset) {
+        _hHeaderScrollController.jumpTo(offset);
+      }
+    });
+
+    _hHeaderScrollController.addListener(() {
+      double offset = _hHeaderScrollController.offset;
+      if (_hMatrixHeaderScrollController.hasClients && _hMatrixHeaderScrollController.offset != offset) {
+        _hMatrixHeaderScrollController.jumpTo(offset);
+      }
+      if (_hGridScrollController.hasClients && _hGridScrollController.offset != offset) {
+        _hGridScrollController.jumpTo(offset);
       }
     });
 
@@ -87,6 +107,7 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
   void dispose() {
     _hHeaderScrollController.dispose();
     _hGridScrollController.dispose();
+    _hMatrixHeaderScrollController.dispose();
     _vNameScrollController.dispose();
     _vGridScrollController.dispose();
     searchController.dispose();
@@ -493,7 +514,7 @@ class _JadwalPegawaiState extends State<JadwalPegawai> {
             _buildNameCell("Nama Pegawai / Departemen", isHeader: true),
             Expanded(
               child: SingleChildScrollView(
-                controller: _hHeaderScrollController,
+                controller: _hMatrixHeaderScrollController,
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
                   width: (cellWidth * days) + (statsColumnWidth * 9),
