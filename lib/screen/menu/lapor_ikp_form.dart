@@ -630,7 +630,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      "Keluarga / Lainnya",
+                      "Keluarga / Staf / Pengunjung",
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -651,7 +651,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputLabel("Kategori Korban"),
+        _buildInputLabel("Insiden Terjadi Pada"),
         const SizedBox(height: 8),
         _buildVictimTypeSelector(),
         const SizedBox(height: 20),
