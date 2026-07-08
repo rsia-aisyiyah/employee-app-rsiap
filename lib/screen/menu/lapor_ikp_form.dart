@@ -489,7 +489,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         if (searchResults.isNotEmpty) ...[
           const SizedBox(height: 8),
           Container(
-            maxHeight: 180,
+            constraints: const BoxConstraints(maxHeight: 180),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(15),
