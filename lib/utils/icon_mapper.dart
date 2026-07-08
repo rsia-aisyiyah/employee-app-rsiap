@@ -27,6 +27,10 @@ class IconMapper {
       case 'info':
         return Icons.info_outline;
       case 'warning':
+      case 'warning_amber_rounded':
+      case 'icons.warning_amber_rounded':
+      case 'ikp':
+      case 'lapor_ikp':
         return Icons.warning_amber_rounded;
       case 'settings':
       case 'gear':
