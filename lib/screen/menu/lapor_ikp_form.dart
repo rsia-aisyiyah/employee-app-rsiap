@@ -576,18 +576,13 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                       size: 16,
                       color: isPasien ? primaryColor : Colors.grey[600],
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        "Pasien",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: isPasien ? primaryColor : Colors.grey[600],
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Pasien",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isPasien ? primaryColor : Colors.grey[600],
                       ),
                     ),
                   ],
@@ -633,18 +628,13 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                       size: 16,
                       color: !isPasien ? primaryColor : Colors.grey[600],
                     ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        "Selain Pasien",
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: !isPasien ? primaryColor : Colors.grey[600],
-                        ),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Selain Pasien",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: !isPasien ? primaryColor : Colors.grey[600],
                       ),
                     ),
                   ],
