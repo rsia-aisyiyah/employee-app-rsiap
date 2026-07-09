@@ -88,7 +88,8 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   String? selectedLayananInsidenLainnya;
   List<String> selectedKasusInsiden = [];
   String? selectedKasusInsidenLainnya;
-
+  int? userUnitId;
+  bool isMutuOrAdmin = false;
   // Step 3: Severity & Action
   String? selectedDampak; // tidak signifikan, minor, moderat, mayor, katastropik
   int pernahTerjadi = 0; // 0: Tidak, 1: Ya
@@ -220,6 +221,12 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         setState(() {
           masterJenisInsiden = body['data']['jenis_insiden'] ?? [];
           masterUnits = body['data']['units'] ?? [];
+          userUnitId = body['data']['user_unit_id'] != null ? int.tryParse(body['data']['user_unit_id'].toString()) : null;
+          isMutuOrAdmin = body['data']['is_mutu_or_admin'] ?? false;
+          
+          if (widget.existingData == null && userUnitId != null && !isMutuOrAdmin) {
+            selectedUnitId = userUnitId;
+          }
         });
       } else {
         Msg.error(context, "Gagal mengambil data master IKP");
@@ -1016,7 +1023,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         Container(
           height: 50,
           padding: const EdgeInsets.symmetric(horizontal: 15),
-          decoration: _buildInputBoxDecoration(),
+          decoration: _buildInputBoxDecoration(enabled: isMutuOrAdmin || userUnitId == null),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
               value: masterUnits.any((u) => u['id'] == selectedUnitId) ? selectedUnitId : null,
@@ -1028,11 +1035,13 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                   child: Text(u['nama_unit'] ?? '-'),
                 );
               }).toList(),
-              onChanged: (val) {
-                setState(() => selectedUnitId = val);
-                _fetchAutoGrading();
-                _fetchSimilarIncidents();
-              },
+              onChanged: (isMutuOrAdmin || userUnitId == null)
+                  ? (val) {
+                      setState(() => selectedUnitId = val);
+                      _fetchAutoGrading();
+                      _fetchSimilarIncidents();
+                    }
+                  : null,
             ),
           ),
         ),
