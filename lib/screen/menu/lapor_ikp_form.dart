@@ -1286,15 +1286,24 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   }
 
   Widget _buildStringDropdown({required String value, required List<String> items, required ValueChanged<String?> onChanged}) {
+    final List<String> resolvedItems = List.from(items);
+    if (!resolvedItems.contains(value) && value.isNotEmpty) {
+      resolvedItems.add(value);
+    }
+    
+    final String resolvedValue = resolvedItems.contains(value)
+        ? value
+        : (resolvedItems.isNotEmpty ? resolvedItems.first : '');
+
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: _buildInputBoxDecoration(),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: resolvedValue.isNotEmpty ? resolvedValue : null,
           isExpanded: true,
-          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
+          items: resolvedItems.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
           onChanged: onChanged,
         ),
       ),
