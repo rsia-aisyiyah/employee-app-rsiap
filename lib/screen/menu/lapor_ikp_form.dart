@@ -94,6 +94,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   String selectedStatusPelapor = 'Staf'; // Staf, Pj, Koor
   final TextEditingController _tindakanController = TextEditingController();
   String tindakanOleh = 'Petugas'; // Petugas, Tim
+  final TextEditingController _tindakanOlehDetailController = TextEditingController();
 
   // Auto grading state variables
   String? autoGradingValue; // biru, hijau, kuning, merah
@@ -116,6 +117,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     _kronologiController.dispose();
     _tempatController.dispose();
     _tindakanController.dispose();
+    _tindakanOlehDetailController.dispose();
     super.dispose();
   }
 
@@ -151,7 +153,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     });
 
     try {
-      var queryParams = "?jenis_insiden_id=$selectedJenisInsidenId&unit_id=$selectedUnitId&dampak_insiden=$selectedDampak";
+      var queryParams = "?jenis_insiden_id=$selectedJenisInsidenId&unit_id=$selectedUnitId&dampak_insiden=${Uri.encodeComponent(selectedDampak!)}";
       var res = await Api().getData('/sdi/ikp/grading$queryParams');
       
       if (res.statusCode == 200) {
@@ -182,7 +184,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
 
     setState(() => isSearchingPasien = true);
     try {
-      var res = await Api().getData('/sdi/ikp/pasien/search?keyword=$query');
+      var res = await Api().getData('/sdi/ikp/pasien/search?keyword=${Uri.encodeComponent(query)}');
       if (res.statusCode == 200) {
         var body = json.decode(res.body);
         setState(() {
@@ -298,9 +300,12 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   }
 
   Future<void> _submitReport() async {
+    final bool isOlehTimAtauPetugas = tindakanOleh.toLowerCase() == 'tim' || tindakanOleh.toLowerCase() == 'petugas';
+
     if (selectedDampak == null ||
-        _tindakanController.text.isEmpty) {
-      Msg.warning(context, "Mohon lengkapi data dampak dan tindakan awal.");
+        _tindakanController.text.isEmpty ||
+        (isOlehTimAtauPetugas && _tindakanOlehDetailController.text.trim().isEmpty)) {
+      Msg.warning(context, "Mohon lengkapi data dampak, tindakan awal, dan detail petugas/tim.");
       return;
     }
 
@@ -335,7 +340,8 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       'pernah_terjadi': pernahTerjadi,
       'status_pelapor': selectedStatusPelapor,
       'tindakan_insiden': _tindakanController.text,
-      'tindakan_oleh': tindakanOleh
+      'tindakan_oleh': tindakanOleh,
+      'tindakan_detail': isOlehTimAtauPetugas ? _tindakanOlehDetailController.text.trim() : null
     };
 
     try {
@@ -1077,6 +1083,12 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
             ),
           ],
         ),
+        if (tindakanOleh.toLowerCase() == 'tim' || tindakanOleh.toLowerCase() == 'petugas') ...[
+          const SizedBox(height: 15),
+          _buildInputLabel("Detail Nama Tim / Petugas *"),
+          const SizedBox(height: 8),
+          _buildFormTextField(_tindakanOlehDetailController, "Masukkan nama petugas atau anggota tim"),
+        ],
         const SizedBox(height: 15),
         _buildInputLabel("Apakah Kejadian Serupa Pernah Terjadi di Unit Lain?"),
         const SizedBox(height: 8),
