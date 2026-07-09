@@ -548,77 +548,240 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
   void _showUpdateGradingDialog(BuildContext context, Map item, StateSetter parentSetState) {
     String? selectedGrading = item['grading_risiko']?.toString();
     bool isSaving = false;
+    List similarIncidents = [];
+    bool isLoadingSimilar = true;
+    bool hasErrorSimilar = false;
+
+    Future<void> fetchSimilar(StateSetter setDialogState) async {
+      try {
+        final res = await Api().getData('/sdi/ikp/similar/${item['id']}');
+        if (res.statusCode == 200) {
+          final body = json.decode(res.body);
+          if (body['success'] == true) {
+            setDialogState(() {
+              similarIncidents = body['data'] ?? [];
+              isLoadingSimilar = false;
+            });
+            return;
+          }
+        }
+        setDialogState(() {
+          hasErrorSimilar = true;
+          isLoadingSimilar = false;
+        });
+      } catch (e) {
+        debugPrint("Error fetching similar incidents: $e");
+        setDialogState(() {
+          hasErrorSimilar = true;
+          isLoadingSimilar = false;
+        });
+      }
+    }
 
     showDialog(
       context: context,
       builder: (BuildContext ctx) {
+        bool didFetch = false;
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            if (!didFetch) {
+              didFetch = true;
+              fetchSimilar(setDialogState);
+            }
+
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               title: const Text(
                 "Update Grading Risiko",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    "Pilih grading risiko insiden untuk menentukan tindak lanjut.",
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 20),
-                  ...['Biru', 'Hijau', 'Kuning', 'Merah'].map((colorName) {
-                    final color = _getGradingColor(colorName);
-                    final isSelected = selectedGrading?.toUpperCase() == colorName.toUpperCase();
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      child: InkWell(
-                        onTap: () {
-                          setDialogState(() {
-                            selectedGrading = colorName;
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
-                            border: Border.all(
-                              color: isSelected ? color : Colors.grey[300]!,
-                              width: isSelected ? 2 : 1,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                colorName,
-                                style: TextStyle(
-                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                  color: isSelected ? color : Colors.black87,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const Spacer(),
-                              if (isSelected)
-                                Icon(Icons.check_circle, color: color, size: 20),
-                            ],
-                          ),
-                        ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Pilih grading risiko insiden untuk menentukan tindak lanjut.",
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
-                    );
-                  }).toList(),
-                ],
+                      const SizedBox(height: 15),
+                      ...['Biru', 'Hijau', 'Kuning', 'Merah'].map((colorName) {
+                        final color = _getGradingColor(colorName);
+                        final isSelected = selectedGrading?.toUpperCase() == colorName.toUpperCase();
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          child: InkWell(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedGrading = colorName;
+                              });
+                            },
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isSelected ? color.withOpacity(0.08) : Colors.grey[50],
+                                border: Border.all(
+                                  color: isSelected ? color : Colors.grey[300]!,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    colorName,
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      color: isSelected ? color : Colors.black87,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  if (isSelected)
+                                    Icon(Icons.check_circle, color: color, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+
+                      const SizedBox(height: 20),
+                      const Divider(),
+                      const SizedBox(height: 10),
+
+                      // Section: Data Insiden Pada Unit Kerja Yang Sama
+                      const Text(
+                        "Insiden Lain di Unit Kerja Sama (Maks 5)",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Data terbaru yang pernah terjadi di unit kerja yang sama.",
+                        style: TextStyle(fontSize: 11, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 12),
+
+                      if (isLoadingSimilar)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 20),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        )
+                      else if (hasErrorSimilar)
+                        const Text(
+                          "Gagal mengambil data insiden sejenis.",
+                          style: TextStyle(fontSize: 11, color: Colors.red),
+                        )
+                      else if (similarIncidents.isEmpty)
+                        const Text(
+                          "Belum ada insiden lain di unit kerja ini.",
+                          style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                        )
+                      else
+                        ...similarIncidents.map((sim) {
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              border: Border.all(color: Colors.grey[200]!),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  sim['insiden'] ?? '-',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    // Jenis Alias Badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue[50],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        sim['jenis_alias'] ?? 'IKP',
+                                        style: TextStyle(
+                                          color: Colors.blue[700],
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 9,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Dampak Badge
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange[50],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        (sim['dampak_insiden'] ?? '').toString().toUpperCase(),
+                                        style: TextStyle(
+                                          color: Colors.orange[700],
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 9,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today, size: 10, color: Colors.grey),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      sim['tanggal_insiden'] != null ? _formatDate(sim['tanggal_insiden']) : '-',
+                                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Icon(Icons.location_on_outlined, size: 10, color: Colors.grey),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        sim['tempat_kejadian'] ?? '-',
+                                        style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                    ],
+                  ),
+                ),
               ),
               actions: [
                 TextButton(
