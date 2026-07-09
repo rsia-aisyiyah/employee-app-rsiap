@@ -855,25 +855,47 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
       appBar: AppBar(
         title: const Text(
           "Riwayat IKP Unit",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5),
+          style: TextStyle(
+            fontWeight: FontWeight.bold, 
+            fontSize: 16, 
+            letterSpacing: 0.8,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
         elevation: 0,
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
                 primaryColor,
-                primaryColor.withOpacity(0.9),
+                const Color(0xFF009FDF),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
+            ),
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(24),
+              bottomRight: Radius.circular(24),
             ),
           ),
         ),
       ),
       body: Column(
         children: [
+          const SizedBox(height: 10),
           _buildFilterHeader(),
           Expanded(
             child: RefreshIndicator(
