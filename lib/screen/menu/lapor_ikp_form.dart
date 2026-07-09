@@ -95,11 +95,20 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   final TextEditingController _tindakanController = TextEditingController();
   String tindakanOleh = 'Petugas'; // Petugas, Tim
   final TextEditingController _tindakanOlehDetailController = TextEditingController();
+  String? selectedGradingRisiko; // Biru, Hijau, Kuning, Merah
 
   // Auto grading state variables
   String? autoGradingValue; // biru, hijau, kuning, merah
   String? autoGradingLabel; // Rendah, Moderat, Tinggi, Ekstrim
   bool isCalculatingGrading = false;
+
+  String _mapWarnaToGrading(String? warna) {
+    if (warna == 'biru') return 'Biru';
+    if (warna == 'hijau') return 'Hijau';
+    if (warna == 'kuning') return 'Kuning';
+    if (warna == 'merah') return 'Merah';
+    return 'Biru';
+  }
 
   @override
   void initState() {
@@ -162,6 +171,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           setState(() {
             autoGradingValue = body['data']['warna']; // biru, hijau, kuning, merah
             autoGradingLabel = body['data']['grading']; // Rendah, Moderat, Tinggi, Ekstrim
+            selectedGradingRisiko = _mapWarnaToGrading(body['data']['warna']);
           });
         }
       }
@@ -305,8 +315,9 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
 
     if (selectedDampak == null ||
         _tindakanController.text.isEmpty ||
+        selectedGradingRisiko == null ||
         (isOlehTimAtauPetugas && _tindakanOlehDetailController.text.trim().isEmpty)) {
-      Msg.warning(context, "Mohon lengkapi data dampak, tindakan awal, dan detail petugas/tim.");
+      Msg.warning(context, "Mohon lengkapi data dampak, tindakan awal, grading risiko, dan detail petugas/tim.");
       return;
     }
 
@@ -342,7 +353,8 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       'status_pelapor': selectedStatusPelapor,
       'tindakan_insiden': _tindakanController.text,
       'tindakan_oleh': tindakanOleh,
-      'tindakan_detail': isOlehTimAtauPetugas ? _tindakanOlehDetailController.text.trim() : null
+      'tindakan_detail': isOlehTimAtauPetugas ? _tindakanOlehDetailController.text.trim() : null,
+      'grading_risiko': selectedGradingRisiko
     };
 
     try {
@@ -1013,6 +1025,8 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildAutoGradingSection(),
+        const SizedBox(height: 20),
+        _buildGradingRisikoSelection(),
         const SizedBox(height: 25),
         _buildInputLabel("Tindakan Awal yang Dilakukan Pasca Kejadian *"),
         const SizedBox(height: 8),
@@ -1320,7 +1334,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                   height: 18,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: c, width: 2),
+                    border: Border.all(color: isSelected ? c : Colors.grey[350]!, width: 1.8),
                     color: isSelected ? c : Colors.transparent,
                   ),
                   child: isSelected
@@ -1522,6 +1536,76 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildGradingRisikoSelection() {
+    List<String> options = ['Biru', 'Hijau', 'Kuning', 'Merah'];
+    Map<String, Color> colors = {
+      'Biru': Colors.blue,
+      'Hijau': Colors.green,
+      'Kuning': Colors.amber[700]!,
+      'Merah': Colors.red,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInputLabel("Grading Risiko * (Manual Adjustment)"),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: options.map((opt) {
+            bool isSelected = selectedGradingRisiko == opt;
+            Color c = colors[opt]!;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() => selectedGradingRisiko = opt);
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? c : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? c : Colors.grey[300]!,
+                      width: 1.5,
+                    ),
+                    boxShadow: isSelected
+                        ? [BoxShadow(color: c.withOpacity(0.3), blurRadius: 6, offset: const Offset(0, 3))]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.white : c,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        opt,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isSelected ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 
