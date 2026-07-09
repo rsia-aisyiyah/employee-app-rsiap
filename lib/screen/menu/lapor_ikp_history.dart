@@ -371,60 +371,80 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                       color: Colors.white,
                       border: Border(top: BorderSide(color: Colors.grey[200]!)),
                     ),
-                    child: Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Print Button
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _isDownloadingPdf
-                                ? null
-                                : () async {
-                                    setModalState(() => _isDownloadingPdf = true);
-                                    await _downloadAndPrintPDF(item['id']);
-                                    setModalState(() => _isDownloadingPdf = false);
-                                  },
-                            icon: _isDownloadingPdf
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Icon(Icons.print_outlined, size: 18),
-                            label: const Text("Cetak PDF", style: TextStyle(fontWeight: FontWeight.bold)),
+                        if (_isMutuOrAdmin) ...[
+                          ElevatedButton.icon(
+                            onPressed: () => _showUpdateGradingDialog(context, item, setModalState),
+                            icon: const Icon(Icons.shield_outlined, size: 18),
+                            label: const Text("Update Grading Risiko", style: TextStyle(fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue[600],
+                              backgroundColor: Colors.orange[800],
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              minimumSize: const Size(double.infinity, 44),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        
-                        // Edit Button
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              Navigator.pop(context); // Close preview
-                              final result = await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LaporIkpFormScreen(existingData: item),
+                          const SizedBox(height: 12),
+                        ],
+                        Row(
+                          children: [
+                            // Print Button
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _isDownloadingPdf
+                                    ? null
+                                    : () async {
+                                        setModalState(() => _isDownloadingPdf = true);
+                                        await _downloadAndPrintPDF(item['id']);
+                                        setModalState(() => _isDownloadingPdf = false);
+                                      },
+                                icon: _isDownloadingPdf
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                      )
+                                    : const Icon(Icons.print_outlined, size: 18),
+                                label: const Text("Cetak PDF", style: TextStyle(fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue[600],
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                 ),
-                              );
-                              if (result == true) {
-                                _fetchHistory(page: 1);
-                              }
-                            },
-                            icon: const Icon(Icons.edit_outlined, size: 18),
-                            label: const Text("Ubah / Edit", style: TextStyle(fontWeight: FontWeight.bold)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryColor,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 12),
+                            
+                            // Edit Button
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  Navigator.pop(context); // Close preview
+                                  final result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LaporIkpFormScreen(existingData: item),
+                                    ),
+                                  );
+                                  if (result == true) {
+                                    _fetchHistory(page: 1);
+                                  }
+                                },
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                                label: const Text("Ubah / Edit", style: TextStyle(fontWeight: FontWeight.bold)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -523,6 +543,139 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
         .replaceAll("'", '')
         .replaceAll('-', ' ')
         .trim();
+  }
+
+  void _showUpdateGradingDialog(BuildContext context, Map item, StateSetter parentSetState) {
+    String? selectedGrading = item['grading_risiko']?.toString();
+    bool isSaving = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              title: const Text(
+                "Update Grading Risiko",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Pilih grading risiko insiden untuk menentukan tindak lanjut.",
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 20),
+                  ...['Biru', 'Hijau', 'Kuning', 'Merah'].map((colorName) {
+                    final color = _getGradingColor(colorName);
+                    final isSelected = selectedGrading?.toUpperCase() == colorName.toUpperCase();
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      child: InkWell(
+                        onTap: () {
+                          setDialogState(() {
+                            selectedGrading = colorName;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected ? color.withOpacity(0.1) : Colors.grey[50],
+                            border: Border.all(
+                              color: isSelected ? color : Colors.grey[300]!,
+                              width: isSelected ? 2 : 1,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                colorName,
+                                style: TextStyle(
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  color: isSelected ? color : Colors.black87,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (isSelected)
+                                Icon(Icons.check_circle, color: color, size: 20),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                  child: const Text("Batal", style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          setDialogState(() => isSaving = true);
+                          try {
+                            final res = await Api().postData(
+                              {'grading_risiko': selectedGrading},
+                              '/sdi/ikp/update-grading/${item['id']}',
+                            );
+
+                            if (res.statusCode == 200) {
+                              final body = json.decode(res.body);
+                              if (body['success'] == true) {
+                                Msg.success(context, "Grading berhasil diperbarui");
+                                parentSetState(() {
+                                  item['grading_risiko'] = selectedGrading;
+                                });
+                                _fetchHistory(page: 1);
+                                Navigator.pop(ctx);
+                              } else {
+                                Msg.error(context, body['message'] ?? "Gagal memperbarui grading");
+                              }
+                            } else {
+                              Msg.error(context, "Gagal memperbarui grading: Status ${res.statusCode}");
+                            }
+                          } catch (e) {
+                            Msg.error(context, "Terjadi kesalahan: $e");
+                          } finally {
+                            setDialogState(() => isSaving = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Text("Simpan", style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
