@@ -169,7 +169,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       // Step 2: Details
       selectedJenisInsidenId = int.tryParse(data['jenis_insiden_id']?.toString() ?? '');
       _insidenController.text = data['insiden'] ?? '';
-      _kronologiController.text = data['kronologi'] ?? '';
+      _kronologiController.text = _stripHtml(data['kronologi']?.toString());
 
       selectedJenisPelapor = data['jenis_pelapor'] ?? 'karyawan';
       selectedJenisPelaporLainnya = data['jenis_pelapor_lainnya'];
@@ -201,7 +201,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       pernahTerjadi = int.tryParse(data['pernah_terjadi']?.toString() ?? '0') ?? 0;
       selectedStatusPelapor = data['status_pelapor'] ?? 'Staf';
 
-      _tindakanController.text = data['tindakan_insiden'] ?? '';
+      _tindakanController.text = _stripHtml(data['tindakan_insiden']?.toString());
       tindakanOleh = data['tindakan_oleh'] ?? 'Petugas';
       _tindakanOlehDetailController.text = data['tindakan_detail'] ?? '';
       selectedGradingRisiko = _mapWarnaToGrading(data['grading_risiko']?.toString().toLowerCase());
@@ -418,7 +418,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       'tanggal_insiden': formattedTglInsiden,
       'waktu_insiden': formattedWaktu,
       'insiden': _insidenController.text,
-      'kronologi': _kronologiController.text,
+      'kronologi': _wrapInParagraph(_kronologiController.text),
       'jenis_pelapor': selectedJenisPelapor,
       'jenis_pelapor_lainnya': selectedJenisPelaporLainnya,
       'korban_insiden': selectedKorbanInsiden,
@@ -432,7 +432,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
       'dampak_insiden': selectedDampak,
       'pernah_terjadi': pernahTerjadi,
       'status_pelapor': selectedStatusPelapor,
-      'tindakan_insiden': _tindakanController.text,
+      'tindakan_insiden': _wrapInParagraph(_tindakanController.text),
       'tindakan_oleh': tindakanOleh,
       'tindakan_detail': isOlehTimAtauPetugas ? _tindakanOlehDetailController.text.trim() : null,
       'grading_risiko': selectedGradingRisiko
@@ -1773,6 +1773,30 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  String _stripHtml(String? text) {
+    if (text == null) return '';
+    final regExp = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
+    String cleanText = text.replaceAll(regExp, '');
+    
+    cleanText = cleanText
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"');
+        
+    return cleanText.trim();
+  }
+
+  String _wrapInParagraph(String text) {
+    String trimmed = text.trim();
+    if (trimmed.isEmpty) return '';
+    if (trimmed.startsWith('<p>') && trimmed.endsWith('</p>')) {
+      return trimmed;
+    }
+    return "<p>$trimmed</p>";
   }
 
   Widget _buildSimilarIncidentsSection() {
