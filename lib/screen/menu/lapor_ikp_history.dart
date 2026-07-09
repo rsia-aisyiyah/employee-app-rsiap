@@ -857,7 +857,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
           "Riwayat IKP Unit",
           style: TextStyle(
             fontWeight: FontWeight.bold, 
-            fontSize: 16, 
+            fontSize: 18, 
             letterSpacing: 0.8,
             color: Colors.white,
           ),
