@@ -303,7 +303,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                         _buildSectionHeader("DETAIL INSIDEN", Icons.warning_amber_rounded),
                         _buildDetailRow("Waktu Kejadian", "$formattingDateInsiden - ${item['waktu_insiden'] ?? '-'}"),
                         _buildDetailRow("Insiden yang Terjadi", item['insiden'] ?? '-'),
-                        _buildDetailRow("Kronologi Kejadian", item['kronologi'] ?? '-'),
+                        _buildDetailRow("Kronologi Kejadian", _stripHtml(item['kronologi'])),
                         _buildDetailRow("Tempat Kejadian", item['tempat_kejadian'] ?? '-'),
                         _buildDetailRow("Unit Terkait", item['nama_unit'] ?? '-'),
 
@@ -320,7 +320,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                         _buildDetailRow("Layanan Terkait", item['layanan_insiden']?.toString().toUpperCase() ?? '-'),
                         if (item['layanan_insiden_lainnya'] != null)
                           _buildDetailRow("Layanan Terkait (Lainnya)", item['layanan_insiden_lainnya']),
-                        _buildDetailRow("Kasus Terkait", item['kasus_insiden']?.toString() ?? '-'),
+                        _buildDetailRow("Kasus Terkait", _formatKasusTerkait(item['kasus_insiden']?.toString())),
                         if (item['kasus_insiden_lainnya'] != null)
                           _buildDetailRow("Kasus Terkait (Lainnya)", item['kasus_insiden_lainnya']),
 
@@ -329,7 +329,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                         // Actions & Severity Section
                         _buildSectionHeader("DAMPAK & TINDAKAN", Icons.healing_outlined),
                         _buildDetailRow("Dampak Cedera", _capitalize(item['dampak_insiden'] ?? '')),
-                        _buildDetailRow("Tindakan Awal", item['tindakan_insiden'] ?? '-'),
+                        _buildDetailRow("Tindakan Awal", _stripHtml(item['tindakan_insiden'])),
                         _buildDetailRow("Tindakan Oleh", _capitalize(item['tindakan_oleh'] ?? '')),
                         if (item['tindakan_detail'] != null)
                           _buildDetailRow("Detail Pelaksana", item['tindakan_detail']),
@@ -482,6 +482,47 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
   String _capitalize(String s) {
     if (s.isEmpty) return s;
     return s[0].toUpperCase() + s.substring(1);
+  }
+
+  String _stripHtml(String? text) {
+    if (text == null) return '-';
+    final regExp = RegExp(r'<[^>]*>', multiLine: true, caseSensitive: false);
+    String cleanText = text.replaceAll(regExp, '');
+    
+    cleanText = cleanText
+        .replaceAll('&body;', ' ')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"');
+        
+    return cleanText.trim();
+  }
+
+  String _formatKasusTerkait(String? value) {
+    if (value == null || value == '-' || value.isEmpty) return '-';
+    
+    try {
+      if (value.trim().startsWith('[') && value.trim().endsWith(']')) {
+        final decoded = json.decode(value);
+        if (decoded is List) {
+          return decoded
+              .map((item) => item.toString().replaceAll('-', ' '))
+              .join(', ');
+        }
+      }
+    } catch (e) {
+      debugPrint("Error parsing kasus_insiden JSON: $e");
+    }
+
+    return value
+        .replaceAll('[', '')
+        .replaceAll(']', '')
+        .replaceAll('"', '')
+        .replaceAll("'", '')
+        .replaceAll('-', ' ')
+        .trim();
   }
 
   @override
