@@ -6,7 +6,8 @@ import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
 class LaporIkpFormScreen extends StatefulWidget {
-  const LaporIkpFormScreen({super.key});
+  final Map? existingData;
+  const LaporIkpFormScreen({super.key, this.existingData});
 
   @override
   State<LaporIkpFormScreen> createState() => _LaporIkpFormScreenState();
@@ -113,7 +114,11 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchMasterData();
+    _fetchMasterData().then((_) {
+      if (widget.existingData != null) {
+        _prepopulateForm();
+      }
+    });
   }
 
   @override
@@ -128,6 +133,76 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     _tindakanController.dispose();
     _tindakanOlehDetailController.dispose();
     super.dispose();
+  }
+
+  void _prepopulateForm() {
+    if (widget.existingData == null) return;
+    final data = widget.existingData!;
+
+    setState(() {
+      // Step 1: Patient info & date
+      _noRmController.text = data['pasien_id'] == '000000' ? '' : (data['pasien_id'] ?? '');
+      _nmPasienController.text = data['nm_pasien'] ?? '';
+      _tglLahirController.text = data['tgl_lahir'] ?? '';
+      selectedJk = data['jk'] ?? 'L';
+
+      if (data['tgl_pasien_masuk'] != null) {
+        tglPasienMasuk = DateTime.parse(data['tgl_pasien_masuk']);
+      }
+      if (data['tanggal_insiden'] != null) {
+        tglInsiden = DateTime.parse(data['tanggal_insiden']);
+      }
+      if (data['waktu_insiden'] != null) {
+        final parts = data['waktu_insiden'].toString().split(':');
+        if (parts.length >= 2) {
+          waktuInsiden = TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+        }
+      }
+
+      isPasien = _noRmController.text.isNotEmpty;
+
+      // Step 2: Details
+      selectedJenisInsidenId = int.tryParse(data['jenis_insiden_id']?.toString() ?? '');
+      _insidenController.text = data['insiden'] ?? '';
+      _kronologiController.text = data['kronologi'] ?? '';
+
+      selectedJenisPelapor = data['jenis_pelapor'] ?? 'karyawan';
+      selectedJenisPelaporLainnya = data['jenis_pelapor_lainnya'];
+
+      selectedKorbanInsiden = data['korban_insiden'] ?? 'pasien';
+      selectedKorbanInsidenLainnya = data['korban_insiden_lainnya'];
+
+      selectedLayananInsiden = data['layanan_insiden'] ?? 'ranap';
+      selectedLayananInsidenLainnya = data['layanan_insiden_lainnya'];
+
+      if (data['kasus_insiden'] != null) {
+        if (data['kasus_insiden'] is String) {
+          try {
+            selectedKasusInsiden = List<String>.from(json.decode(data['kasus_insiden']));
+          } catch (e) {
+            selectedKasusInsiden = [];
+          }
+        } else if (data['kasus_insiden'] is List) {
+          selectedKasusInsiden = List<String>.from(data['kasus_insiden']);
+        }
+      }
+      selectedKasusInsidenLainnya = data['kasus_insiden_lainnya'];
+
+      _tempatController.text = data['tempat_kejadian'] ?? '';
+      selectedUnitId = int.tryParse(data['unit_id']?.toString() ?? '');
+
+      // Step 3: Action & Severity
+      selectedDampak = data['dampak_insiden'];
+      pernahTerjadi = int.tryParse(data['pernah_terjadi']?.toString() ?? '0') ?? 0;
+      selectedStatusPelapor = data['status_pelapor'] ?? 'Staf';
+
+      _tindakanController.text = data['tindakan_insiden'] ?? '';
+      tindakanOleh = data['tindakan_oleh'] ?? 'Petugas';
+      _tindakanOlehDetailController.text = data['tindakan_detail'] ?? '';
+      selectedGradingRisiko = _mapWarnaToGrading(data['grading_risiko']?.toString().toLowerCase());
+    });
+
+    _fetchAutoGrading();
   }
 
   Future<void> _fetchMasterData() async {
@@ -358,7 +433,9 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     };
 
     try {
-      var res = await Api().postData(payload, '/sdi/ikp/lapor');
+      var res = widget.existingData != null
+          ? await Api().postData(payload, '/sdi/ikp/update/${widget.existingData!['id']}')
+          : await Api().postData(payload, '/sdi/ikp/lapor');
       var body = json.decode(res.body);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
@@ -386,13 +463,15 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
             Text("Berhasil"),
           ],
         ),
-        content: const Text(
-            "Laporan IKP berhasil terkirim. Komite Mutu & Keselamatan Pasien akan segera mengevaluasi."),
+        content: Text(
+            widget.existingData != null
+                ? "Laporan IKP berhasil diperbarui."
+                : "Laporan IKP berhasil terkirim. Komite Mutu & Keselamatan Pasien akan segera mengevaluasi."),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              Navigator.pop(context);
+              Navigator.pop(context, true);
             },
             child: Text("OK",
                 style: TextStyle(

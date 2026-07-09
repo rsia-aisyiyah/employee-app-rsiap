@@ -1,8 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:rsia_employee_app/api/request.dart';
+import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
@@ -29,6 +34,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
   List _units = [];
   bool _isMutuOrAdmin = false;
   bool _showFilterPanel = false;
+  bool _isDownloadingPdf = false;
 
   @override
   void initState() {
@@ -169,6 +175,32 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
     _fetchHistory(page: 1);
   }
 
+  Future<void> _downloadAndPrintPDF(int id) async {
+    setState(() => _isDownloadingPdf = true);
+    Msg.info(context, "Menyiapkan file PDF...");
+
+    try {
+      final baseWebUrl = AppConfig.baseUrl.replaceAll('/rsiapi-v2', '');
+      final downloadUrl = "$baseWebUrl/app/insiden/$id/print";
+
+      final dir = Platform.isAndroid
+          ? (await getExternalStorageDirectory())?.path
+          : (await getApplicationDocumentsDirectory()).path;
+      final filePath = "$dir/IKP_Report_$id.pdf";
+
+      Dio dio = Dio();
+      await dio.download(downloadUrl, filePath);
+
+      Msg.success(context, "Unduh selesai");
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      debugPrint("Error downloading/printing IKP PDF: $e");
+      Msg.error(context, "Gagal mengunduh atau membuka PDF: $e");
+    } finally {
+      setState(() => _isDownloadingPdf = false);
+    }
+  }
+
   Color _getGradingColor(String? grading) {
     if (grading == null) return Colors.grey;
     switch (grading.toUpperCase()) {
@@ -192,6 +224,264 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
     } catch (e) {
       return dateStr;
     }
+  }
+
+  void _showDetailBottomSheet(Map item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final grading = item['grading_risiko']?.toString();
+        final gradingColor = _getGradingColor(grading);
+        final formattingDateMasuk = item['tgl_pasien_masuk'] != null ? _formatDate(item['tgl_pasien_masuk']) : '-';
+        final formattingDateInsiden = item['tanggal_insiden'] != null ? _formatDate(item['tanggal_insiden']) : '-';
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(25),
+                  topRight: Radius.circular(25),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // Indicator Drag Bar
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Detail Laporan IKP",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(color: Colors.grey[100], shape: BoxShape.circle),
+                            child: const Icon(Icons.close, size: 18, color: Colors.grey),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(),
+
+                  // Content
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.all(20),
+                      children: [
+                        // Patient Section
+                        _buildSectionHeader("INFORMASI KORBAN / PASIEN", Icons.person_outline),
+                        _buildDetailRow("No. Rekam Medis (RM)", item['pasien_id'] == '000000' ? 'Bukan Pasien (000000)' : (item['pasien_id'] ?? '-')),
+                        _buildDetailRow("Nama Korban/Pasien", item['nm_pasien'] ?? '-'),
+                        _buildDetailRow("Tanggal Lahir", item['tgl_lahir'] != null ? _formatDate(item['tgl_lahir']) : '-'),
+                        _buildDetailRow("Jenis Kelamin", item['jk'] == 'L' ? 'Laki-laki' : 'Perempuan'),
+                        _buildDetailRow("Tanggal Masuk RS", formattingDateMasuk),
+                        
+                        const SizedBox(height: 20),
+
+                        // Incident Section
+                        _buildSectionHeader("DETAIL INSIDEN", Icons.warning_amber_rounded),
+                        _buildDetailRow("Waktu Kejadian", "$formattingDateInsiden - ${item['waktu_insiden'] ?? '-'}"),
+                        _buildDetailRow("Insiden yang Terjadi", item['insiden'] ?? '-'),
+                        _buildDetailRow("Kronologi Kejadian", item['kronologi'] ?? '-'),
+                        _buildDetailRow("Tempat Kejadian", item['tempat_kejadian'] ?? '-'),
+                        _buildDetailRow("Unit Terkait", item['nama_unit'] ?? '-'),
+
+                        const SizedBox(height: 20),
+
+                        // Classifications Section
+                        _buildSectionHeader("KLASIFIKASI & PELAPORAN", Icons.category_outlined),
+                        _buildDetailRow("Jenis Pelapor", _capitalize(item['jenis_pelapor'] ?? '')),
+                        if (item['jenis_pelapor_lainnya'] != null)
+                          _buildDetailRow("Jenis Pelapor (Lainnya)", item['jenis_pelapor_lainnya']),
+                        _buildDetailRow("Korban Insiden", _capitalize(item['korban_insiden'] ?? '')),
+                        if (item['korban_insiden_lainnya'] != null)
+                          _buildDetailRow("Korban Insiden (Lainnya)", item['korban_insiden_lainnya']),
+                        _buildDetailRow("Layanan Terkait", item['layanan_insiden']?.toString().toUpperCase() ?? '-'),
+                        if (item['layanan_insiden_lainnya'] != null)
+                          _buildDetailRow("Layanan Terkait (Lainnya)", item['layanan_insiden_lainnya']),
+                        _buildDetailRow("Kasus Terkait", item['kasus_insiden']?.toString() ?? '-'),
+                        if (item['kasus_insiden_lainnya'] != null)
+                          _buildDetailRow("Kasus Terkait (Lainnya)", item['kasus_insiden_lainnya']),
+
+                        const SizedBox(height: 20),
+
+                        // Actions & Severity Section
+                        _buildSectionHeader("DAMPAK & TINDAKAN", Icons.healing_outlined),
+                        _buildDetailRow("Dampak Cedera", _capitalize(item['dampak_insiden'] ?? '')),
+                        _buildDetailRow("Tindakan Awal", item['tindakan_insiden'] ?? '-'),
+                        _buildDetailRow("Tindakan Oleh", _capitalize(item['tindakan_oleh'] ?? '')),
+                        if (item['tindakan_detail'] != null)
+                          _buildDetailRow("Detail Pelaksana", item['tindakan_detail']),
+                        
+                        const SizedBox(height: 20),
+
+                        // Grading Section
+                        _buildSectionHeader("GRADING RISIKO", Icons.shield_outlined),
+                        Container(
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: gradingColor.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: gradingColor.withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 12,
+                                height: 12,
+                                decoration: BoxDecoration(color: gradingColor, shape: BoxShape.circle),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Grading Akhir: ${item['grading_risiko'] ?? 'Belum Ditentukan'}",
+                                style: TextStyle(color: gradingColor, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Bottom Action Buttons
+                  Container(
+                    padding: EdgeInsets.fromLTRB(20, 15, 20, MediaQuery.of(context).padding.bottom + 15),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border(top: BorderSide(color: Colors.grey[200]!)),
+                    ),
+                    child: Row(
+                      children: [
+                        // Print Button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isDownloadingPdf
+                                ? null
+                                : () async {
+                                    setModalState(() => _isDownloadingPdf = true);
+                                    await _downloadAndPrintPDF(item['id']);
+                                    setModalState(() => _isDownloadingPdf = false);
+                                  },
+                            icon: _isDownloadingPdf
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.print_outlined, size: 18),
+                            label: const Text("Cetak PDF", style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        
+                        // Edit Button
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              Navigator.pop(context); // Close preview
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => LaporIkpFormScreen(existingData: item),
+                                ),
+                              );
+                              if (result == true) {
+                                _fetchHistory(page: 1);
+                              }
+                            },
+                            icon: const Icon(Icons.edit_outlined, size: 18),
+                            label: const Text("Ubah / Edit", style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: primaryColor),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor, letterSpacing: 0.5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   @override
@@ -239,109 +529,112 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                         final grading = item['grading_risiko']?.toString();
                         final gradingColor = _getGradingColor(grading);
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 15,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(18),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: primaryColor.withOpacity(0.08),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        item['jenis_alias'] ?? 'IKP',
-                                        style: TextStyle(
-                                          color: primaryColor,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ),
-                                    if (grading != null)
+                        return GestureDetector(
+                          onTap: () => _showDetailBottomSheet(item),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                         decoration: BoxDecoration(
-                                          color: gradingColor.withOpacity(0.1),
+                                          color: primaryColor.withOpacity(0.08),
                                           borderRadius: BorderRadius.circular(8),
-                                          border: Border.all(color: gradingColor.withOpacity(0.3), width: 1),
                                         ),
                                         child: Text(
-                                          "Grading: $grading",
+                                          item['jenis_alias'] ?? 'IKP',
                                           style: TextStyle(
-                                            color: gradingColor,
+                                            color: primaryColor,
                                             fontWeight: FontWeight.bold,
-                                            fontSize: 10,
+                                            fontSize: 11,
                                           ),
                                         ),
                                       ),
-                                  ],
-                                ),
-                                const SizedBox(height: 15),
-                                Text(
-                                  item['insiden'] ?? '-',
-                                  style: const TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2D3142),
-                                    height: 1.4,
+                                      if (grading != null)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                          decoration: BoxDecoration(
+                                            color: gradingColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: gradingColor.withOpacity(0.3), width: 1),
+                                          ),
+                                          child: Text(
+                                            "Grading: $grading",
+                                            style: TextStyle(
+                                              color: gradingColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Icon(Icons.calendar_today_outlined, size: 13, color: Colors.grey[400]),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      _formatDate(item['tanggal_insiden'] ?? ''),
-                                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                  const SizedBox(height: 15),
+                                  Text(
+                                    item['insiden'] ?? '-',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF2D3142),
+                                      height: 1.4,
                                     ),
-                                    const SizedBox(width: 15),
-                                    Icon(Icons.meeting_room_outlined, size: 13, color: Colors.grey[400]),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        item['nama_unit'] ?? '-',
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.calendar_today_outlined, size: 13, color: Colors.grey[400]),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        _formatDate(item['tanggal_insiden'] ?? ''),
                                         style: TextStyle(color: Colors.grey[500], fontSize: 12),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                const Divider(height: 1, thickness: 0.5),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    Icon(Icons.person_outline, size: 13, color: Colors.grey[400]),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        "Korban: ${item['nm_pasien'] ?? '-'}",
-                                        style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w500),
-                                        overflow: TextOverflow.ellipsis,
+                                      const SizedBox(width: 15),
+                                      Icon(Icons.meeting_room_outlined, size: 13, color: Colors.grey[400]),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          item['nama_unit'] ?? '-',
+                                          style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Divider(height: 1, thickness: 0.5),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.person_outline, size: 13, color: Colors.grey[400]),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          "Korban: ${item['nm_pasien'] ?? '-'}",
+                                          style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w500),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         );
