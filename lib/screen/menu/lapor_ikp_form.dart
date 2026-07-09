@@ -1019,7 +1019,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           decoration: _buildInputBoxDecoration(),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<int>(
-              value: selectedUnitId,
+              value: masterUnits.any((u) => u['id'] == selectedUnitId) ? selectedUnitId : null,
               hint: Text("Pilih Unit", style: TextStyle(color: Colors.grey[400], fontSize: 13)),
               isExpanded: true,
               items: masterUnits.map((u) {
@@ -1307,13 +1307,34 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     required ValueChanged<String?> onChanged,
     bool enabled = true,
   }) {
+    String resolvedValue = value;
+    if (!options.containsKey(value)) {
+      final match = options.keys.firstWhere(
+        (key) => key.toLowerCase() == value.toLowerCase(),
+        orElse: () => '',
+      );
+      if (match.isNotEmpty) {
+        resolvedValue = match;
+      } else {
+        final keyMatch = options.entries.firstWhere(
+          (entry) => entry.value.toLowerCase() == value.toLowerCase(),
+          orElse: () => const MapEntry('', ''),
+        ).key;
+        if (keyMatch.isNotEmpty) {
+          resolvedValue = keyMatch;
+        } else {
+          resolvedValue = options.keys.isNotEmpty ? options.keys.first : '';
+        }
+      }
+    }
+
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: _buildInputBoxDecoration(enabled: enabled),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: resolvedValue.isNotEmpty ? resolvedValue : null,
           isExpanded: true,
           items: options.entries.map((entry) {
             return DropdownMenuItem(
