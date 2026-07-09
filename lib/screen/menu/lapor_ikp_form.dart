@@ -285,8 +285,9 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           _kronologiController.text.isEmpty ||
           _tempatController.text.isEmpty ||
           selectedUnitId == null ||
-          selectedKasusInsiden.isEmpty) {
-        Msg.warning(context, "Mohon lengkapi seluruh detail laporan insiden termasuk kasus penyakit.");
+          selectedKasusInsiden.isEmpty ||
+          selectedDampak == null) {
+        Msg.warning(context, "Mohon lengkapi seluruh detail laporan insiden termasuk kasus dan dampak cedera.");
         return;
       }
       setState(() => _currentStep = 3);
@@ -998,6 +999,10 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
             );
           }).toList(),
         ),
+        const SizedBox(height: 25),
+        _buildInputLabel("Dampak Cedera (Tingkat Keparahan / Severity) *"),
+        const SizedBox(height: 10),
+        _buildDampakCards(),
       ],
     );
   }
@@ -1007,9 +1012,6 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildInputLabel("Dampak Cedera (Tingkat Keparahan / Severity) *"),
-        const SizedBox(height: 10),
-        _buildDampakCards(),
         _buildAutoGradingSection(),
         const SizedBox(height: 25),
         _buildInputLabel("Tindakan Awal yang Dilakukan Pasca Kejadian *"),
@@ -1314,9 +1316,16 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
             child: Row(
               children: [
                 Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(color: c, shape: BoxShape.circle),
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: c, width: 2),
+                    color: isSelected ? c : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(Icons.check, color: Colors.white, size: 10)
+                      : null,
                 ),
                 const SizedBox(width: 15),
                 Expanded(
@@ -1329,7 +1338,6 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
                     ),
                   ),
                 ),
-                if (isSelected) Icon(Icons.check_circle, color: c, size: 20),
               ],
             ),
           ),
