@@ -29,7 +29,8 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
 
   // Search & Filter State
   final TextEditingController _searchController = TextEditingController();
-  DateTimeRange? _selectedDateRange;
+  DateTime? _startDate;
+  DateTime? _endDate;
   int? _selectedUnitId;
   List _units = [];
   bool _isMutuOrAdmin = false;
@@ -98,10 +99,13 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
       if (_searchController.text.isNotEmpty) {
         queryParams += "&keyword=${Uri.encodeComponent(_searchController.text)}";
       }
-      if (_selectedDateRange != null) {
-        final start = DateFormat('yyyy-MM-dd').format(_selectedDateRange!.start);
-        final end = DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end);
-        queryParams += "&start_date=$start&end_date=$end";
+      if (_startDate != null) {
+        final start = DateFormat('yyyy-MM-dd').format(_startDate!);
+        queryParams += "&start_date=$start";
+      }
+      if (_endDate != null) {
+        final end = DateFormat('yyyy-MM-dd').format(_endDate!);
+        queryParams += "&end_date=$end";
       }
       if (_selectedUnitId != null) {
         queryParams += "&unit_id=$_selectedUnitId";
@@ -133,15 +137,14 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
     }
   }
 
-  Future<void> _selectDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
+  Future<void> _pickFilterDate(bool isStart) async {
+    final DateTime? picked = await showDatePicker(
       context: context,
+      initialDate: isStart 
+          ? (_startDate ?? DateTime.now()) 
+          : (_endDate ?? DateTime.now()),
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      initialDateRange: _selectedDateRange ?? DateTimeRange(
-        start: DateTime.now().subtract(const Duration(days: 7)),
-        end: DateTime.now(),
-      ),
       builder: (context, child) {
         return Theme(
           data: ThemeData.light().copyWith(
@@ -159,15 +162,19 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
 
     if (picked != null) {
       setState(() {
-        _selectedDateRange = picked;
+        if (isStart) {
+          _startDate = picked;
+        } else {
+          _endDate = picked;
+        }
       });
-      _fetchHistory(page: 1);
     }
   }
 
   void _resetFilters() {
     setState(() {
-      _selectedDateRange = null;
+      _startDate = null;
+      _endDate = null;
       _selectedUnitId = null;
       _searchController.clear();
       _showFilterPanel = false;
@@ -1024,7 +1031,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
 
   Widget _buildFilterHeader() {
     int activeFiltersCount = 0;
-    if (_selectedDateRange != null) activeFiltersCount++;
+    if (_startDate != null || _endDate != null) activeFiltersCount++;
     if (_selectedUnitId != null) activeFiltersCount++;
 
     return Container(
@@ -1139,60 +1146,119 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
   }
 
   Widget _buildFilterOptions() {
-    String dateRangeLabel = "Pilih Range Tanggal";
-    if (_selectedDateRange != null) {
-      final startStr = DateFormat('dd/MM/yyyy').format(_selectedDateRange!.start);
-      final endStr = DateFormat('dd/MM/yyyy').format(_selectedDateRange!.end);
-      dateRangeLabel = "$startStr - $endStr";
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Filter Range Tanggal",
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
-        ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: _selectDateRange,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.date_range_outlined, color: primaryColor, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      dateRangeLabel,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: _selectedDateRange != null ? Colors.black87 : Colors.grey[600],
-                        fontWeight: _selectedDateRange != null ? FontWeight.bold : FontWeight.normal,
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Tanggal Mulai",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () => _pickFilterDate(true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _startDate != null ? primaryColor : Colors.grey[300]!,
+                          width: _startDate != null ? 1.5 : 1,
+                        ),
+                        boxShadow: _startDate != null
+                            ? [BoxShadow(color: primaryColor.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                            : [],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined, color: _startDate != null ? primaryColor : Colors.grey[400], size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _startDate != null ? DateFormat('dd/MM/yyyy').format(_startDate!) : "Pilih Tanggal",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _startDate != null ? Colors.black87 : Colors.grey[600],
+                                fontWeight: _startDate != null ? FontWeight.bold : FontWeight.normal,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (_startDate != null)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _startDate = null);
+                              },
+                              child: Icon(Icons.cancel, color: Colors.grey[400], size: 16),
+                            ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-                if (_selectedDateRange != null)
-                  GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedDateRange = null);
-                      _fetchHistory(page: 1);
-                    },
-                    child: Icon(Icons.cancel, color: Colors.grey[400], size: 18),
-                  )
-                else
-                  Icon(Icons.keyboard_arrow_right, color: Colors.grey[400], size: 18),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Tanggal Selesai",
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () => _pickFilterDate(false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _endDate != null ? primaryColor : Colors.grey[300]!,
+                          width: _endDate != null ? 1.5 : 1,
+                        ),
+                        boxShadow: _endDate != null
+                            ? [BoxShadow(color: primaryColor.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))]
+                            : [],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined, color: _endDate != null ? primaryColor : Colors.grey[400], size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _endDate != null ? DateFormat('dd/MM/yyyy').format(_endDate!) : "Pilih Tanggal",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _endDate != null ? Colors.black87 : Colors.grey[600],
+                                fontWeight: _endDate != null ? FontWeight.bold : FontWeight.normal,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (_endDate != null)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() => _endDate = null);
+                              },
+                              child: Icon(Icons.cancel, color: Colors.grey[400], size: 16),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         if (_isMutuOrAdmin) ...[
           const SizedBox(height: 15),
