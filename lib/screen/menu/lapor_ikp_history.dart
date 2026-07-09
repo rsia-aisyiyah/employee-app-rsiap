@@ -471,7 +471,6 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                             ),
                           ),
                         ),
-                        ),
                     ],
                   ),
                 ),
