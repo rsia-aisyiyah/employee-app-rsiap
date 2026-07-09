@@ -990,7 +990,7 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          "Pasien / Korban: ${item['nm_pasien'] ?? '-'}",
+                                          "Pasien: ${item['nm_pasien'] ?? '-'}",
                                           style: TextStyle(color: Colors.grey[600], fontSize: 12, fontWeight: FontWeight.w500),
                                           overflow: TextOverflow.ellipsis,
                                         ),
