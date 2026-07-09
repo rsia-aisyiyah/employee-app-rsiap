@@ -366,7 +366,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           tglPasienMasuk == null ||
           tglInsiden == null ||
           waktuInsiden == null) {
-        Msg.warning(context, "Mohon lengkapi seluruh data korban dan waktu.");
+        Msg.warning(context, "Mohon lengkapi seluruh data pasien/orang dan waktu.");
         return;
       }
       setState(() => _currentStep = 2);
@@ -856,11 +856,11 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           ],
           const SizedBox(height: 20),
         ],
-        _buildInputLabel(isPasien ? "Nama Pasien *" : "Nama Lengkap Korban *"),
+        _buildInputLabel(isPasien ? "Nama Pasien *" : "Nama Lengkap *"),
         const SizedBox(height: 8),
         _buildFormTextField(
           _nmPasienController,
-          isPasien ? "Akan otomatis terisi dari pencarian SIMRS" : "Ketik Nama Lengkap Korban secara manual",
+          isPasien ? "Akan otomatis terisi dari pencarian SIMRS" : "Ketik nama lengkap secara manual",
           enabled: !isPasien,
         ),
         const SizedBox(height: 15),
@@ -1045,7 +1045,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
           onChanged: (val) => setState(() => selectedJenisPelapor = val!),
         ),
         const SizedBox(height: 15),
-        _buildInputLabel("Korban Insiden"),
+        _buildInputLabel("Pihak Terkena Insiden"),
         const SizedBox(height: 8),
         _buildMappedDropdown(
           value: selectedKorbanInsiden,
