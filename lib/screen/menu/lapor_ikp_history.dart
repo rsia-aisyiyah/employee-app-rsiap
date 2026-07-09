@@ -855,11 +855,22 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
       appBar: AppBar(
         title: const Text(
           "Riwayat IKP Unit",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, letterSpacing: 0.5),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5),
         ),
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
+        centerTitle: true,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                primaryColor,
+                primaryColor.withOpacity(0.9),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -1035,14 +1046,18 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
     if (_selectedUnitId != null) activeFiltersCount++;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(20),
+          bottomRight: Radius.circular(20),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -1052,21 +1067,23 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
             children: [
               Expanded(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  height: 46,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: Colors.grey[50]!,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[200]!, width: 1),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.search, color: Colors.grey[500], size: 20),
-                      const SizedBox(width: 8),
+                      Icon(Icons.search_rounded, color: Colors.grey[400], size: 20),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
                           controller: _searchController,
                           onSubmitted: (val) => _fetchHistory(page: 1),
                           decoration: const InputDecoration(
-                            hintText: "Cari data...",
+                            hintText: "Cari data laporan...",
                             hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
                             border: InputBorder.none,
                           ),
@@ -1079,52 +1096,47 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
                             _searchController.clear();
                             _fetchHistory(page: 1);
                           },
-                          child: Icon(Icons.clear, color: Colors.grey[600], size: 18),
+                          child: Icon(Icons.clear, color: Colors.grey[400], size: 18),
                         ),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               GestureDetector(
                 onTap: () {
                   setState(() => _showFilterPanel = !_showFilterPanel);
                 },
                 child: Container(
-                  padding: const EdgeInsets.all(10),
+                  height: 46,
+                  width: 46,
                   decoration: BoxDecoration(
-                    color: _showFilterPanel ? primaryColor.withOpacity(0.1) : Colors.grey[100],
+                    color: _showFilterPanel ? primaryColor.withOpacity(0.08) : Colors.grey[50]!,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: _showFilterPanel ? primaryColor : Colors.transparent,
-                      width: 1.5,
+                      color: _showFilterPanel ? primaryColor : Colors.grey[200]!,
+                      width: 1,
                     ),
                   ),
                   child: Stack(
+                    alignment: Alignment.center,
                     clipBehavior: Clip.none,
                     children: [
                       Icon(
-                        Icons.filter_list_rounded,
+                        Icons.tune_rounded,
                         color: _showFilterPanel ? primaryColor : Colors.grey[600],
                         size: 20,
                       ),
                       if (activeFiltersCount > 0)
                         Positioned(
-                          top: -6,
-                          right: -6,
+                          top: 8,
+                          right: 8,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            height: 8,
+                            width: 8,
                             decoration: const BoxDecoration(
-                              color: Colors.red,
+                              color: Colors.redAccent,
                               shape: BoxShape.circle,
-                            ),
-                            child: Text(
-                              activeFiltersCount.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.bold,
-                              ),
                             ),
                           ),
                         ),
