@@ -103,6 +103,11 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
   String? autoGradingLabel; // Rendah, Moderat, Tinggi, Ekstrim
   bool isCalculatingGrading = false;
 
+  // Similar incidents state variables
+  List similarIncidents = [];
+  bool isLoadingSimilar = false;
+  bool hasErrorSimilar = false;
+
   String _mapWarnaToGrading(String? warna) {
     if (warna == 'biru') return 'Biru';
     if (warna == 'hijau') return 'Hijau';
@@ -203,6 +208,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
     });
 
     _fetchAutoGrading();
+    _fetchSimilarIncidents();
   }
 
   Future<void> _fetchMasterData() async {
@@ -1025,6 +1031,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
               onChanged: (val) {
                 setState(() => selectedUnitId = val);
                 _fetchAutoGrading();
+                _fetchSimilarIncidents();
               },
             ),
           ),
@@ -1106,6 +1113,7 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
         _buildAutoGradingSection(),
         const SizedBox(height: 20),
         _buildGradingRisikoSelection(),
+        _buildSimilarIncidentsSection(),
         const SizedBox(height: 25),
         _buildInputLabel("Tindakan Awal yang Dilakukan Pasca Kejadian *"),
         const SizedBox(height: 8),
@@ -1684,6 +1692,203 @@ class _LaporIkpFormScreenState extends State<LaporIkpFormScreen> {
             );
           }).toList(),
         ),
+      ],
+    );
+  }
+
+  Future<void> _fetchSimilarIncidents() async {
+    if (selectedUnitId == null) {
+      setState(() {
+        similarIncidents = [];
+        isLoadingSimilar = false;
+      });
+      return;
+    }
+
+    setState(() {
+      isLoadingSimilar = true;
+      hasErrorSimilar = false;
+    });
+
+    try {
+      final String excludeParam = widget.existingData != null ? "&exclude_id=${widget.existingData!['id']}" : "";
+      final res = await Api().getData('/sdi/ikp/similar-by-unit?unit_id=$selectedUnitId$excludeParam');
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        if (body['success'] == true) {
+          setState(() {
+            similarIncidents = body['data'] ?? [];
+            isLoadingSimilar = false;
+          });
+          return;
+        }
+      }
+      setState(() {
+        hasErrorSimilar = true;
+        isLoadingSimilar = false;
+      });
+    } catch (e) {
+      debugPrint("Error fetching similar incidents in form: $e");
+      setState(() {
+        hasErrorSimilar = true;
+        isLoadingSimilar = false;
+      });
+    }
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      DateTime dt = DateTime.parse(dateStr).toLocal();
+      return DateFormat('dd MMMM yyyy', 'id_ID').format(dt);
+    } catch (e) {
+      return dateStr;
+    }
+  }
+
+  Widget _buildSimilarIncidentsSection() {
+    if (selectedUnitId == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 20),
+        const Divider(),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Icon(Icons.history_toggle_off_outlined, size: 18, color: primaryColor),
+            const SizedBox(width: 8),
+            Text(
+              "Data Insiden Pada Unit Kerja Yang Sama",
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor, letterSpacing: 0.5),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          "Data dibawah ini diambil 5 data terbaru yang pernah terjadi pada unit kerja yang sama.",
+          style: TextStyle(fontSize: 10, color: Colors.grey),
+        ),
+        const SizedBox(height: 12),
+        if (isLoadingSimilar)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          )
+        else if (hasErrorSimilar)
+          const Text(
+            "Gagal mengambil data insiden sejenis.",
+            style: TextStyle(fontSize: 11, color: Colors.red),
+          )
+        else if (similarIncidents.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: const Text(
+              "Belum ada insiden lain di unit kerja ini.",
+              style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
+            ),
+          )
+        else
+          ...similarIncidents.map((sim) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.grey[200]!),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.01),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    sim['insiden'] ?? '-',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Color(0xFF2D3142),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[50],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          sim['jenis_alias'] ?? 'IKP',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          (sim['dampak_insiden'] ?? '').toString().toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.orange[700],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined, size: 11, color: Colors.grey[400]),
+                      const SizedBox(width: 4),
+                      Text(
+                        sim['tanggal_insiden'] != null ? _formatDate(sim['tanggal_insiden']) : '-',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      ),
+                      const SizedBox(width: 15),
+                      Icon(Icons.location_on_outlined, size: 11, color: Colors.grey[400]),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          sim['tempat_kejadian'] ?? '-',
+                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
       ],
     );
   }
