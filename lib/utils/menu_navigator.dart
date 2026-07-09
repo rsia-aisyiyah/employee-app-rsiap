@@ -29,6 +29,7 @@ import 'package:rsia_employee_app/screen/menu/inventaris_mutasi.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/screen/menu/akreditasi/akreditasi_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
+import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -121,7 +122,7 @@ class MenuNavigator {
       case 'lapor-ikp':
       case 'lapor_ikp':
       case 'menu_lapor_ikp':
-        return const LaporIkpFormScreen();
+        return const LaporIkpHistoryScreen();
       case 'menu_berkas_pegawai':
         return null;
       default:
