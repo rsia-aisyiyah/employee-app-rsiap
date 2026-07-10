@@ -126,6 +126,9 @@ class IconMapper {
       case 'riwayat_lembur':
       case 'menu_riwayat_lembur':
         return Icons.manage_history_rounded;
+      case 'approval_lembur':
+      case 'menu_approval_lembur':
+        return Icons.verified_user_rounded;
       case 'campaign':
       case 'news':
       case 'pengumuman':

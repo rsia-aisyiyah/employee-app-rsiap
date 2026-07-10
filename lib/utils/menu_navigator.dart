@@ -20,6 +20,7 @@ import 'package:rsia_employee_app/screen/menu/approval_jadwal.dart';
 import 'package:rsia_employee_app/screen/menu/surat_eksternal/surat_eksternal_screen.dart';
 import 'package:rsia_employee_app/screen/menu/lembur.dart';
 import 'package:rsia_employee_app/screen/menu/lembur_history.dart';
+import 'package:rsia_employee_app/screen/menu/approval_lembur.dart';
 import 'package:rsia_employee_app/screen/menu/presensi_dokter.dart';
 import 'package:rsia_employee_app/screen/menu/jadwal_pegawai.dart';
 import 'package:rsia_employee_app/screen/menu/pemeliharaan_inventaris.dart';
@@ -87,6 +88,8 @@ class MenuNavigator {
         return const HelpdeskMainScreen();
       case 'menu_lembur':
         return const LemburScreen(title: 'Lembur');
+      case 'menu_approval_lembur':
+        return const ApprovalLemburScreen();
       case 'menu_riwayat_lembur':
         return const LemburHistoryScreen();
       case 'menu_penyakit':

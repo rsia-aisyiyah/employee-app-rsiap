@@ -187,8 +187,13 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
     Msg.info(context, "Menyiapkan file PDF...");
 
     try {
-      final baseWebUrl = AppConfig.baseUrl.replaceAll('/rsiapi-v2', '');
-      final downloadUrl = "$baseWebUrl/app/insiden/$id/print";
+      final String downloadUrl;
+      if (AppConfig.baseUrl.contains('rsiap.my.id')) {
+        downloadUrl = "https://ikp.rsiap.my.id/app/insiden/$id/print";
+      } else {
+        final baseWebUrl = AppConfig.baseUrl.replaceAll('/rsiapi-v2', '');
+        downloadUrl = "$baseWebUrl/ikp/app/insiden/$id/print";
+      }
 
       final dir = Platform.isAndroid
           ? (await getExternalStorageDirectory())?.path
@@ -857,8 +862,8 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
           "Riwayat IKP Unit",
           style: TextStyle(
             fontWeight: FontWeight.bold, 
-            fontSize: 18, 
-            letterSpacing: 0.8,
+            fontSize: 20, 
+            letterSpacing: 0.5,
             color: Colors.white,
           ),
         ),
@@ -867,12 +872,12 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
         backgroundColor: Colors.transparent,
         leading: IconButton(
           icon: Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withOpacity(0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white),
+            child: const Icon(Icons.arrow_back, size: 20, color: Colors.white),
           ),
           onPressed: () => Navigator.pop(context),
         ),
