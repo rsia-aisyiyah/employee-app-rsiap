@@ -219,105 +219,108 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
       decoration: BoxDecoration(
         color: primaryColor,
         borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
         ),
         boxShadow: [
           BoxShadow(
             color: primaryColor.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20, top: 5),
-      child: Column(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 18, top: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Period Select (monthly / yearly)
-              Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    _buildPeriodTab('monthly', 'Bulanan'),
-                    _buildPeriodTab('yearly', 'Tahunan'),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              
-              // Select Month & Year
-              Row(
+          // Period Toggle (Bulanan / Tahunan)
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
                 children: [
-                  if (_period == 'monthly') ...[
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _selectedMonth,
-                          dropdownColor: primaryColor,
-                          icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                          items: _monthsList.map((m) {
-                            return DropdownMenuItem<int>(
-                              value: m['value'],
-                              child: Text(m['label'].substring(0, 3)),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _selectedMonth = val);
-                              _loadDashboardData();
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<int>(
-                        value: _selectedYear,
-                        dropdownColor: primaryColor,
-                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                        items: List.generate(4, (i) => DateTime.now().year - i).map((y) {
-                          return DropdownMenuItem<int>(
-                            value: y,
-                            child: Text(y.toString()),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedYear = val);
-                            _loadDashboardData();
-                          }
-                        },
-                      ),
+                  _buildPeriodTab('monthly', 'Bulanan'),
+                  _buildPeriodTab('yearly', 'Tahunan'),
+                ],
+              ),
+            ),
+          ),
+
+          // Month & Year Selectors
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (_period == 'monthly') ...[
+                _buildDropdownPill(
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: _selectedMonth,
+                      dropdownColor: primaryColor,
+                      isDense: true,
+                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                      items: _monthsList.map((m) {
+                        return DropdownMenuItem<int>(
+                          value: m['value'],
+                          child: Text(m['label'].substring(0, 3)),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedMonth = val);
+                          _loadDashboardData();
+                        }
+                      },
                     ),
                   ),
-                ],
-              )
+                ),
+                const SizedBox(width: 8),
+              ],
+              _buildDropdownPill(
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: _selectedYear,
+                    dropdownColor: primaryColor,
+                    isDense: true,
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 18),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    items: List.generate(4, (i) => DateTime.now().year - i).map((y) {
+                      return DropdownMenuItem<int>(
+                        value: y,
+                        child: Text(y.toString()),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() => _selectedYear = val);
+                        _loadDashboardData();
+                      }
+                    },
+                  ),
+                ),
+              ),
             ],
-          )
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDropdownPill({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withOpacity(0.2)),
+      ),
+      child: child,
     );
   }
 
@@ -354,9 +357,9 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 3,
-      mainAxisSpacing: 10,
-      crossAxisSpacing: 10,
-      childAspectRatio: 1.1,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.75,
       children: [
         _buildStatCard("Total Tiket", summary['total_tickets']?.toString() ?? "0", Icons.folder_open, Colors.blue),
         _buildStatCard("Open", summary['open']?.toString() ?? "0", Icons.mail_outline, Colors.cyan),
@@ -372,28 +375,42 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(color: Colors.black.withOpacity(0.025), blurRadius: 8, offset: const Offset(0, 3))
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.08)),
+        border: Border.all(color: Colors.grey.withOpacity(0.07)),
       ),
-      padding: const EdgeInsets.all(10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 16),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[500]),
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), height: 1.1),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Colors.grey[500]),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
+              ],
+            ),
           ),
         ],
       ),
