@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/screen/menu/helpdesk_form.dart';
+import 'package:rsia_employee_app/screen/menu/helpdesk_dashboard.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 import 'package:rsia_employee_app/components/loadingku.dart';
 
@@ -322,29 +323,73 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_back,
+                          color: Colors.white, size: 20),
+                    ),
                   ),
-                  child: const Icon(Icons.arrow_back,
-                      color: Colors.white, size: 20),
-                ),
+                  const SizedBox(width: 15),
+                  const Text(
+                    "Helpdesk IT",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 15),
-              const Text(
-                "Helpdesk IT",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+              if (isIT)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const HelpdeskDashboardScreen()),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        )
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.dashboard_rounded, color: primaryColor, size: 14),
+                        const SizedBox(width: 5),
+                        Text(
+                          "Dashboard",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 25),
