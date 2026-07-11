@@ -190,7 +190,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildSummaryStats(),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           _buildSlaSection(),
                           const SizedBox(height: 20),
                           _buildTrendChartCard(),
