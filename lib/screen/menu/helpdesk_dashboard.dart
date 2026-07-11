@@ -367,7 +367,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
         _buildStatCard("Proses", summary['proses']?.toString() ?? "0", Icons.sync_rounded, Colors.orange),
         _buildStatCard("Selesai", summary['selesai']?.toString() ?? "0", Icons.check_circle_outline, Colors.green),
         _buildStatCard("Batal", summary['batal']?.toString() ?? "0", Icons.cancel_outlined, Colors.red),
-        _buildStatCard("MESSA Wait", summary['waiting_logs']?.toString() ?? "0", Icons.phone_android_rounded, Colors.pink),
+        _buildStatCard("Menunggu", summary['waiting_logs']?.toString() ?? "0", Icons.phone_android_rounded, Colors.pink),
       ],
     );
   }
