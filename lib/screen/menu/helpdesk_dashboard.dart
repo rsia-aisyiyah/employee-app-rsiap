@@ -387,7 +387,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B)),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
           ),
           const SizedBox(height: 2),
           Text(
@@ -483,11 +483,11 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(title, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[500])),
-              Text("${(percent * 100).round()}%", style: TextStyle(fontSize: 11, fontWeight: FontWeight.extrabold, color: color)),
+              Text("${(percent * 100).round()}%", style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
             ],
           ),
           const SizedBox(height: 6),
-          Text(ratio, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B))),
+          Text(ratio, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
           const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
@@ -532,7 +532,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Tren Volume Tiket", style: TextStyle(fontSize: 14, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B))),
+              const Text("Tren Volume Tiket", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
               Text(
                 _period == 'monthly' ? "${_getSelectedMonthName()} $_selectedYear" : "Tahun $_selectedYear",
                 style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.blue),
@@ -637,7 +637,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
             children: [
               Text(
                 "Data Rincian Aktivitas (${_period == 'monthly' ? _getSelectedMonthName() + ' ' + _selectedYear.toString() : _selectedYear.toString()})",
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B)),
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
               ),
             ],
           ),
@@ -818,7 +818,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Distribusi Kategori Kendala", style: TextStyle(fontSize: 14, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B))),
+          const Text("Distribusi Kategori Kendala", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
           const SizedBox(height: 15),
           ...byCategory.map((cat) {
             String label = cat['kategori'] ?? 'Lainnya';
@@ -880,7 +880,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Detail Kontribusi Tim", style: TextStyle(fontSize: 14, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B))),
+          const Text("Detail Kontribusi Tim", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
           const SizedBox(height: 15),
           ...topTechnicians.map((tech) {
             String name = tech['teknisi']?['nama'] ?? 'Tanpa Nama';
@@ -954,7 +954,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Tiket Terbaru Masuk", style: TextStyle(fontSize: 14, fontWeight: FontWeight.extrabold, color: Color(0xFF1E293B))),
+          const Text("Tiket Terbaru Masuk", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
           const SizedBox(height: 15),
           ...recentTickets.map((ticket) {
             String noTiket = ticket['no_tiket'] ?? '-';
@@ -1009,7 +1009,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
                         decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
                         child: Text(
                           status,
-                          style: TextStyle(color: statusColor, fontWeight: FontWeight.extrabold, fontSize: 9.5),
+                          style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 9.5),
                         ),
                       )
                     ],
@@ -1183,11 +1183,11 @@ class _LookupTicketsBottomSheetState extends State<_LookupTicketsBottomSheet> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(noTiket, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.extrabold, fontSize: 12, color: Colors.blue)),
+                                    Text(noTiket, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blue)),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(color: statusColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
-                                      child: Text(status, style: TextStyle(color: statusColor, fontWeight: FontWeight.extrabold, fontSize: 9.5)),
+                                      child: Text(status, style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 9.5)),
                                     )
                                   ],
                                 ),
