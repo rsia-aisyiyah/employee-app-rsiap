@@ -356,7 +356,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 8),
       crossAxisCount: 3,
       mainAxisSpacing: 8,
       crossAxisSpacing: 8,
