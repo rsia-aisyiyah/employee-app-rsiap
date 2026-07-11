@@ -190,7 +190,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildSummaryStats(),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 0),
                           _buildSlaSection(),
                           const SizedBox(height: 20),
                           _buildTrendChartCard(),
@@ -356,6 +356,7 @@ class _HelpdeskDashboardScreenState extends State<HelpdeskDashboardScreen> {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
       crossAxisCount: 3,
       mainAxisSpacing: 8,
       crossAxisSpacing: 8,
