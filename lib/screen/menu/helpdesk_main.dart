@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -29,10 +30,46 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
 
   final TextEditingController _searchController = TextEditingController();
 
+  // Scroll Controller & Pagination States
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  
+  // Filters
+  String _selectedStatusFilter = 'all'; // 'all', 'open', 'proses', 'selesai', 'batal'
+  String _selectedStatusFilterIncoming = 'all'; // 'all', 'WAITING', 'PROSES', 'SELESAI', 'BATAL'
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_scrollListener);
     _initSession();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreData();
+    }
+  }
+
+  Future<void> _loadMoreData() async {
+    if (_isLoadingMore || !_hasMore) return;
+    setState(() {
+      _isLoadingMore = true;
+      _currentPage++;
+    });
+    _fetchData(refresh: false);
   }
 
   Future<void> _initSession() async {
@@ -100,61 +137,107 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
     }
   }
 
-  Future<void> _fetchData() async {
+  Future<void> _fetchData({bool refresh = true}) async {
+    if (refresh) {
+      setState(() {
+        _currentPage = 1;
+        _hasMore = true;
+        isLoading = true;
+      });
+    }
+    
     if (activeTab == 0) {
-      await _fetchIncomingReports();
+      await _fetchIncomingReports(refresh: refresh);
     } else {
-      await _fetchManagementTickets();
+      await _fetchManagementTickets(refresh: refresh);
     }
   }
 
-  Future<void> _fetchIncomingReports() async {
-    setState(() => isLoading = true);
+  Future<void> _fetchIncomingReports({bool refresh = true}) async {
     try {
-      var res = await Api().getData('/helpdesk/tiket/history');
+      String queryParams = "?page=$_currentPage&limit=15";
+      if (_selectedStatusFilterIncoming != 'all') {
+        queryParams += "&status=$_selectedStatusFilterIncoming";
+      }
+      
+      var res = await Api().getData('/helpdesk/tiket/history$queryParams');
       var body = json.decode(res.body);
 
       if (res.statusCode == 200) {
+        var dataList = body['data']['data'] ?? [];
         setState(() {
-          allTickets = body['data']['data'] ?? [];
+          if (refresh) {
+            allTickets = dataList;
+          } else {
+            allTickets.addAll(dataList);
+          }
           filteredTickets = allTickets;
+          _hasMore = dataList.length >= 15;
           isLoading = false;
+          _isLoadingMore = false;
         });
       } else {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          _isLoadingMore = false;
+        });
         Msg.error(context, body['message'] ?? "Gagal memuat data");
       }
     } catch (e) {
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        _isLoadingMore = false;
+      });
       Msg.error(context, "Terjadi kesalahan: $e");
     }
   }
 
-  Future<void> _fetchManagementTickets() async {
-    setState(() => isLoading = true);
+  Future<void> _fetchManagementTickets({bool refresh = true}) async {
     try {
-      var res = await Api().getData('/helpdesk/tiket/active');
+      String queryParams = "?page=$_currentPage&limit=15";
+      if (_selectedStatusFilter != 'all') {
+        queryParams += "&status=${_selectedStatusFilter.substring(0, 1).toUpperCase()}${_selectedStatusFilter.substring(1)}";
+      }
+      if (_searchController.text.trim().isNotEmpty) {
+        queryParams += "&keyword=${Uri.encodeComponent(_searchController.text.trim())}";
+      }
+
+      var res = await Api().getData('/helpdesk/tiket/active$queryParams');
       var body = json.decode(res.body);
 
       if (res.statusCode == 200) {
+        var dataList = body['data']['data'] ?? [];
         setState(() {
-          managementTickets = body['data']['data'] ?? [];
+          if (refresh) {
+            managementTickets = dataList;
+          } else {
+            managementTickets.addAll(dataList);
+          }
           filteredManagementTickets = managementTickets;
+          _hasMore = dataList.length >= 15;
           isLoading = false;
+          _isLoadingMore = false;
         });
       } else {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          _isLoadingMore = false;
+        });
         Msg.error(context, body['message'] ?? "Gagal memuat data");
       }
     } catch (e) {
-      setState(() => isLoading = false);
+      setState(() {
+        isLoading = false;
+        _isLoadingMore = false;
+      });
       Msg.error(context, "Terjadi kesalahan: $e");
     }
   }
 
-  void _filterData(String query) {
-    setState(() {
-      if (activeTab == 0) {
+  void _onSearchChanged(String query) {
+    if (activeTab == 0) {
+      // Local filter for incoming reports (tab 0)
+      setState(() {
         filteredTickets = allTickets.where((ticket) {
           final laporan =
               (ticket['isi_laporan'] ?? '').toString().toLowerCase();
@@ -162,18 +245,16 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
           return laporan.contains(query.toLowerCase()) ||
               noTiket.contains(query.toLowerCase());
         }).toList();
-      } else {
-        filteredManagementTickets = managementTickets.where((ticket) {
-          final keluhan = (ticket['keluhan'] ?? '').toString().toLowerCase();
-          final noTiket = (ticket['no_tiket'] ?? '').toString().toLowerCase();
-          final pelapor =
-              (ticket['pelapor']?['nama'] ?? '').toString().toLowerCase();
-          return keluhan.contains(query.toLowerCase()) ||
-              noTiket.contains(query.toLowerCase()) ||
-              pelapor.contains(query.toLowerCase());
-        }).toList();
-      }
-    });
+      });
+    } else {
+      // Server-side debounced search for management tickets (tab 1)
+      _debounce?.cancel();
+      _debounce = Timer(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _fetchData(refresh: true);
+        }
+      });
+    }
   }
 
   Future<void> _acceptReport(int id) async {
@@ -187,7 +268,7 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
       var body = json.decode(res.body);
       if (res.statusCode == 200) {
         Msg.success(context, "Tiket berhasil diterbitkan");
-        _fetchIncomingReports();
+        _fetchIncomingReports(refresh: true);
       } else {
         setState(() => isLoading = false);
         Msg.error(context, body['message'] ?? "Gagal memproses laporan");
@@ -253,11 +334,12 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
       body: Column(
         children: [
           _buildHeader(),
+          _buildStatusFilterBar(),
           Expanded(
             child: isLoading
                 ? Center(child: loadingku(fullPage: false))
                 : RefreshIndicator(
-                    onRefresh: _fetchData,
+                    onRefresh: () => _fetchData(refresh: true),
                     color: primaryColor,
                     child: (activeTab == 0
                                 ? filteredTickets
@@ -424,7 +506,7 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
             ),
             child: TextField(
               controller: _searchController,
-              onChanged: _filterData,
+              onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: activeTab == 0
                     ? "Cari nomor tiket atau keluhan..."
@@ -450,7 +532,7 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
             activeTab = index;
             _searchController.clear();
           });
-          _fetchData();
+          _fetchData(refresh: true);
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -492,12 +574,107 @@ class _HelpdeskMainScreenState extends State<HelpdeskMainScreen> {
   Widget _buildTicketList() {
     List tickets = activeTab == 0 ? filteredTickets : filteredManagementTickets;
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(20),
-      itemCount: tickets.length,
+      itemCount: tickets.length + (_isLoadingMore ? 1 : 0),
       physics: const BouncingScrollPhysics(),
       itemBuilder: (context, index) {
+        if (index == tickets.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2.5),
+              ),
+            ),
+          );
+        }
         return _buildTicketCard(tickets[index]);
       },
+    );
+  }
+
+  Widget _buildStatusFilterBar() {
+    if (!isIT) return const SizedBox.shrink();
+    
+    List<Map<String, String>> filters = [];
+    if (activeTab == 0) {
+      filters = [
+        {'value': 'all', 'label': 'Semua'},
+        {'value': 'WAITING', 'label': 'Waiting'},
+        {'value': 'PROSES', 'label': 'Proses'},
+        {'value': 'SELESAI', 'label': 'Selesai'},
+        {'value': 'BATAL', 'label': 'Batal'},
+      ];
+    } else {
+      filters = [
+        {'value': 'all', 'label': 'Semua'},
+        {'value': 'open', 'label': 'Open'},
+        {'value': 'proses', 'label': 'Proses'},
+        {'value': 'selesai', 'label': 'Selesai'},
+        {'value': 'batal', 'label': 'Batal'},
+      ];
+    }
+
+    String currentFilter = activeTab == 0 ? _selectedStatusFilterIncoming : _selectedStatusFilter;
+
+    return Container(
+      height: 48,
+      margin: const EdgeInsets.only(top: 12, bottom: 2),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filters.length,
+        itemBuilder: (context, index) {
+          final filter = filters[index];
+          final bool isActive = currentFilter == filter['value'];
+          
+          return Container(
+            margin: const EdgeInsets.only(right: 8, top: 4, bottom: 8),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  if (activeTab == 0) {
+                    _selectedStatusFilterIncoming = filter['value']!;
+                  } else {
+                    _selectedStatusFilter = filter['value']!;
+                  }
+                });
+                _fetchData(refresh: true);
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isActive ? primaryColor : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isActive ? primaryColor : Colors.grey[200]!,
+                  ),
+                  boxShadow: isActive ? [
+                    BoxShadow(
+                      color: primaryColor.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    )
+                  ] : null,
+                ),
+                child: Text(
+                  filter['label']!,
+                  style: TextStyle(
+                    color: isActive ? Colors.white : const Color(0xFF475569),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
