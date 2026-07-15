@@ -75,14 +75,15 @@ class IconMapper {
         return Icons.event_note_rounded;
       case 'jadwal-tambahan':
       case 'menu_pengajuan_jadwal_tambahan':
-        return Icons.edit_calendar_rounded;
+        return Icons.more_time_rounded;
       case 'approval':
       case 'approval_jadwal':
       case 'jadwal_approval':
       case 'menu_approval_jadwal':
+        return Icons.event_available_rounded;
       case 'approval-jadwal-tambahan':
       case 'menu_approval_jadwal_tambahan':
-        return Icons.event_available_rounded;
+        return Icons.fact_check_rounded;
       case 'money':
       case 'payments':
       case 'payment':
