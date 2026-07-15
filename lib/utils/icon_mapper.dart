@@ -70,9 +70,10 @@ class IconMapper {
       case 'event':
       case 'pengajuan_jadwal':
       case 'menu_pengajuan_jadwal':
+        return Icons.edit_calendar_rounded;
       case 'jadwal_pegawai':
       case 'menu_jadwal_pegawai':
-        return Icons.event_note_rounded;
+        return Icons.calendar_month;
       case 'jadwal-tambahan':
       case 'menu_pengajuan_jadwal_tambahan':
         return Icons.more_time_rounded;
