@@ -23,13 +23,14 @@ import 'package:rsia_employee_app/screen/menu/lembur_history.dart';
 import 'package:rsia_employee_app/screen/menu/approval_lembur.dart';
 import 'package:rsia_employee_app/screen/menu/presensi_dokter.dart';
 import 'package:rsia_employee_app/screen/menu/jadwal_pegawai.dart';
+import 'package:rsia_employee_app/screen/menu/pengajuan_jadwal_tambahan.dart';
+import 'package:rsia_employee_app/screen/menu/approval_jadwal_tambahan.dart';
 import 'package:rsia_employee_app/screen/menu/pemeliharaan_inventaris.dart';
 import 'package:rsia_employee_app/screen/menu/permintaan_perbaikan.dart';
 import 'package:rsia_employee_app/screen/menu/perbaikan_service.dart';
 import 'package:rsia_employee_app/screen/menu/inventaris_mutasi.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/screen/menu/akreditasi/akreditasi_home_screen.dart';
-import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
 
 class MenuNavigator {
@@ -80,6 +81,10 @@ class MenuNavigator {
       case 'jadwal_approval':
       case 'menu_approval_jadwal':
         return const ApprovalJadwal();
+      case 'menu_pengajuan_jadwal_tambahan':
+        return const PengajuanJadwalTambahan();
+      case 'menu_approval_jadwal_tambahan':
+        return const ApprovalJadwalTambahan();
       case 'menu_dashboard_kunjungan':
         return const DashboardKunjungan();
       case 'menu_dashboard_bed':
