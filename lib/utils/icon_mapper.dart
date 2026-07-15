@@ -1,7 +1,22 @@
 import 'package:flutter/material.dart';
 
 class IconMapper {
-  static IconData getIcon(String iconName) {
+  static IconData getIcon(String iconName, {String? routeKey}) {
+    if (routeKey != null && routeKey.isNotEmpty) {
+      switch (routeKey.toLowerCase()) {
+        case 'menu_pengajuan_jadwal':
+        case 'pengajuan_jadwal':
+          return Icons.edit_calendar_rounded;
+        case 'menu_jadwal_pegawai':
+        case 'jadwal_pegawai':
+          return Icons.calendar_month;
+        case 'menu_pengajuan_jadwal_tambahan':
+          return Icons.more_time_rounded;
+        case 'menu_approval_jadwal_tambahan':
+          return Icons.fact_check_rounded;
+      }
+    }
+
     switch (iconName.toLowerCase()) {
       // Essentials & Common Actions
       case 'home':

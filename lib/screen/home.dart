@@ -577,7 +577,7 @@ class _HomePageState extends State<HomePage> {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    IconMapper.getIcon(item['icon']?.toString() ?? ""),
+                    IconMapper.getIcon(item['icon']?.toString() ?? "", routeKey: item['route']?.toString()),
                     size: 28,
                     color: isDisabled ? Colors.grey : themeColor,
                   ),
@@ -797,7 +797,7 @@ class _HomePageState extends State<HomePage> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      IconMapper.getIcon(parent['icon']?.toString() ?? ""),
+                      IconMapper.getIcon(parent['icon']?.toString() ?? "", routeKey: parent['route']?.toString()),
                       color: themeColor,
                       size: 24,
                     ),
@@ -863,7 +863,7 @@ class _HomePageState extends State<HomePage> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            IconMapper.getIcon(sub['icon']?.toString() ?? ""),
+                            IconMapper.getIcon(sub['icon']?.toString() ?? "", routeKey: sub['route']?.toString()),
                             size: 24,
                             color: isSubDisabled ? Colors.grey : themeColor,
                           ),
