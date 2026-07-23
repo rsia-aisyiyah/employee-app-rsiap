@@ -32,6 +32,7 @@ import 'package:rsia_employee_app/screen/menu/inventaris_mutasi.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/screen/menu/akreditasi/akreditasi_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
+import 'package:rsia_employee_app/screen/menu/ebook/ebook_main_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -131,6 +132,16 @@ class MenuNavigator {
       case 'lapor_ikp':
       case 'menu_lapor_ikp':
         return const LaporIkpHistoryScreen();
+      case 'menu_ebook':
+      case 'menu_e_book':
+      case 'menu_ebook_jurnal':
+      case 'ebook':
+      case 'e_book':
+      case 'ebook_jurnal':
+        return const EbookMainScreen(initialTabIndex: 0);
+      case 'menu_jurnal':
+      case 'jurnal':
+        return const EbookMainScreen(initialTabIndex: 1);
       case 'menu_berkas_pegawai':
         return null;
       default:

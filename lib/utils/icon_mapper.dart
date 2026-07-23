@@ -188,6 +188,17 @@ class IconMapper {
       case 'indikator_ranap':
         return Icons.query_stats_rounded;
 
+      // E-Book & Jurnal
+      case 'ebook':
+      case 'e_book':
+      case 'menu_ebook':
+      case 'menu_e_book':
+      case 'menu_ebook_jurnal':
+        return Icons.menu_book_rounded;
+      case 'jurnal':
+      case 'menu_jurnal':
+        return Icons.article_rounded;
+
       // Akreditasi (parent menu)
       case 'akreditasi':
       case 'menu_akreditasi':
