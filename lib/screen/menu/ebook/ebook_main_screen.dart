@@ -189,7 +189,7 @@ class _EbookListTabState extends State<EbookListTab> {
     setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
-        _service.fetchCategories(),
+        _service.fetchCategories(jenis: widget.jenis),
         _service.fetchEbooks(
           page: 1,
           jenis: widget.jenis,

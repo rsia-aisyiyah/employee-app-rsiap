@@ -58,9 +58,12 @@ class EbookService {
   }
 
   /// Fetch categories for E-Book & Jurnal
-  Future<List<Map<String, dynamic>>> fetchCategories() async {
+  Future<List<Map<String, dynamic>>> fetchCategories({String? jenis}) async {
     try {
-      final response = await _api.getData('/sdi/ebook/categories');
+      final String pathUrl = (jenis != null && jenis.isNotEmpty)
+          ? '/sdi/ebook/categories?jenis=$jenis'
+          : '/sdi/ebook/categories';
+      final response = await _api.getData(pathUrl);
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         if (data['success'] == true) {
