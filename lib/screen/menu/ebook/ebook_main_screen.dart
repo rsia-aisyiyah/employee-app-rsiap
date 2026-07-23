@@ -468,7 +468,8 @@ class _EbookListTabState extends State<EbookListTab> {
       },
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected ? themeColor : const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(20),
@@ -479,6 +480,7 @@ class _EbookListTabState extends State<EbookListTab> {
         ),
         child: Text(
           label,
+          textAlign: TextAlign.center,
           style: TextStyle(
             color: isSelected ? Colors.white : const Color(0xFF475569),
             fontSize: 12,
