@@ -287,15 +287,10 @@ class _EbookListTabState extends State<EbookListTab> {
       item['views_count'] = (item['views_count'] ?? 0) + 1;
     });
 
-    Directory? dir;
-    if (Platform.isAndroid) {
-      dir = await getExternalStorageDirectory();
-    } else {
-      dir = await getApplicationDocumentsDirectory();
-    }
+    final Directory dir = await getTemporaryDirectory();
 
     final filename = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-    final String localFilePath = "${dir!.path}/$filename";
+    final String localFilePath = "${dir.path}/$filename";
     final File localFile = File(localFilePath);
 
     if (await localFile.exists()) {
@@ -303,7 +298,7 @@ class _EbookListTabState extends State<EbookListTab> {
       return;
     }
 
-    // Download file
+    // Download to temporary private app cache for viewing
     setState(() {
       _downloadingIds.add(id);
       _downloadProgress[id] = 0.0;
@@ -328,7 +323,7 @@ class _EbookListTabState extends State<EbookListTab> {
           _downloadingIds.remove(id);
           _downloadProgress.remove(id);
         });
-        Msg.success(context, 'Unduh selesai. Membuka dokumen...');
+        Msg.success(context, 'Membuka dokumen...');
         await OpenFilex.open(localFilePath);
       }
     } catch (e) {
@@ -337,7 +332,7 @@ class _EbookListTabState extends State<EbookListTab> {
           _downloadingIds.remove(id);
           _downloadProgress.remove(id);
         });
-        Msg.error(context, 'Gagal mengunduh berkas PDF');
+        Msg.error(context, 'Gagal memuat dokumen PDF');
       }
     }
   }
