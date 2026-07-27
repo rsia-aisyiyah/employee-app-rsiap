@@ -46,19 +46,21 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to scan QR codes and verify attendance</string>
+	<string>Aplikasi memerlukan akses kamera untuk memindai kode QR absensi presensi pegawai serta mengambil foto profil pegawai RSIA Aisyiyah Pekajangan.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Aplikasi membutuhkan lokasi Anda untuk memverifikasi kehadiran saat berada di area kantor.</string>
+	<string>Aplikasi memerlukan akses lokasi saat digunakan untuk memverifikasi bahwa posisi pegawai berada di area kantor RSIA Aisyiyah Pekajangan saat melakukan presensi kehadiran.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Aplikasi membutuhkan lokasi Anda untuk memverifikasi kehadiran saat berada di area kantor.</string>
+	<string>Aplikasi memerlukan akses lokasi untuk memverifikasi bahwa posisi pegawai berada di area kantor RSIA Aisyiyah Pekajangan saat melakukan presensi kehadiran.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Aplikasi membutuhkan lokasi Anda untuk memverifikasi kehadiran saat berada di area kantor.</string>
+	<string>Aplikasi memerlukan akses lokasi untuk memverifikasi bahwa posisi pegawai berada di area kantor RSIA Aisyiyah Pekajangan saat melakukan presensi kehadiran.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs photos access to save downloaded files</string>
+	<string>Aplikasi memerlukan akses ke galeri foto untuk memilih foto profil pegawai serta menyimpan dokumen berkas yang diunduh dari aplikasi.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Aplikasi memerlukan izin untuk menyimpan berkas atau dokumen yang diunduh ke galeri foto perangkat Anda.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app needs microphone access</string>
+	<string>Aplikasi memerlukan akses mikrofon untuk merekam audio apabila fitur perekaman video digunakan saat verifikasi presensi pegawai.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Gunakan Face ID untuk login lebih cepat dan aman</string>
+	<string>Aplikasi menggunakan Face ID atau Touch ID untuk autentikasi login pegawai yang lebih cepat dan aman.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
