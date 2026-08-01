@@ -108,7 +108,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getJadwal() async {
     try {
-      var res = await Api().getData("/pegawai/${box.read('sub')}/jadwal");
+      var res = await Api().getData("/pegawai/${box.read('sub')}/jadwal?mode=final");
       var body = json.decode(res.body);
       if (res.statusCode == 200) {
         if (mounted) {
