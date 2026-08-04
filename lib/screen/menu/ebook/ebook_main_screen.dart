@@ -493,7 +493,7 @@ class _EbookListTabState extends State<EbookListTab> {
     final String category = item['kategori']?['nama_kategori']?.toString() ?? 'Umum';
     final String year = item['tahun_terbit']?.toString() ?? '-';
     final int views = item['views_count'] ?? 0;
-    final String? coverPath = item['cover']?.toString();
+    final String? coverPath = (item['cover_image'] ?? item['cover'])?.toString();
     final int id = int.tryParse(item['id'].toString()) ?? 0;
     final bool isDownloading = _downloadingIds.contains(id);
     final double progress = _downloadProgress[id] ?? 0.0;
