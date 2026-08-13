@@ -621,10 +621,20 @@ class _SertifikasiState extends State<Sertifikasi> {
     );
   }
 
-  Future<void> _openCertificate(String filename, {bool isPengajuan = false, int? id}) async {
-    String url = isPengajuan
-        ? "$apiUrl/diklat/pengajuan/download/$id"
-        : "$apiUrl/diklat/download/$filename";
+  Future<void> _openCertificate(String filename, {bool isPengajuan = false, bool isInternal = false, int? id}) async {
+    String url = "";
+    if (isPengajuan && id != null) {
+      url = "$apiUrl/diklat/pengajuan/download/$id";
+    } else if (isInternal && id != null) {
+      url = "$apiUrl/diklat/$id/sertifikat/pdf";
+    } else if (filename.isNotEmpty) {
+      url = "$apiUrl/diklat/download/$filename";
+    } else if (id != null) {
+      url = "$apiUrl/diklat/$id/sertifikat/pdf";
+    } else {
+      Msg.error(context, "File sertifikat tidak ditemukan");
+      return;
+    }
     var token = box.read('token');
 
     try {
@@ -637,7 +647,8 @@ class _SertifikasiState extends State<Sertifikasi> {
 
       if (dir == null) throw "Directory not found";
 
-      String localPath = "$dir/$filename";
+      String safeFileName = filename.isNotEmpty ? filename : "Sertifikat_Diklat_$id.pdf";
+      String localPath = "$dir/$safeFileName";
       File file = File(localPath);
 
       if (await file.exists()) {
@@ -1137,47 +1148,52 @@ class _SertifikasiState extends State<Sertifikasi> {
             ),
           ),
 
-          // Action Button (if file exists)
-          if (data['berkas'] != null && data['berkas'] != '') ...[
-            Container(
-              decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.04),
-                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-                border: Border.fromBorderSide(
-                  BorderSide(color: primaryColor.withOpacity(0.05), width: 1)
-                ),
+          // Action Button (Available for all certificates)
+          Container(
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.04),
+              borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+              border: Border.fromBorderSide(
+                BorderSide(color: primaryColor.withOpacity(0.05), width: 1)
               ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    _openCertificate(data['berkas']);
-                  },
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.download_rounded, size: 16, color: primaryColor),
-                        const SizedBox(width: 8),
-                        Text(
-                          "Lihat & Unduh Sertifikat",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  final String berkas = data['berkas']?.toString() ?? '';
+                  final int? id = data['id'];
+                  final bool isEksternal = (data['is_eksternal'] == 1 || data['is_eksternal'] == '1');
+                  if (berkas.isNotEmpty && isEksternal) {
+                    _openCertificate(berkas, id: id);
+                  } else {
+                    _openCertificate(berkas, isInternal: true, id: id);
+                  }
+                },
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.download_rounded, size: 16, color: primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Lihat & Unduh Sertifikat",
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
                         ),
-                        const SizedBox(width: 4),
-                        Icon(Icons.arrow_forward_ios_rounded, size: 11, color: primaryColor),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 11, color: primaryColor),
+                    ],
                   ),
                 ),
               ),
-            )
-          ]
+            ),
+          )
         ],
       ),
     );
