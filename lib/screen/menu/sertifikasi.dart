@@ -62,10 +62,14 @@ class _SertifikasiState extends State<Sertifikasi> {
       if (res.statusCode == 200) {
         var body = json.decode(res.body);
         if (mounted) {
-          setState(() {
-            dataSertifikasi = body['data'] ?? [];
+            List rawList = body['data'] ?? [];
+            rawList.sort((a, b) {
+              String tglA = a['kegiatan']?['tgl_mulai']?.toString() ?? '';
+              String tglB = b['kegiatan']?['tgl_mulai']?.toString() ?? '';
+              return tglA.compareTo(tglB);
+            });
+            dataSertifikasi = rawList;
             isLoading = false;
-          });
         }
       } else {
         if (mounted) {
@@ -157,11 +161,11 @@ class _SertifikasiState extends State<Sertifikasi> {
       }
     }
     var sorted = years.toList();
-    // Sort descending with 'Semua' at index 0
+    // Sort ascending with 'Semua' at index 0
     sorted.sort((a, b) {
       if (a == 'Semua') return -1;
       if (b == 'Semua') return 1;
-      return b.compareTo(a);
+      return a.compareTo(b);
     });
     return sorted;
   }
