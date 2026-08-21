@@ -58,7 +58,7 @@ class _FileManagerState extends State<FileManager> {
   }
 
   Future fetchFileManager() async {
-    var res = await Api().getData("/rsia/file/manager");
+    var res = await Api().getData("/rsia/file/manager?limit=100");
     if (res.statusCode == 200) {
       var body = json.decode(res.body);
 
