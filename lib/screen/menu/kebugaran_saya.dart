@@ -295,7 +295,9 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
     int rhr = _parseNum(todayData['detak_jantung_resting']);
     int sleepMin = _parseNum(todayData['durasi_tidur_menit']);
     double sleepHours = double.parse((sleepMin / 60).toStringAsFixed(1));
-    double spo2 = double.tryParse(todayData['spo2_avg']?.toString() ?? '98.5') ?? 98.5;
+    double? spo2Val = double.tryParse(todayData['spo2_avg']?.toString() ?? '');
+    int calories = _parseNum(todayData['kalori_aktif']);
+    int activeMins = _parseNum(todayData['menit_aktif']);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -323,9 +325,9 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
                 child: _buildMetricTile(
                   title: "Tidur Malam",
                   value: "$sleepHours Jam",
-                  subtitle: sleepMin < 300 ? "⚠️ Kurang Tidur" : "Cukup Istirahat",
+                  subtitle: sleepMin == 0 ? "Belum ada data" : (sleepMin < 300 ? "⚠️ Kurang Tidur" : "Cukup Istirahat"),
                   icon: "😴",
-                  color: sleepMin < 300 ? Colors.orange : Colors.indigo,
+                  color: sleepMin == 0 ? Colors.grey : (sleepMin < 300 ? Colors.orange : Colors.indigo),
                 ),
               ),
             ],
@@ -336,8 +338,8 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
               Expanded(
                 child: _buildMetricTile(
                   title: "Saturasi SpO2",
-                  value: "$spo2%",
-                  subtitle: "Normal (95-100%)",
+                  value: spo2Val != null ? "$spo2Val%" : "- %",
+                  subtitle: spo2Val != null ? "Normal (95-100%)" : "Belum ada data",
                   icon: "🩸",
                   color: Colors.teal,
                 ),
@@ -346,8 +348,8 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
               Expanded(
                 child: _buildMetricTile(
                   title: "Kalori Aktif",
-                  value: "${todayData['kalori_aktif'] ?? 340} kcal",
-                  subtitle: "${todayData['menit_aktif'] ?? 45} mnt aktif",
+                  value: "$calories kcal",
+                  subtitle: "$activeMins mnt aktif",
                   icon: "🔥",
                   color: Colors.deepOrange,
                 ),

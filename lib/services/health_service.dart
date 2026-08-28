@@ -69,7 +69,7 @@ class HealthService {
     int totalSleepMinutes = 0;
     int deepSleepMinutes = 0;
     int remSleepMinutes = 0;
-    double avgSpo2 = 98.0;
+    double? avgSpo2;
 
     try {
       bool authorized = await requestPermissions();
