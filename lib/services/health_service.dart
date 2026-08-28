@@ -29,8 +29,21 @@ class HealthService {
 
       // Trigger native OS permission dialogs on Android
       if (defaultTargetPlatform == TargetPlatform.android) {
-        await Permission.activityRecognition.request();
-        await Permission.sensors.request();
+        try {
+          await Permission.activityRecognition.request();
+          await Permission.sensors.request();
+
+          var status = await _health.getHealthConnectSdkStatus();
+          if (status == HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired) {
+            await _health.installHealthConnect();
+            return false;
+          } else if (status != HealthConnectSdkStatus.sdkAvailable) {
+            debugPrint("Health Connect SDK Status: $status");
+            return false;
+          }
+        } catch (e) {
+          debugPrint("Android Health Connect check error: $e");
+        }
       }
 
       bool? hasPermission = await _health.hasPermissions(_types);
