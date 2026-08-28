@@ -4,6 +4,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/colors.dart';
+import 'package:rsia_employee_app/services/health_service.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
 class KebugaranSayaScreen extends StatefulWidget {
@@ -88,28 +89,15 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
     final nik = box.read('sub');
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-    // Demo sync payload to backend
+    // Fetch real metrics from Apple Health / Google Health Connect
+    Map<String, dynamic> realHealth = await HealthService.fetchTodayHealthData();
+    realHealth['tanggal'] = today;
+
     final syncPayload = {
       'nik': nik,
       'platform': Theme.of(context).platform == TargetPlatform.iOS ? 'iOS' : 'Android',
-      'device_name': 'Smartwatch / Fit Device',
-      'logs': [
-        {
-          'tanggal': today,
-          'jumlah_langkah': 8450,
-          'jarak_km': 5.4,
-          'kalori_aktif': 340,
-          'menit_aktif': 45,
-          'detak_jantung_avg': 74,
-          'detak_jantung_max': 125,
-          'detak_jantung_resting': 62,
-          'durasi_tidur_menit': 435, // 7.25 jam
-          'tidur_nyenyak_menit': 120,
-          'tidur_rem_menit': 80,
-          'spo2_avg': 98.5,
-          'sumber_device': 'Smartwatch'
-        }
-      ]
+      'device_name': realHealth['sumber_device'] ?? 'Smartwatch',
+      'logs': [realHealth]
     };
 
     try {

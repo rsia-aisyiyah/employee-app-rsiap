@@ -59,8 +59,10 @@
 	<string>Aplikasi memerlukan izin untuk menyimpan berkas atau dokumen yang diunduh ke galeri foto perangkat Anda.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Aplikasi memerlukan akses mikrofon untuk merekam audio apabila fitur perekaman video digunakan saat verifikasi presensi pegawai.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Aplikasi menggunakan Face ID atau Touch ID untuk autentikasi login pegawai yang lebih cepat dan aman.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Aplikasi memerlukan akses data kesehatan (Langkah, Detak Jantung, Kualitas Tidur) untuk pemantauan kebugaran dan kesehatan pegawai RSIA Aisyiyah Pekajangan.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Aplikasi memerlukan izin untuk memperbarui catatan data kesehatan pegawai RSIA Aisyiyah Pekajangan.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
