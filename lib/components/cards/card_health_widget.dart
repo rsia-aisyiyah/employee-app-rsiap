@@ -88,13 +88,21 @@ class _CardHealthWidgetState extends State<CardHealthWidget> {
     }
   }
 
+  int _parseNum(dynamic val) {
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is double) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? (double.tryParse(val)?.toInt() ?? 0);
+    return 0;
+  }
+
   @override
   Widget build(BuildContext context) {
     bool hasData = todayData.isNotEmpty && todayData['jumlah_langkah'] != null;
-    int steps = todayData['jumlah_langkah'] ?? 0;
+    int steps = _parseNum(todayData['jumlah_langkah']);
     double progress = (steps / 10000).clamp(0.0, 1.0);
-    int hr = todayData['detak_jantung_avg'] ?? 0;
-    int sleepMin = todayData['durasi_tidur_menit'] ?? 0;
+    int hr = _parseNum(todayData['detak_jantung_avg']);
+    int sleepMin = _parseNum(todayData['durasi_tidur_menit']);
     double sleepHours = double.parse((sleepMin / 60).toStringAsFixed(1));
 
     return GestureDetector(

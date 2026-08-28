@@ -161,8 +161,16 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
     );
   }
 
+  int _parseNum(dynamic val) {
+    if (val == null) return 0;
+    if (val is int) return val;
+    if (val is double) return val.toInt();
+    if (val is String) return int.tryParse(val) ?? (double.tryParse(val)?.toInt() ?? 0);
+    return 0;
+  }
+
   Widget _buildHeaderSummary() {
-    int steps = todayData['jumlah_langkah'] ?? 8450;
+    int steps = _parseNum(todayData['jumlah_langkah']);
     double progress = (steps / 10000).clamp(0.0, 1.0);
 
     return Container(
@@ -283,11 +291,11 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
   }
 
   Widget _buildMetricCards() {
-    int hr = todayData['detak_jantung_avg'] ?? 74;
-    int rhr = todayData['detak_jantung_resting'] ?? 62;
-    int sleepMin = todayData['durasi_tidur_menit'] ?? 435;
+    int hr = _parseNum(todayData['detak_jantung_avg']);
+    int rhr = _parseNum(todayData['detak_jantung_resting']);
+    int sleepMin = _parseNum(todayData['durasi_tidur_menit']);
     double sleepHours = double.parse((sleepMin / 60).toStringAsFixed(1));
-    double spo2 = (todayData['spo2_avg'] ?? 98.5).toDouble();
+    double spo2 = double.tryParse(todayData['spo2_avg']?.toString() ?? '98.5') ?? 98.5;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -463,7 +471,7 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
               style: const TextStyle(fontSize: 11),
             ),
             trailing: Text(
-              "${NumberFormat.decimalPattern('id').format(item['total_steps'] ?? 0)} lgk",
+              "${NumberFormat.decimalPattern('id').format(_parseNum(item['total_steps']))} lgk",
               style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
@@ -496,7 +504,7 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
             title: Text(item['departemen'] ?? 'Unit', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
             subtitle: Text("${item['total_members']} Anggota Aktif", style: const TextStyle(fontSize: 11)),
             trailing: Text(
-              "${NumberFormat.decimalPattern('id').format(item['avg_steps_per_member'] ?? 0)} lgk/staf",
+              "${NumberFormat.decimalPattern('id').format(_parseNum(item['avg_steps_per_member']))} lgk/staf",
               style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
