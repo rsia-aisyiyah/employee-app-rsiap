@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HealthService {
   static final Health _health = Health();
@@ -25,6 +26,13 @@ class HealthService {
   static Future<bool> requestPermissions() async {
     try {
       configure();
+
+      // Trigger native OS permission dialogs on Android
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        await Permission.activityRecognition.request();
+        await Permission.sensors.request();
+      }
+
       bool? hasPermission = await _health.hasPermissions(_types);
       if (hasPermission == true) return true;
 
