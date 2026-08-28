@@ -14,6 +14,7 @@ import 'package:rsia_employee_app/components/skeletons/skeleton_home.dart';
 import 'package:rsia_employee_app/utils/icon_mapper.dart';
 import 'package:rsia_employee_app/utils/menu_navigator.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
+import 'package:rsia_employee_app/components/cards/card_health_widget.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -618,7 +619,11 @@ class _HomePageState extends State<HomePage> {
           _buildTopSection(),
           _buildAttendanceStatus(),
           Transform.translate(
-            offset: const Offset(0, -10), // Shift title up slightly (adds spacing from top card)
+            offset: const Offset(0, -25),
+            child: const CardHealthWidget(),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -20), // Shift title up slightly (adds spacing from top card)
             child: const Padding(
               padding: EdgeInsets.fromLTRB(20, 0, 20, 5),
               child: Text(

@@ -33,10 +33,16 @@ import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/screen/menu/akreditasi/akreditasi_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
 import 'package:rsia_employee_app/screen/menu/ebook/ebook_main_screen.dart';
+import 'package:rsia_employee_app/screen/menu/kebugaran_saya.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
     switch (routeKey) {
+      case 'menu_kebugaran':
+      case 'menu_kesehatan':
+      case 'kebugaran_saya':
+      case 'kebugaran':
+        return const KebugaranSayaScreen();
       case 'menu_dashboard':
       case 'menu_dashboard_rs':
         return const DashboardRS();
