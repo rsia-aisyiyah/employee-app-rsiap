@@ -103,13 +103,47 @@ class _KebugaranSayaScreenState extends State<KebugaranSayaScreen> with SingleTi
     try {
       var res = await Api().postData(syncPayload, '/sdi/health/sync');
       if (res.statusCode == 200) {
-        Msg.success(context, "Data Smartwatch berhasil disinkronkan!");
+        if (mounted) {
+          int steps = realHealth['jumlah_langkah'] ?? 0;
+          String logInfo = realHealth['status_log'] ?? '';
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              title: const Row(
+                children: [
+                  Icon(Icons.health_and_safety, color: Colors.teal),
+                  SizedBox(width: 8),
+                  Text("Status Sync Sensor", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Langkah Terbaca: $steps langkah", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text("Sumber: ${realHealth['sumber_device']}"),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(10)),
+                    child: Text(logInfo.isEmpty ? "Tidak ada catatan error." : logInfo, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Tutup")),
+              ],
+            ),
+          );
+        }
         await _loadHealthData();
       } else {
-        Msg.error(context, "Gagal menyinkronkan data Smartwatch");
+        if (mounted) Msg.error(context, "Gagal menyinkronkan data Smartwatch");
       }
     } catch (e) {
-      Msg.error(context, "Terjadi kesalahan sync: $e");
+      if (mounted) Msg.error(context, "Terjadi kesalahan sync: $e");
     } finally {
       if (mounted) {
         setState(() {

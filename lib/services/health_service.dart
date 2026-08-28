@@ -36,10 +36,6 @@ class HealthService {
           var status = await _health.getHealthConnectSdkStatus();
           if (status == HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired) {
             await _health.installHealthConnect();
-            return false;
-          } else if (status != HealthConnectSdkStatus.sdkAvailable) {
-            debugPrint("Health Connect SDK Status: $status");
-            return false;
           }
         } catch (e) {
           debugPrint("Android Health Connect check error: $e");
@@ -70,58 +66,67 @@ class HealthService {
     int deepSleepMinutes = 0;
     int remSleepMinutes = 0;
     double? avgSpo2;
+    String statusLog = "";
 
     try {
       bool authorized = await requestPermissions();
+      statusLog += "Permission Authorized: $authorized. ";
 
-      if (authorized) {
-        // 1. Fetch Steps
-        try {
-          int? steps = await _health.getTotalStepsInInterval(midnight, now);
-          if (steps != null) totalSteps = steps;
-        } catch (e) {
-          debugPrint("Error fetching steps: $e");
+      // Always try fetching steps even if HealthConnect authorization is partial
+      try {
+        int? steps = await _health.getTotalStepsInInterval(midnight, now);
+        if (steps != null && steps > 0) {
+          totalSteps = steps;
+          statusLog += "Steps: $steps. ";
+        } else {
+          statusLog += "Steps: 0/null. ";
         }
+      } catch (e) {
+        statusLog += "Steps Err: $e. ";
+        debugPrint("Error fetching steps: $e");
+      }
 
-        // 2. Fetch Health Data Points (Heart Rate, Sleep, SpO2)
-        try {
-          List<HealthDataPoint> dataPoints = await _health.getHealthDataFromTypes(
-            types: _types,
-            startTime: midnight,
-            endTime: now,
-          );
+      // Fetch Health Data Points (Heart Rate, Sleep, SpO2)
+      try {
+        List<HealthDataPoint> dataPoints = await _health.getHealthDataFromTypes(
+          types: _types,
+          startTime: midnight,
+          endTime: now,
+        );
 
-          List<double> hrValues = [];
-          for (var point in dataPoints) {
-            if (point.type == HealthDataType.HEART_RATE) {
-              if (point.value is NumericHealthValue) {
-                double val = (point.value as NumericHealthValue).numericValue.toDouble();
-                hrValues.add(val);
-              }
-            } else if (point.type == HealthDataType.SLEEP_ASLEEP) {
-              int durationMin = point.dateTo.difference(point.dateFrom).inMinutes;
-              totalSleepMinutes += durationMin;
-            } else if (point.type == HealthDataType.BLOOD_OXYGEN) {
-              if (point.value is NumericHealthValue) {
-                avgSpo2 = (point.value as NumericHealthValue).numericValue.toDouble();
-              }
+        statusLog += "DataPoints count: ${dataPoints.length}. ";
+
+        List<double> hrValues = [];
+        for (var point in dataPoints) {
+          if (point.type == HealthDataType.HEART_RATE) {
+            if (point.value is NumericHealthValue) {
+              double val = (point.value as NumericHealthValue).numericValue.toDouble();
+              hrValues.add(val);
+            }
+          } else if (point.type == HealthDataType.SLEEP_ASLEEP) {
+            int durationMin = point.dateTo.difference(point.dateFrom).inMinutes;
+            totalSleepMinutes += durationMin;
+          } else if (point.type == HealthDataType.BLOOD_OXYGEN) {
+            if (point.value is NumericHealthValue) {
+              avgSpo2 = (point.value as NumericHealthValue).numericValue.toDouble();
             }
           }
-
-          if (hrValues.isNotEmpty) {
-            avgHeartRate = hrValues.reduce((a, b) => a + b) / hrValues.length;
-            maxHeartRate = hrValues.reduce((a, b) => a > b ? a : b).toInt();
-            restingHeartRate = hrValues.reduce((a, b) => a < b ? a : b);
-          }
-        } catch (e) {
-          debugPrint("Error fetching health points: $e");
         }
+
+        if (hrValues.isNotEmpty) {
+          avgHeartRate = hrValues.reduce((a, b) => a + b) / hrValues.length;
+          maxHeartRate = hrValues.reduce((a, b) => a > b ? a : b).toInt();
+          restingHeartRate = hrValues.reduce((a, b) => a < b ? a : b);
+        }
+      } catch (e) {
+        statusLog += "Points Err: $e. ";
+        debugPrint("Error fetching health points: $e");
       }
     } catch (e) {
+      statusLog += "Global Err: $e. ";
       debugPrint("HealthService fetch error: $e");
     }
 
-    // Double check fallback values if on emulator or zero data
     double distanceKm = double.parse((totalSteps * 0.00075).toStringAsFixed(1));
     int activeCalories = (totalSteps * 0.04).toInt();
     int activeMinutes = (totalSteps / 100).toInt();
@@ -140,6 +145,7 @@ class HealthService {
       'spo2_avg': avgSpo2,
       'sumber_device': defaultTargetPlatform == TargetPlatform.iOS ? 'Apple Watch / HealthKit' : 'Smartwatch / Health Connect',
       'has_real_sensor_data': totalSteps > 0 || totalSleepMinutes > 0 || avgHeartRate > 0,
+      'status_log': statusLog,
     };
   }
 }
