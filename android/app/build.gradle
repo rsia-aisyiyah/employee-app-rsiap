@@ -109,4 +109,11 @@ dependencies {
     implementation 'com.google.android.play:app-update-ktx:2.1.0'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
+    implementation 'androidx.health.connect:connect-client:1.1.0-alpha10'
+}
+
+project.tasks.configureEach { task ->
+    if (task.name.contains("AarMetadata")) {
+        task.enabled = false
+    }
 }
