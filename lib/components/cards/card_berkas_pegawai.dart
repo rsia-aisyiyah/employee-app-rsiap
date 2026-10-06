@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:rsia_employee_app/config/colors.dart';
-// import 'package:flutter_downloader/flutter_downloader.dart';
-// import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:dio/dio.dart';
+import 'package:rsia_employee_app/screen/pdf_viewer_screen.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
 class CardBerkasPegawai extends StatefulWidget {
@@ -78,6 +77,26 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
     }
 
     filePath = "$dir/${url.substring(url.lastIndexOf('/') + 1)}";
+
+    // ── Preview PDF langsung di aplikasi ──
+    if (fileExt == 'PDF') {
+      String title = widget.dataBerkasPegawai['master_berkas_pegawai']?['nama_berkas'] ??
+          widget.dataBerkasPegawai['nama_berkas'] ??
+          widget.dataBerkasPegawai['nama'] ??
+          'Berkas Pegawai';
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewerScreen(
+            title: title,
+            url: url,
+            localPath: isHAveDownloading ? filePath : null,
+          ),
+        ),
+      );
+      return;
+    }
 
     File file = File(filePath);
     var isExist = await file.exists();
@@ -213,7 +232,7 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
           else
             InkWell(
               onTap: () {
-                downloadFile(
+                openFile(
                     baseUrl + widget.dataBerkasPegawai['berkas'].toString());
               },
               borderRadius: BorderRadius.circular(10),
@@ -221,25 +240,35 @@ class _CardBerkasPegawaiState extends State<CardBerkasPegawai> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isHAveDownloading
-                      ? Colors.green.withOpacity(0.1)
-                      : primaryColor.withOpacity(0.1),
+                  color: fileExt == 'PDF'
+                      ? primaryColor.withOpacity(0.1)
+                      : (isHAveDownloading
+                          ? Colors.green.withOpacity(0.1)
+                          : primaryColor.withOpacity(0.1)),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     Icon(
-                      isHAveDownloading
-                          ? Icons.check_circle
-                          : Icons.download_rounded,
-                      color: isHAveDownloading ? Colors.green : primaryColor,
+                      fileExt == 'PDF'
+                          ? Icons.visibility_rounded
+                          : (isHAveDownloading
+                              ? Icons.check_circle
+                              : Icons.download_rounded),
+                      color: fileExt == 'PDF'
+                          ? primaryColor
+                          : (isHAveDownloading ? Colors.green : primaryColor),
                       size: 20,
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      isHAveDownloading ? "Buka" : "Unduh",
+                      fileExt == 'PDF'
+                          ? "Lihat"
+                          : (isHAveDownloading ? "Buka" : "Unduh"),
                       style: TextStyle(
-                        color: isHAveDownloading ? Colors.green : primaryColor,
+                        color: fileExt == 'PDF'
+                            ? primaryColor
+                            : (isHAveDownloading ? Colors.green : primaryColor),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),

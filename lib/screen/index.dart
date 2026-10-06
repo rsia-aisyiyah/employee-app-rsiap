@@ -612,30 +612,42 @@ class _IndexScreenState extends State<IndexScreen>
   }
 
   Widget _buildBottomNavigationBar() {
+    const radius = Radius.circular(24);
+
     return Container(
       decoration: BoxDecoration(
+        borderRadius: const BorderRadius.only(
+          topLeft: radius,
+          topRight: radius,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
-            offset: const Offset(0, -5),
-            blurRadius: 20,
+            color: Colors.black.withOpacity(0.06),
+            offset: const Offset(0, -4),
+            blurRadius: 16,
           ),
         ],
       ),
-      child: BottomAppBar(
-        color: Colors.white,
-        elevation: 0,
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        height: Platform.isIOS ? 90 : 70,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            _buildNavItem(Icons.home_filled, "Home", 0),
-            const SizedBox(width: 48), // Space for FAB
-            _buildNavItem(Icons.person, "Profile", 1),
-          ],
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: radius,
+          topRight: radius,
+        ),
+        child: BottomAppBar(
+          color: Colors.white,
+          elevation: 0,
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 8.0,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          height: Platform.isIOS ? 90 : 70,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              _buildNavItem(Icons.home_filled, "Home", 0),
+              const SizedBox(width: 48), // Space for FAB
+              _buildNavItem(Icons.person, "Profile", 1),
+            ],
+          ),
         ),
       ),
     );

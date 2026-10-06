@@ -16,6 +16,7 @@ import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
 // import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:rsia_employee_app/services/health_service.dart';
 
 Future<void> main() async {
   print('🚀 Starting app initialization...');
@@ -26,6 +27,8 @@ Future<void> main() async {
     debugPrint('💾 Initializing GetStorage...');
     await GetStorage.init();
     debugPrint('✅ GetStorage initialized');
+    // Start pedometer sensor listener if permission granted
+    HealthService.init();
   } catch (e) {
     debugPrint('❌ Error initializing GetStorage: $e');
   }

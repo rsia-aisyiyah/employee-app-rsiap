@@ -34,14 +34,38 @@ import 'package:rsia_employee_app/screen/menu/akreditasi/akreditasi_home_screen.
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
 import 'package:rsia_employee_app/screen/menu/ebook/ebook_main_screen.dart';
 import 'package:rsia_employee_app/screen/menu/kebugaran_saya.dart';
+import 'package:rsia_employee_app/screen/menu/tts/tts_home_screen.dart';
+import 'package:rsia_employee_app/screen/menu/emergency_rush/emergency_rush_home_screen.dart';
+import 'package:rsia_employee_app/screen/menu/kantin/kantin_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
     switch (routeKey) {
+      case 'kantin':
+      case 'menu_kantin':
+      case 'kantin_rsia':
+      case 'pesan_makanan':
+        return const KantinScreen();
+      case 'emergency_rush':
+      case 'ambulans_gesit':
+      case 'game_ambulans':
+      case 'menu_ambulans':
+      case 'menu_emergency_rush':
+        return const EmergencyRushHomeScreen();
+      case 'menu_tts':
+      case 'tts':
+      case 'game_tts':
+      case 'teka_teki_silang':
+      case 'kuis_tts':
+      case 'tts_rsia':
+        return const TtsHomeScreen();
       case 'menu_kebugaran':
       case 'menu_kesehatan':
       case 'kebugaran_saya':
       case 'kebugaran':
+      case 'menu_wellness':
+      case 'wellness_saya':
+      case 'wellness':
         return const KebugaranSayaScreen();
       case 'menu_dashboard':
       case 'menu_dashboard_rs':

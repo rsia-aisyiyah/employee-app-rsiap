@@ -1,9 +1,78 @@
 import 'package:flutter/material.dart';
 
 class IconMapper {
+  static String? getEmoji(String iconName, {String? routeKey}) {
+    final r = (routeKey ?? '').trim().toLowerCase();
+    final i = iconName.trim().toLowerCase();
+    if (r == 'emergency_rush' ||
+        r == 'ambulans_gesit' ||
+        r == 'game_ambulans' ||
+        r == 'menu_ambulans' ||
+        r == 'menu_emergency_rush' ||
+        i == 'emergency_rush' ||
+        i == 'ambulans_gesit' ||
+        i == 'ambulans') {
+      return '🚑';
+    }
+    if (r == 'kantin' ||
+        r == 'menu_kantin' ||
+        r == 'kantin_rsia' ||
+        r == 'pesan_makanan' ||
+        i == 'kantin' ||
+        i == 'menu_kantin' ||
+        i == 'kantin_rsia') {
+      return '🍱';
+    }
+    return null;
+  }
+
+  static Widget buildIcon(
+    String iconName, {
+    String? routeKey,
+    Color? color,
+    double size = 24,
+  }) {
+    final emoji = getEmoji(iconName, routeKey: routeKey);
+    if (emoji != null) {
+      return Text(
+        emoji,
+        style: TextStyle(
+          fontSize: size * 0.95,
+          height: 1.1,
+        ),
+      );
+    }
+    return Icon(
+      getIcon(iconName, routeKey: routeKey),
+      size: size,
+      color: color,
+    );
+  }
+
   static IconData getIcon(String iconName, {String? routeKey}) {
     if (routeKey != null && routeKey.isNotEmpty) {
       switch (routeKey.toLowerCase()) {
+        case 'emergency_rush':
+        case 'ambulans_gesit':
+        case 'game_ambulans':
+        case 'menu_ambulans':
+        case 'menu_emergency_rush':
+          return Icons.airport_shuttle_rounded;
+        case 'kantin':
+        case 'menu_kantin':
+        case 'kantin_rsia':
+        case 'pesan_makanan':
+          return Icons.restaurant_rounded;
+        case 'menu_tts':
+        case 'tts':
+        case 'game_tts':
+        case 'teka_teki_silang':
+          return Icons.extension_rounded;
+        case 'menu_kebugaran':
+        case 'menu_kesehatan':
+        case 'kebugaran_saya':
+        case 'kebugaran':
+          return Icons.watch_rounded;
         case 'menu_pengajuan_jadwal':
         case 'pengajuan_jadwal':
           return Icons.edit_calendar_rounded;
@@ -18,6 +87,42 @@ class IconMapper {
     }
 
     switch (iconName.toLowerCase()) {
+      // Kebugaran & Smartwatch
+      case 'kebugaran':
+      case 'kebugaran_saya':
+      case 'menu_kebugaran':
+      case 'wellness':
+      case 'wellness_saya':
+      case 'menu_wellness':
+      case 'kesehatan':
+      case 'menu_kesehatan':
+      case 'watch':
+      case 'smartwatch':
+      case 'fitness':
+      case 'health':
+        return Icons.watch_rounded;
+
+      // Mini Games & Arcade
+      case 'emergency_rush':
+      case 'ambulans_gesit':
+      case 'game_ambulans':
+      case 'menu_ambulans':
+      case 'menu_emergency_rush':
+        return Icons.airport_shuttle_rounded;
+      case 'menu_tts':
+      case 'tts':
+      case 'game_tts':
+      case 'teka_teki_silang':
+        return Icons.extension_rounded;
+
+      // Kantin & Makanan
+      case 'kantin':
+      case 'menu_kantin':
+      case 'kantin_rsia':
+      case 'pesan_makanan':
+      case 'makanan':
+        return Icons.restaurant_rounded;
+
       // Essentials & Common Actions
       case 'home':
         return Icons.home;

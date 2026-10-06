@@ -6,6 +6,7 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/config/config.dart';
+import 'package:rsia_employee_app/screen/pdf_viewer_screen.dart';
 import 'package:rsia_employee_app/services/ebook_service.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
@@ -288,52 +289,22 @@ class _EbookListTabState extends State<EbookListTab> {
     });
 
     final Directory dir = await getTemporaryDirectory();
-
     final filename = fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
     final String localFilePath = "${dir.path}/$filename";
     final File localFile = File(localFilePath);
+    final bool isDownloaded = await localFile.exists() && await localFile.length() > 0;
 
-    if (await localFile.exists()) {
-      await OpenFilex.open(localFilePath);
-      return;
-    }
-
-    // Download to temporary private app cache for viewing
-    setState(() {
-      _downloadingIds.add(id);
-      _downloadProgress[id] = 0.0;
-    });
-
-    try {
-      final Dio dio = Dio();
-      await dio.download(
-        fileUrl,
-        localFilePath,
-        onReceiveProgress: (rec, total) {
-          if (total > 0 && mounted) {
-            setState(() {
-              _downloadProgress[id] = rec / total;
-            });
-          }
-        },
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewerScreen(
+            title: item['judul']?.toString() ?? filename,
+            url: fileUrl,
+            localPath: isDownloaded ? localFilePath : null,
+          ),
+        ),
       );
-
-      if (mounted) {
-        setState(() {
-          _downloadingIds.remove(id);
-          _downloadProgress.remove(id);
-        });
-        Msg.success(context, 'Membuka dokumen...');
-        await OpenFilex.open(localFilePath);
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _downloadingIds.remove(id);
-          _downloadProgress.remove(id);
-        });
-        Msg.error(context, 'Gagal memuat dokumen PDF');
-      }
     }
   }
 

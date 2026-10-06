@@ -199,6 +199,10 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
             if (status == 'checked_in') {
               _presensiType = 'pulang';
               _endpoint = '/presensi-online/check-out';
+              if (data['shift'] != null) {
+                _todayShift = data['shift'];
+                _isScheduleSelected = true;
+              }
             } else if (status == 'checked_out') {
               if (!_isJadwalTambahan) {
                 setState(() {

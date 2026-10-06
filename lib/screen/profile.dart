@@ -411,16 +411,20 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: Colors.grey[50],
       body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildTopHeader(context),
-            const SizedBox(height: 20),
+            const SizedBox(height: 52),
+            _buildEmployeeIdentity(),
+            const SizedBox(height: 16),
+            _buildQuickMetrics(),
+            const SizedBox(height: 16),
             _buildModernProfileInfo(),
-            const SizedBox(height: 120),
+            const SizedBox(height: 110),
           ],
         ),
       ),
@@ -433,18 +437,24 @@ class _ProfilePageState extends State<ProfilePage> {
       clipBehavior: Clip.none,
       children: [
         Container(
-          margin: const EdgeInsets.only(bottom: 50),
           width: double.infinity,
-          height: 180 + MediaQuery.of(context).padding.top,
+          height: 135 + MediaQuery.of(context).padding.top,
           decoration: BoxDecoration(
-            color: primaryColor,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                primaryColor,
+                primaryColor.withBlue(210).withGreen(180),
+              ],
+            ),
             borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
+              bottomLeft: Radius.circular(36),
+              bottomRight: Radius.circular(36),
             ),
             boxShadow: [
               BoxShadow(
-                color: primaryColor.withOpacity(0.4),
+                color: primaryColor.withOpacity(0.25),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -452,7 +462,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           child: Padding(
             padding: EdgeInsets.only(
-                top: MediaQuery.of(context).padding.top + 10,
+                top: MediaQuery.of(context).padding.top + 8,
                 right: 20,
                 left: 20),
             child: Row(
@@ -468,13 +478,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 InkWell(
                   onTap: _showLogoutMenu,
+                  borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.settings, color: Colors.white),
+                    child: const Icon(Icons.settings_outlined, color: Colors.white, size: 20),
                   ),
                 ),
               ],
@@ -482,8 +493,190 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         Positioned(
-          bottom: 0,
+          bottom: -46,
           child: _buildCenteredProfilePic(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmployeeIdentity() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          children: [
+            Text(
+              _bio['nama']?.toString() ?? "Nama Pegawai",
+              style: const TextStyle(
+                fontSize: 18.5,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                // NIK Chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: primaryColor.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.badge_outlined, size: 12, color: primaryColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        _bio['nik']?.toString() ?? "-",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Jabatan Chip
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F172A).withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.work_outline_rounded,
+                          size: 12, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        _bio['jbtn']?.toString() ?? "Pegawai",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getAgeString() {
+    if (_bio['tgl_lahir'] != null) {
+      try {
+        DateTime dob = DateTime.parse(_bio['tgl_lahir'].toString());
+        DateDuration age = AgeCalculator.age(dob);
+        return "${age.years} Thn";
+      } catch (e) {
+        return "-";
+      }
+    }
+    return "-";
+  }
+
+  Widget _buildQuickMetrics() {
+    final masaKerja = _getDurationString();
+    final usia = _getAgeString();
+    final sttsKerja = _bio['stts_kerja']?.toString() ??
+        _bio['status_kerja']?['nama']?.toString() ??
+        "Aktif";
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildMetricColumn(
+            icon: Icons.history_toggle_off_rounded,
+            label: "Masa Kerja",
+            value: masaKerja,
+            color: const Color(0xFF0284C7),
+          ),
+          Container(width: 1, height: 28, color: Colors.grey[200]),
+          _buildMetricColumn(
+            icon: Icons.cake_rounded,
+            label: "Usia",
+            value: usia,
+            color: const Color(0xFFEA580C),
+          ),
+          Container(width: 1, height: 28, color: Colors.grey[200]),
+          _buildMetricColumn(
+            icon: Icons.verified_rounded,
+            label: "Status",
+            value: sttsKerja,
+            color: const Color(0xFF10B981),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricColumn({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 15, color: color),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[500],
+          ),
         ),
       ],
     );
@@ -926,52 +1119,38 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Widget _buildCenteredProfilePic() {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
+    return Container(
+      padding: const EdgeInsets.all(3.5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
           ),
-          child: Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              image: _bio['photo'] != null
-                  ? DecorationImage(
-                      image: CachedNetworkImageProvider(
-                          photoUrl + _bio['photo'].toString()),
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                    )
-                  : null,
-            ),
-            child: _bio['photo'] == null
-                ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                : null,
-          ),
+        ],
+      ),
+      child: Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          image: _bio['photo'] != null
+              ? DecorationImage(
+                  image: CachedNetworkImageProvider(
+                      photoUrl + _bio['photo'].toString()),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                )
+              : null,
         ),
-        const SizedBox(height: 15),
-        Text(
-          _bio['nama']?.toString() ?? "Nama Pegawai",
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          _bio['jbtn']?.toString() ?? "Jabatan",
-          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-        ),
-      ],
+        child: _bio['photo'] == null
+            ? const Icon(Icons.person, size: 48, color: Colors.grey)
+            : null,
+      ),
     );
   }
 
@@ -1565,115 +1744,156 @@ class _ProfilePageState extends State<ProfilePage> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          _buildInfoCard("Informasi Pribadi", [
-            _buildInfoTile(Icons.perm_identity, "NIK", _bio['nik'] ?? "-"),
-            _buildInfoTile(
-                Icons.wc,
+          // 1. Informasi Pribadi
+          _buildInfoCard(
+            "Informasi Pribadi",
+            [
+              _buildInfoTile(
+                Icons.badge_outlined,
+                "NIK",
+                _bio['nik']?.toString() ?? "-",
+                iconColor: const Color(0xFF0284C7),
+              ),
+              _buildInfoTile(
+                Icons.wc_rounded,
                 "J. Kelamin",
                 (_bio['jk'] == "L" || _bio['jk'] == "Pria")
                     ? "Laki-laki"
-                    : "Perempuan"),
-            _buildInfoTile(Icons.cake, "TTL",
-                "${_bio['tmp_lahir'] ?? '-'}, ${_bio['tgl_lahir'] != null ? Helper.formatDate4(_bio['tgl_lahir']) : '-'}"),
-            _buildInfoTile(
-                Icons.work_outline,
+                    : "Perempuan",
+                iconColor: const Color(0xFF7C3AED),
+              ),
+              _buildInfoTile(
+                Icons.cake_rounded,
+                "TTL",
+                "${_bio['tmp_lahir'] ?? '-'}, ${_bio['tgl_lahir'] != null ? Helper.formatDate4(_bio['tgl_lahir']) : '-'}",
+                iconColor: const Color(0xFFEA580C),
+              ),
+              _buildInfoTile(
+                Icons.calendar_today_rounded,
                 "Mulai Kerja",
                 _bio['mulai_kerja'] != null
                     ? Helper.formatDate2(_bio['mulai_kerja'])
-                    : '-'),
+                    : '-',
+                iconColor: const Color(0xFF10B981),
+              ),
+            ],
+            headerIcon: Icons.person_rounded,
+            headerColor: const Color(0xFF0284C7),
+          ),
 
-            // Only show duration if initialized (it might not be if mulai_kerja was null)
-            // We check if duration is initialized by checking if variables using it are accessed safely or just checking the logic above
-            // Since duration is 'late', accessing it before init throws.
-            // We can wrap it in a try-catch block conceptually or better, assume it's set if mulia_kerja was present.
-            // However, 'late' variable check is tricky.
-            // Better strategy: Make duration nullable or check _bio['mulai_kerja'] again.
-            if (_bio['mulai_kerja'] != null)
-              _buildInfoTile(Icons.timer, "Masa Kerja", _getDurationString()),
-          ]),
-          const SizedBox(height: 15),
+          // 2. Kontak & Alamat
           _buildInfoCard(
             "Kontak & Alamat",
             [
               _buildInfoTile(
-                  Icons.phone_android,
-                  "No. HP",
-                  (_bio['petugas'] != null &&
-                          _bio['petugas']['no_telp'] != null)
-                      ? _bio['petugas']['no_telp']
-                      : "-"),
+                Icons.phone_iphone_rounded,
+                "No. HP",
+                (_bio['petugas'] != null &&
+                        _bio['petugas']['no_telp'] != null)
+                    ? _bio['petugas']['no_telp']
+                    : "-",
+                iconColor: const Color(0xFF0D9488),
+              ),
               _buildInfoTile(
-                  Icons.email_outlined,
-                  "Email",
-                  (_bio['email'] != null && _bio['email']['email'] != null)
-                      ? _bio['email']['email']
-                      : "-"),
+                Icons.email_outlined,
+                "Email",
+                (_bio['email'] != null && _bio['email']['email'] != null)
+                    ? _bio['email']['email']
+                    : "-",
+                iconColor: const Color(0xFF2563EB),
+              ),
               _buildInfoTile(
-                  Icons.location_on_outlined, "Alamat", _bio['alamat'] ?? "-"),
+                Icons.location_on_outlined,
+                "Alamat",
+                _bio['alamat'] ?? "-",
+                iconColor: const Color(0xFFE11D48),
+              ),
               _buildInfoTile(
-                  Icons.favorite_border,
-                  "Status Menikah",
-                  () {
-                    final status = (_bio['petugas'] != null && _bio['petugas']['stts_nikah'] != null)
-                        ? _bio['petugas']['stts_nikah'].toString()
-                        : 'SINGLE';
-                    const labels = {
-                      'SINGLE': 'Single / Belum Menikah',
-                      'MENIKAH': 'Menikah',
-                      'JANDA': 'Janda',
-                      'DUDHA': 'Dudha',
-                      'JOMBLO': 'Jomblo',
-                    };
-                    return labels[status] ?? status;
-                  }()),
+                Icons.favorite_rounded,
+                "Status Menikah",
+                () {
+                  final status = (_bio['petugas'] != null &&
+                          _bio['petugas']['stts_nikah'] != null)
+                      ? _bio['petugas']['stts_nikah'].toString()
+                      : 'SINGLE';
+                  const labels = {
+                    'SINGLE': 'Single / Belum Menikah',
+                    'MENIKAH': 'Menikah',
+                    'JANDA': 'Janda',
+                    'DUDHA': 'Duda',
+                    'JOMBLO': 'Jomblo',
+                  };
+                  return labels[status] ?? status;
+                }(),
+                iconColor: const Color(0xFFDB2777),
+              ),
             ],
+            headerIcon: Icons.contact_phone_rounded,
+            headerColor: const Color(0xFF0D9488),
             onAdd: _showEditDialog,
           ),
+
+          // 3. Kualifikasi Klinis (if available)
           if (_bio['kualifikasi_staf'] != null) ...[
-            const SizedBox(height: 15),
             _buildInfoCard(
               "Kualifikasi Klinis",
               [
-                _buildInfoTile(Icons.verified_user, "Nomor STR",
-                    _bio['kualifikasi_staf']['nomor_str'] ?? "-"),
-                _buildInfoTile(Icons.assignment, "Nomor SIP",
-                    _bio['kualifikasi_staf']['nomor_sip'] ?? "-"),
                 _buildInfoTile(
-                    Icons.event_busy,
-                    "Tgl. Berakhir SIP",
-                    _bio['kualifikasi_staf']['tanggal_akhir_str'] != null
-                        ? Helper.formatDate2(
-                            _bio['kualifikasi_staf']['tanggal_akhir_str'])
-                        : "-"),
-                if (_bio['latest_sk_kredensial'] != null && _bio['latest_sk_kredensial']['kredensial'] != null)
+                  Icons.badge_rounded,
+                  "Nomor STR",
+                  _bio['kualifikasi_staf']['nomor_str'] ?? "-",
+                  iconColor: const Color(0xFF4F46E5),
+                ),
+                _buildInfoTile(
+                  Icons.assignment_rounded,
+                  "Nomor SIP",
+                  _bio['kualifikasi_staf']['nomor_sip'] ?? "-",
+                  iconColor: const Color(0xFF0891B2),
+                ),
+                _buildInfoTile(
+                  Icons.event_busy_rounded,
+                  "Tgl. Berakhir SIP",
+                  _bio['kualifikasi_staf']['tanggal_akhir_str'] != null
+                      ? Helper.formatDate2(
+                          _bio['kualifikasi_staf']['tanggal_akhir_str'])
+                      : "-",
+                  iconColor: const Color(0xFFD97706),
+                ),
+                if (_bio['latest_sk_kredensial'] != null &&
+                    _bio['latest_sk_kredensial']['kredensial'] != null)
                   _buildInfoTile(
-                      Icons.military_tech_outlined,
-                      "Jenjang Kredensial",
-                      _bio['latest_sk_kredensial']['kredensial']['label'] ?? "-"),
+                    Icons.military_tech_rounded,
+                    "Jenjang Kredensial",
+                    _bio['latest_sk_kredensial']['kredensial']['label'] ?? "-",
+                    iconColor: const Color(0xFF9333EA),
+                  ),
               ],
+              headerIcon: Icons.health_and_safety_rounded,
+              headerColor: const Color(0xFF4F46E5),
               onAdd: _showEditDialog,
             ),
           ],
-          const SizedBox(height: 15),
+
+          // 4. Data Keluarga
           _buildInfoCard(
             "Data Keluarga",
             (_bio['keluarga'] != null && (_bio['keluarga'] as List).isNotEmpty)
                 ? (_bio['keluarga'] as List).map((member) {
-                    IconData familyIcon = Icons.person_outline;
+                    IconData familyIcon = Icons.person_outline_rounded;
                     switch (member['hubungan'].toString().toLowerCase()) {
                       case 'suami':
                       case 'ayah':
-                        familyIcon = Icons.male;
+                        familyIcon = Icons.male_rounded;
                         break;
                       case 'istri':
                       case 'ibu':
-                        familyIcon = Icons.female;
+                        familyIcon = Icons.female_rounded;
                         break;
                       case 'anak':
-                        familyIcon = Icons.child_care;
+                        familyIcon = Icons.child_care_rounded;
                         break;
                       default:
-                        familyIcon = Icons.people_outline;
+                        familyIcon = Icons.people_outline_rounded;
                     }
 
                     return _buildFamilyTile(
@@ -1687,7 +1907,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   }).toList()
                 : [
                     const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
+                      padding: EdgeInsets.symmetric(vertical: 18),
                       child: Center(
                         child: Text(
                           "Belum ada data keluarga",
@@ -1696,7 +1916,128 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     )
                   ],
+            headerIcon: Icons.family_restroom_rounded,
+            headerColor: const Color(0xFFD97706),
             onAdd: _showAddFamilyDialog,
+          ),
+
+          // 5. Keamanan & Akun
+          _buildInfoCard(
+            "Keamanan & Akun",
+            [
+              if (_biometricAvailable) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: (_biometricEnabled ? primaryColor : Colors.grey)
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.fingerprint_rounded,
+                          size: 20,
+                          color: _biometricEnabled ? primaryColor : Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Login Fingerprint",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                            Text(
+                              _biometricEnabled ? 'Aktif' : 'Nonaktif',
+                              style: TextStyle(
+                                color: _biometricEnabled
+                                    ? Colors.green
+                                    : Colors.grey[500],
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: _biometricEnabled,
+                        activeColor: primaryColor,
+                        onChanged: (value) async {
+                          if (value) {
+                            await _enableBiometric((fn) => setState(fn));
+                          } else {
+                            await _disableBiometric((fn) => setState(fn));
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, thickness: 0.7, color: Color(0xFFF1F5F9)),
+                const SizedBox(height: 8),
+              ],
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const LogoutScreen()),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.logout_rounded,
+                            size: 18,
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            "Keluar dari Akun",
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          size: 20,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            headerIcon: Icons.security_rounded,
+            headerColor: const Color(0xFF64748B),
           ),
         ],
       ),
@@ -1711,20 +2052,34 @@ class _ProfilePageState extends State<ProfilePage> {
     String? ktp,
     String? bpjs,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
+    Color relColor = const Color(0xFF0284C7);
+    if (['istri', 'ibu'].contains(relation.toLowerCase())) {
+      relColor = const Color(0xFFDB2777);
+    } else if (['anak'].contains(relation.toLowerCase())) {
+      relColor = const Color(0xFFEA580C);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.1),
-              shape: BoxShape.circle,
+              color: relColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 20, color: primaryColor),
+            child: Icon(icon, size: 20, color: relColor),
           ),
-          const SizedBox(width: 15),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1736,51 +2091,53 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: Text(
                         name,
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13.5,
                           fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: Colors.blueGrey[50],
-                        borderRadius: BorderRadius.circular(5),
+                        color: relColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         relation,
                         style: TextStyle(
                           fontSize: 10,
-                          color: Colors.blueGrey[700],
+                          color: relColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 6),
                     InkWell(
                       onTap: () => _deleteFamilyMember(id, name),
-                      child: Icon(Icons.delete_outline,
-                          size: 18, color: Colors.red[300]),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Icon(Icons.delete_outline_rounded,
+                            size: 18, color: Colors.red[300]),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                if ((ktp != null && ktp.isNotEmpty) || (bpjs != null && bpjs.isNotEmpty))
+                  const SizedBox(height: 6),
                 if (ktp != null && ktp.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2),
-                    child: Text(
-                      "KTP: $ktp",
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                    ),
+                  Text(
+                    "KTP: $ktp",
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
                   ),
                 if (bpjs != null && bpjs.isNotEmpty)
                   Text(
                     "BPJS: $bpjs",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 11.5, color: Colors.grey[600]),
                   ),
               ],
             ),
@@ -1803,76 +2160,148 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Widget _buildInfoCard(String title, List<Widget> children,
-      {VoidCallback? onAdd}) {
+  Widget _buildInfoCard(
+    String title,
+    List<Widget> children, {
+    VoidCallback? onAdd,
+    IconData? headerIcon,
+    Color? headerColor,
+  }) {
+    final themeColor = headerColor ?? primaryColor;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-              color: Colors.grey.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5)),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title,
+              if (headerIcon != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: themeColor.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(headerIcon, color: themeColor, size: 16),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  title,
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.blueGrey)),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14.5,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
               if (onAdd != null)
-                InkWell(
-                  onTap: onAdd,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onAdd,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                      decoration: BoxDecoration(
+                        color: themeColor.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: themeColor.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            title.contains("Data Keluarga") ? Icons.add_rounded : Icons.edit_rounded,
+                            size: 13,
+                            color: themeColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            title.contains("Data Keluarga") ? "Tambah" : "Ubah",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: themeColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Icon(
-                        title.contains("Data Keluarga")
-                            ? Icons.add
-                            : Icons.edit,
-                        color: primaryColor,
-                        size: 20),
                   ),
                 ),
             ],
           ),
-          const Divider(height: 20),
+          const SizedBox(height: 12),
+          const Divider(height: 1, thickness: 0.7, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 12),
           ...children,
         ],
       ),
     );
   }
 
-  Widget _buildInfoTile(IconData icon, String label, String value) {
+  Widget _buildInfoTile(
+    IconData icon,
+    String label,
+    String value, {
+    Color? iconColor,
+  }) {
+    final color = iconColor ?? const Color(0xFF0284C7);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, size: 20, color: Colors.grey[400]),
-          const SizedBox(width: 15),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Icon(icon, size: 18, color: color),
+            ),
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey[500],
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(value,
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
               ],
             ),
           ),
