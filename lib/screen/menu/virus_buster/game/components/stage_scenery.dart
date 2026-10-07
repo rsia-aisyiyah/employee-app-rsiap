@@ -76,45 +76,48 @@ class StageScenery extends PositionComponent with HasGameRef {
     final scale = screenH / imgH;
     final scaledImgW = imgW * scale;
 
-    // Hitung posisi horizontal dengan scrolling parallax loop
-    final currentScroll = scrollOffset * 0.7; // Kecepatan parallax backdrop
-    final double normalizedOffset = currentScroll % scaledImgW;
+    // Kecepatan parallax backdrop
+    final currentScroll = scrollOffset * 0.7;
 
-    // Draw tile 1 & tile 2 bersebelahan agar looping seamless tanpa celah
-    final double x1 = -normalizedOffset;
-    final double x2 = x1 + scaledImgW;
+    // Hitung index tile dasar secara presisi
+    final int baseTileIndex = (currentScroll / scaledImgW).floor();
+    final double startX = (baseTileIndex * scaledImgW) - currentScroll;
 
     final srcRect = Rect.fromLTWH(0, 0, imgW, imgH);
-
     final paint = Paint()..filterQuality = FilterQuality.medium;
 
-    // Tile 1
-    canvas.drawImageRect(
-      img,
-      srcRect,
-      Rect.fromLTWH(x1, 0, scaledImgW, screenH),
-      paint,
-    );
+    // Gambar tile dengan alternating mirror horisontal agar looping 100% seamless tanpa garis terpotong
+    for (int i = 0; i < 4; i++) {
+      final tileIndex = baseTileIndex + i;
+      final tileX = startX + (i * scaledImgW);
 
-    // Tile 2 (jika tile 1 bergeser ke kiri)
-    if (x2 < screenW + 10) {
-      canvas.drawImageRect(
-        img,
-        srcRect,
-        Rect.fromLTWH(x2, 0, scaledImgW, screenH),
-        paint,
-      );
-    }
+      if (tileX > screenW + 10) break;
+      if (tileX + scaledImgW < -10) continue;
 
-    // Tile 3 (penjaga jika rasio layar sangat lebar)
-    final double x3 = x2 + scaledImgW;
-    if (x3 < screenW + 10) {
-      canvas.drawImageRect(
-        img,
-        srcRect,
-        Rect.fromLTWH(x3, 0, scaledImgW, screenH),
-        paint,
-      );
+      final bool isFlipped = tileIndex % 2 != 0;
+
+      canvas.save();
+      if (isFlipped) {
+        // Tile ganjil di-flip horisontal: tepi kanan bertemu tepi kanan secara kontinu
+        canvas.translate(tileX + scaledImgW, 0);
+        canvas.scale(-1, 1);
+        canvas.drawImageRect(
+          img,
+          srcRect,
+          Rect.fromLTWH(0, 0, scaledImgW, screenH),
+          paint,
+        );
+      } else {
+        // Tile genap digambar normal
+        canvas.translate(tileX, 0);
+        canvas.drawImageRect(
+          img,
+          srcRect,
+          Rect.fromLTWH(0, 0, scaledImgW, screenH),
+          paint,
+        );
+      }
+      canvas.restore();
     }
   }
 

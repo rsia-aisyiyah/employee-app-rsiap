@@ -682,14 +682,37 @@ class _DoctorHeroPreviewPainter extends CustomPainter {
     hairPath.close();
     canvas.drawPath(hairPath, hairPaint);
 
-    // Kacamata Persegi Modern Hitam
-    final glassesFrame = Paint()..color = Colors.black..style = PaintingStyle.stroke..strokeWidth = 2.0;
-    final glassesLens = Paint()..color = const Color(0xFF1E293B);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(-10, -80, 8, 7), const Radius.circular(2)), glassesLens);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(-10, -80, 8, 7), const Radius.circular(2)), glassesFrame);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(2, -80, 8, 7), const Radius.circular(2)), glassesLens);
-    canvas.drawRRect(RRect.fromRectAndRadius(const Rect.fromLTWH(2, -80, 8, 7), const Radius.circular(2)), glassesFrame);
-    canvas.drawLine(const Offset(-2, -77), const Offset(2, -77), glassesFrame);
+    // Mata Dokter Ramah
+    final eyeWhite = Paint()..color = Colors.white;
+    final eyePupil = Paint()..color = const Color(0xFF0F172A);
+    canvas.drawOval(const Rect.fromLTWH(-8, -78, 6, 4.5), eyeWhite);
+    canvas.drawCircle(const Offset(-5, -76), 1.5, eyePupil);
+    canvas.drawOval(const Rect.fromLTWH(2, -78, 6, 4.5), eyeWhite);
+    canvas.drawCircle(const Offset(5, -76), 1.5, eyePupil);
+
+    // Kacamata Persegi Modern Bingkai Putih / Bening Transparan (Sesuai Referensi Asli)
+    final clearFrame = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    final clearBorder = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+    final clearLens = Paint()..color = const Color(0x33E0F2FE);
+
+    final leftLens = RRect.fromRectAndRadius(const Rect.fromLTWH(-10, -81, 8.5, 7.5), const Radius.circular(2));
+    final rightLens = RRect.fromRectAndRadius(const Rect.fromLTWH(1.5, -81, 8.5, 7.5), const Radius.circular(2));
+
+    canvas.drawRRect(leftLens, clearLens);
+    canvas.drawRRect(leftLens, clearFrame);
+    canvas.drawRRect(leftLens, clearBorder);
+
+    canvas.drawRRect(rightLens, clearLens);
+    canvas.drawRRect(rightLens, clearFrame);
+    canvas.drawRRect(rightLens, clearBorder);
+
+    canvas.drawLine(const Offset(-1.5, -77), const Offset(1.5, -77), clearFrame);
 
     // Syringe Blaster di Tangan
     final syringeBody = Paint()..color = const Color(0xCCF1F5F9);

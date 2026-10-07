@@ -13,7 +13,7 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
 
   bool isOnGround = true;
   double groundY = 0.0;
-  int facingDirection = 1; // 1 = Kanan, -1 = Kiri
+  int facingDirection = 1; // 1 = Kanan (maju sisi game), -1 = Kiri
 
   // Run animation timer
   double runCycle = 0.0;
@@ -79,6 +79,12 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
       velocityY = jumpForce;
       isOnGround = false;
     }
+  }
+
+  /// Memantul ke atas setelah menginjak kuman di darat (Mario Stomp!)
+  void bounceAfterStomp() {
+    velocityY = jumpForce * 0.65;
+    isOnGround = false;
   }
 
   void takeDamage() {
@@ -162,8 +168,7 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
 
     canvas.save();
 
-    // PUSAT KOORDINAT: geser ke tengah dasar kaki dokter (bottom center)
-    // Dengan ini (0,0) adalah tepat di telapak kaki dokter di tanah!
+    // PUSAT KOORDINAT: dasar telapak kaki dokter di tanah (0, 0)
     canvas.translate(size.x / 2, size.y);
 
     // Flip hadap kiri / kanan tepat di poros tengah tubuh dokter
@@ -171,20 +176,21 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
       canvas.scale(-1, 1);
     }
 
-    _drawDoctor(canvas);
+    _drawDoctorSideProfile(canvas);
 
     canvas.restore();
   }
 
-  void _drawDoctor(Canvas canvas) {
+  /// Menggambar karakter dokter dengan pose side-profile / 3/4 menghadap sisi game (ke depan arah jalan & tembakan)
+  void _drawDoctorSideProfile(Canvas canvas) {
     final double legSwing = sin(runCycle) * 11;
-    final double coatSwing = sin(runCycle - 0.5) * 8;
+    final double coatSwing = sin(runCycle - 0.4) * 10;
 
     // 0. Bayangan di tanah (hanya menempel di telapak saat di tanah)
     if (isOnGround) {
       final shadowPaint = Paint()..color = const Color(0x35000000);
       canvas.drawOval(
-        Rect.fromCenter(center: const Offset(0, 0), width: 36, height: 7),
+        Rect.fromCenter(center: const Offset(2, 0), width: 38, height: 7),
         shadowPaint,
       );
     }
@@ -198,201 +204,205 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
       final shieldGlow = Paint()
         ..color = const Color(0x25FFEA00)
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(const Offset(0, -38), 42, shieldGlow);
-      canvas.drawCircle(const Offset(0, -38), 42, shieldPaint);
+      canvas.drawCircle(const Offset(4, -38), 42, shieldGlow);
+      canvas.drawCircle(const Offset(4, -38), 42, shieldPaint);
     }
 
-    // 1. Kaki & Celana Biru Tua Formal
+    // 1. Kaki & Celana Biru Tua Formal (Tampak Samping)
     final pantsPaint = Paint()..color = const Color(0xFF1E293B);
     final shoesPaint = Paint()..color = const Color(0xFF0F172A);
 
-    // Kaki Belakang
+    // Kaki Kiri (Belakang)
     canvas.save();
-    canvas.translate(-5, -20);
+    canvas.translate(-4, -20);
     canvas.rotate((-legSwing * pi / 180));
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(-4, 0, 8, 20), const Radius.circular(3)),
       pantsPaint,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-5, 16, 11, 5), const Radius.circular(2)),
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-3, 16, 11, 5), const Radius.circular(2)),
       shoesPaint,
     );
     canvas.restore();
 
-    // Kaki Depan
+    // Ekor Belakang Jas Snelli Putih (Berkibar ke belakang saat lari)
+    final coatBackPaint = Paint()..color = const Color(0xFFE2E8F0);
+    final coatTail = Path();
+    coatTail.moveTo(-8, -48);
+    coatTail.lineTo(-14 - coatSwing, -16);
+    coatTail.lineTo(-2, -18);
+    coatTail.close();
+    canvas.drawPath(coatTail, coatBackPaint);
+
+    // Kaki Kanan (Depan)
     canvas.save();
-    canvas.translate(5, -20);
+    canvas.translate(6, -20);
     canvas.rotate((legSwing * pi / 180));
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(-4, 0, 8, 20), const Radius.circular(3)),
       pantsPaint,
     );
     canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-5, 16, 11, 5), const Radius.circular(2)),
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-3, 16, 12, 5), const Radius.circular(2)),
       shoesPaint,
     );
     canvas.restore();
 
-    // 2. Jas Snelli Dokter Putih (Bagian Belakang / Berkibar)
-    final coatBackPaint = Paint()..color = const Color(0xFFE2E8F0);
-    final coatPathBack = Path();
-    coatPathBack.moveTo(-11, -52);
-    coatPathBack.lineTo(-13 - coatSwing, -16);
-    coatPathBack.lineTo(-2, -18);
-    coatPathBack.close();
-    canvas.drawPath(coatPathBack, coatBackPaint);
-
-    // 3. Badan: Kemeja Biru Cerah & Dasi Biru Tua RSIA
+    // 2. Tubuh & Kemeja Biru Muda Tampak Samping
     final shirtPaint = Paint()..color = const Color(0xFF38BDF8); // Kemeja biru muda
     canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-9, -52, 18, 32), const Radius.circular(4)),
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-7, -52, 16, 32), const Radius.circular(4)),
       shirtPaint,
     );
 
-    // Dasi Biru RSIA
+    // Dasi Biru Tua RSIA (Menjuntai di dada depan)
     final tiePaint = Paint()..color = const Color(0xFF0284C7);
     final tiePath = Path();
-    tiePath.moveTo(0, -48);
-    tiePath.lineTo(-3, -38);
-    tiePath.lineTo(0, -31);
-    tiePath.lineTo(3, -38);
+    tiePath.moveTo(3, -48);
+    tiePath.lineTo(6, -38);
+    tiePath.lineTo(4, -30);
+    tiePath.lineTo(1, -38);
     tiePath.close();
     canvas.drawPath(tiePath, tiePaint);
 
-    // 4. Jas Snelli Putih Depan
-    final coatFrontPaint = Paint()..color = const Color(0xFFFFFFFF);
-    final coatBorderPaint = Paint()
+    // 3. Jas Snelli Putih Tampak Tiga Perempat Samping
+    final coatPaint = Paint()..color = const Color(0xFFFFFFFF);
+    final coatBorder = Paint()
       ..color = const Color(0xFFCBD5E1)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
+      ..strokeWidth = 1.3;
 
-    final coatFrontRect = RRect.fromRectAndRadius(
-      const Rect.fromLTWH(-12, -53, 24, 34),
+    final coatRect = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-9, -52, 20, 33),
       const Radius.circular(4),
     );
-    canvas.drawRRect(coatFrontRect, coatFrontPaint);
-    canvas.drawRRect(coatFrontRect, coatBorderPaint);
+    canvas.drawRRect(coatRect, coatPaint);
+    canvas.drawRRect(coatRect, coatBorder);
 
-    // Kerah Snelli Jas Dokter
-    final collarPaint = Paint()..color = const Color(0xFFF1F5F9);
-    final leftCollar = Path();
-    leftCollar.moveTo(-12, -53);
-    leftCollar.lineTo(-3, -42);
-    leftCollar.lineTo(-6, -34);
-    leftCollar.lineTo(-12, -44);
-    leftCollar.close();
-    canvas.drawPath(leftCollar, collarPaint);
+    // Kerah Lapel Jas Dokter Tampak Samping
+    final lapelPaint = Paint()..color = const Color(0xFFF1F5F9);
+    final lapelPath = Path();
+    lapelPath.moveTo(-2, -52);
+    lapelPath.lineTo(7, -44);
+    lapelPath.lineTo(3, -34);
+    lapelPath.lineTo(0, -42);
+    lapelPath.close();
+    canvas.drawPath(lapelPath, lapelPaint);
 
-    final rightCollar = Path();
-    rightCollar.moveTo(12, -53);
-    rightCollar.lineTo(3, -42);
-    rightCollar.lineTo(6, -34);
-    rightCollar.lineTo(12, -44);
-    rightCollar.close();
-    canvas.drawPath(rightCollar, collarPaint);
+    // Kantong Jas Snelli Samping
+    canvas.drawRect(const Rect.fromLTWH(-3, -33, 7, 4), Paint()..color = const Color(0xFFE2E8F0));
 
-    // Belahan Jas & Saku Dada
-    final linePaint = Paint()
-      ..color = const Color(0xFF94A3B8)
-      ..strokeWidth = 1.2;
-    canvas.drawLine(const Offset(0, -42), const Offset(0, -20), linePaint);
-    // Saku kecil dada kiri
-    canvas.drawRect(const Rect.fromLTWH(4, -45, 5, 4), linePaint..style = PaintingStyle.stroke);
-
-    // 5. Stetoskop di Leher
+    // Stetoskop di Pundak
     final stethoPaint = Paint()
       ..color = const Color(0xFF475569)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
-    final stethoPath = Path();
-    stethoPath.moveTo(-7, -53);
-    stethoPath.quadraticBezierTo(0, -42, 7, -53);
-    canvas.drawPath(stethoPath, stethoPaint);
-    // Bell stetoskop perak
-    canvas.drawCircle(const Offset(2, -42), 2.5, Paint()..color = const Color(0xFFCBD5E1));
+    canvas.drawArc(const Rect.fromLTWH(-4, -53, 10, 14), 0, pi, false, stethoPaint);
+    canvas.drawCircle(const Offset(5, -42), 2.2, Paint()..color = const Color(0xFFCBD5E1));
 
-    // 6. Leher & Kepala
+    // 4. Leher & Kepala Tampak Samping (Menghadap Kanan / Sisi Game)
     final skinPaint = Paint()..color = const Color(0xFFFFDBAC);
-    canvas.drawRect(const Rect.fromLTWH(-4, -56, 8, 4), skinPaint);
+    canvas.drawRect(const Rect.fromLTWH(-2, -56, 8, 5), skinPaint);
 
-    // Kepala / Muka
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-10, -71, 20, 16), const Radius.circular(6)),
-      skinPaint,
+    // Kepala Profil Samping
+    final headRect = RRect.fromRectAndRadius(
+      const Rect.fromLTWH(-8, -71, 18, 16),
+      const Radius.circular(5),
     );
+    canvas.drawRRect(headRect, skinPaint);
 
-    // Rambut Hitam Rapi Belah Samping (Sesuai Foto Dokter Referensi)
+    // Hidung Mancung Kecil Menghadap Kanan (Sisi Game)
+    final nosePath = Path();
+    nosePath.moveTo(10, -64);
+    nosePath.lineTo(13.5, -62);
+    nosePath.lineTo(10, -60);
+    nosePath.close();
+    canvas.drawPath(nosePath, skinPaint);
+
+    // Rambut Hitam Rapi Belah Samping (Tampak Samping)
     final hairPaint = Paint()..color = const Color(0xFF0F172A);
     final hairPath = Path();
-    hairPath.moveTo(-11, -67);
-    hairPath.lineTo(-11, -74);
-    hairPath.quadraticBezierTo(-3, -77, 6, -75);
-    hairPath.lineTo(11, -72);
+    hairPath.moveTo(-9, -67);
+    hairPath.lineTo(-9, -74);
+    hairPath.quadraticBezierTo(2, -77, 11, -73);
     hairPath.lineTo(11, -67);
-    hairPath.lineTo(9, -69);
-    hairPath.quadraticBezierTo(0, -71, -9, -69);
+    hairPath.lineTo(8, -69);
+    hairPath.quadraticBezierTo(0, -71, -7, -68);
     hairPath.close();
     canvas.drawPath(hairPath, hairPaint);
 
-    // 7. Kacamata Hitam Kotak Persegi Modern (Sesuai Referensi Foto Asli)
-    final glassesFramePaint = Paint()
-      ..color = const Color(0xFF000000)
+    // 5. MATA DOKTER RAMAH & KACAMATA PUTIH/BENING SESUAI REFERENSI ASLI
+    // Mata dokter menatap ke depan sisi game
+    final eyeWhite = Paint()..color = Colors.white;
+    final eyePupil = Paint()..color = const Color(0xFF0F172A);
+    canvas.drawOval(Rect.fromCenter(center: const Offset(4, -64.5), width: 5.5, height: 4), eyeWhite);
+    canvas.drawCircle(const Offset(5, -64.5), 1.6, eyePupil);
+    canvas.drawCircle(const Offset(5.5, -65), 0.6, Paint()..color = Colors.white); // Kilau mata
+
+    // KACAMATA BINGKAI PUTIH / BENING TRANSPARAN (CLEAR FRAMES) SESUAI FOTO DOKTER ASLI
+    final clearFramePaint = Paint()
+      ..color = const Color(0xFFFFFFFF) // Frame Putih Bersih
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8;
-    final glassesLensPaint = Paint()..color = const Color(0xFF1E293B);
+      ..strokeWidth = 1.6;
+    final clearFrameOuter = Paint()
+      ..color = const Color(0xFFCBD5E1) // Aksen border halus
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
 
-    // Lensa Kotak Kiri & Kanan
+    // Lensa Persegi Bening dengan Pantulan Kaca Transparan
+    final lensRect = Rect.fromLTWH(0, -68, 11, 7.5);
+    final lensRRect = RRect.fromRectAndRadius(lensRect, const Radius.circular(2.0));
     canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-8, -67, 6.5, 5.5), const Radius.circular(1.5)),
-      glassesLensPaint,
+      lensRRect,
+      Paint()..color = const Color(0x33E0F2FE), // Kaca bening dengan semburat kilau lembut
     );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-8, -67, 6.5, 5.5), const Radius.circular(1.5)),
-      glassesFramePaint,
-    );
+    canvas.drawRRect(lensRRect, clearFramePaint);
+    canvas.drawRRect(lensRRect, clearFrameOuter);
 
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(1.5, -67, 6.5, 5.5), const Radius.circular(1.5)),
-      glassesLensPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(1.5, -67, 6.5, 5.5), const Radius.circular(1.5)),
-      glassesFramePaint,
-    );
-    // Gagang tengah kacamata
-    canvas.drawLine(const Offset(-1.5, -65), const Offset(1.5, -65), glassesFramePaint);
+    // Gagang Kacamata Putih ke Arah Telinga Belakang
+    canvas.drawLine(const Offset(0, -65), const Offset(-7, -65), clearFramePaint);
 
-    // Senyum Ramah
+    // Garis Kilau Refleksi Cahaya Miring di Kaca Bening
+    final glassShine = Paint()
+      ..color = Colors.white.withOpacity(0.6)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(const Offset(3, -67), const Offset(7, -62), glassShine);
+
+    // Senyum Ramah di Wajah Samping
     final smilePaint = Paint()
       ..color = const Color(0xFF991B1B)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
     canvas.drawArc(
-      const Rect.fromLTWH(-3, -60, 6, 3),
+      const Rect.fromLTWH(4, -60, 6, 3),
       0,
-      pi,
+      pi * 0.8,
       false,
       smilePaint,
     );
 
-    // 8. Tangan & Syringe Blaster (Senjata Medis Disinfektan)
-    _drawSyringeBlaster(canvas);
+    // 6. Tangan & Syringe Blaster (Dipegang Menghadap Sisi Game)
+    _drawSyringeBlasterSide(canvas);
   }
 
-  void _drawSyringeBlaster(Canvas canvas) {
+  void _drawSyringeBlasterSide(Canvas canvas) {
     canvas.save();
-    // Posisi tangan dokter memegang blaster
+    // Posisi kedua tangan memegang syringe blaster ke arah kanan (sisi game)
     canvas.translate(10, -36);
 
-    // Lengan Jas Putih
+    // Lengan Jas Snelli Putih
     final sleevePaint = Paint()..color = const Color(0xFFFFFFFF);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-2, -4, 10, 7), const Radius.circular(3)),
-      sleevePaint,
-    );
+    final sleeveBorder = Paint()
+      ..color = const Color(0xFFCBD5E1)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
 
-    // Tabung Syringe Blaster
+    final armRect = RRect.fromRectAndRadius(const Rect.fromLTWH(-2, -4, 11, 8), const Radius.circular(3));
+    canvas.drawRRect(armRect, sleevePaint);
+    canvas.drawRRect(armRect, sleeveBorder);
+
+    // Tabung Syringe Blaster Medis
     final syringeBodyPaint = Paint()..color = const Color(0xEEF1F5F9);
     final syringeBorder = Paint()
       ..color = const Color(0xFF00A896)
@@ -430,8 +440,6 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
 
   /// Titik keluarnya peluru tembakan presisi dari ujung jarum suntik
   Vector2 get muzzlePosition {
-    // Karena anchor = bottomCenter, position.x adalah tengah dokter, position.y adalah tanah (groundY)
-    // Ujung jarum suntik ada di x = 47, y = -36.5 relatif terhadap telapak kaki tengah dokter
     final offsetX = facingDirection == 1 ? 47.0 : -47.0;
     return Vector2(position.x + offsetX, position.y - 36.5);
   }

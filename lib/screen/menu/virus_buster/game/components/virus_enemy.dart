@@ -121,6 +121,10 @@ class VirusEnemy extends PositionComponent with HasGameRef, CollisionCallbacks {
       if (other.isShieldActive) {
         // Player memiliki pelindung APD: hancurkan virus langsung tanpa melukai player
         takeDamage(currentHp);
+      } else if (type == VirusType.fluGoo && other.velocityY > 0 && other.position.y <= position.y + 10) {
+        // MARIO STOMP: Kuman yang jalan di darat mati jika diinjak dari atas!
+        takeDamage(currentHp);
+        other.bounceAfterStomp();
       } else {
         onHitPlayer?.call(other);
       }
