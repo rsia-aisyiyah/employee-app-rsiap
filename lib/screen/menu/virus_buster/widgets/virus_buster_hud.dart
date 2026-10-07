@@ -17,121 +17,129 @@ class VirusBusterHud extends StatelessWidget {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Row 1: Lives, Stage Pill, Skor & Pause
+            // Row 1: Lives, Flexible Stage Info, Skor & Pause
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Lives (Hati Kesehatan)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF161B22).withOpacity(0.85),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
+                    color: const Color(0xFF161B22).withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(stats.maxLives, (index) {
                       final isAlive = index < stats.lives;
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 1.5),
                         child: Icon(
                           isAlive ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                           color: isAlive ? const Color(0xFFEF4444) : Colors.white24,
-                          size: 18,
+                          size: 16,
                         ),
                       );
                     }),
                   ),
                 ),
 
-                // Stage Info Pill
+                const SizedBox(width: 8),
+
+                // Stage Info Pill (Expanded agar tidak pernah overflow)
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F766E).withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.shield_outlined, color: Color(0xFF00E5FF), size: 13),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'S${stats.stage}: ${stageConfig.name}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                // Skor
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F766E).withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3)),
+                    color: const Color(0xFF161B22).withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.shield_outlined, color: Color(0xFF00E5FF), size: 14),
-                      const SizedBox(width: 5),
+                      const Icon(Icons.stars_rounded, color: Color(0xFFFFD54F), size: 15),
+                      const SizedBox(width: 4),
                       Text(
-                        'STAGE ${stats.stage}: ${stageConfig.locationTag.toUpperCase()}',
+                        '${stats.score}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // Skor & Pause
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF161B22).withOpacity(0.85),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.stars_rounded, color: Color(0xFFFFD54F), size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${stats.score}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: onPause,
+                const SizedBox(width: 6),
+
+                // Pause Button
+                InkWell(
+                  onTap: onPause,
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF161B22).withOpacity(0.9),
                       borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.all(7),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161B22).withOpacity(0.85),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white.withOpacity(0.08)),
-                        ),
-                        child: const Icon(Icons.pause_rounded, color: Colors.white, size: 18),
-                      ),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
                     ),
-                  ],
+                    child: const Icon(Icons.pause_rounded, color: Colors.white, size: 16),
+                  ),
                 ),
               ],
             ),
 
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
-            // Row 2: Progress to Boss & Active Power-up timer
+            // Row 2: Progress Bar Menuju Boss & Active Power-up Timer
             Row(
               children: [
-                // Progress Bar Menuju Boss
+                // Progress Bar
                 Expanded(
                   child: Container(
-                    height: 6,
+                    height: 5,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: const Color(0xFF1E293B).withOpacity(0.8),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: FractionallySizedBox(
@@ -149,25 +157,25 @@ class VirusBusterHud extends StatelessWidget {
                   ),
                 ),
 
-                // Active Powerup Tag (jika aktif)
+                // Active Power-up Tag
                 if (stats.activePowerupName.isNotEmpty) ...[
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF59E0B),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.flash_on_rounded, color: Colors.white, size: 11),
-                        const SizedBox(width: 3),
+                        const Icon(Icons.flash_on_rounded, color: Colors.white, size: 10),
+                        const SizedBox(width: 2),
                         Text(
-                          '${stats.activePowerupName} (${stats.powerupTimer.toStringAsFixed(0)}s)',
+                          '${stats.activePowerupName} ${stats.powerupTimer.toStringAsFixed(0)}s',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 9.5,
+                            fontSize: 9,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
