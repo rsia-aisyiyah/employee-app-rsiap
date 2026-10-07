@@ -52,7 +52,7 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
   void setupGround(double y) {
     groundY = y;
     position.y = groundY;
-    position.x = 90;
+    position.x = 42; // Mulai di sisi kiri layar
     isOnGround = true;
     velocityY = 0;
   }
@@ -123,7 +123,9 @@ class PlayerDoctor extends PositionComponent with HasGameRef, CollisionCallbacks
     }
 
     // Keep within world bounds
-    if (position.x < 30) position.x = 30;
+    if (position.x < 28) position.x = 28;
+    final maxX = gameRef.size.x - 36;
+    if (position.x > maxX) position.x = maxX;
 
     // Run animation cycle
     if (isMoving && isOnGround) {

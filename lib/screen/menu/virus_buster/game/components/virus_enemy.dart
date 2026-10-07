@@ -19,6 +19,7 @@ class VirusEnemy extends PositionComponent with HasGameRef, CollisionCallbacks {
   // Gerakan khusus
   double bounceBaseY = 0.0;
   double bouncePhase = 0.0;
+  bool hasEnteredScreen = false;
 
   final void Function(VirusEnemy enemy, int scoreAwarded)? onDefeated;
   final void Function(PlayerDoctor player)? onHitPlayer;
@@ -87,9 +88,19 @@ class VirusEnemy extends PositionComponent with HasGameRef, CollisionCallbacks {
 
     // Gerakan Horizontal ke arah kiri (mendekati dokter)
     if (type == VirusType.bossMega) {
-      // Boss bergerak maju-mundur perlahan di area kanan
-      position.x -= sin(animTimer * 0.5) * 40 * dt;
-      position.y = bounceBaseY + sin(animTimer) * 25;
+      final double arenaTargetX = gameRef.size.x - (size.x * 0.6) - 12;
+      if (!hasEnteredScreen) {
+        // Fase Masuk ke Layar (Entrance): Bergerak maju ke dalam arena
+        position.x -= 140 * dt;
+        if (position.x <= arenaTargetX) {
+          position.x = arenaTargetX;
+          hasEnteredScreen = true;
+        }
+      } else {
+        // Fase Pertarungan di Dalam Layar (On-Screen Battle): Melayang naik-turun & maju-mundur
+        position.x = arenaTargetX + sin(animTimer * 0.7) * 22;
+        position.y = bounceBaseY + sin(animTimer * 1.5) * 32;
+      }
     } else if (type == VirusType.spikeCorona) {
       position.x -= moveSpeed * dt;
       // Memantul gelombang
