@@ -45,8 +45,8 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
   Future<void> onLoad() async {
     super.onLoad();
 
-    // Tinggi ground / lantai disesuaikan dengan layar
-    groundY = size.y * 0.76;
+    // Tinggi ground / lantai disesuaikan dengan garis lantai backdrop
+    groundY = size.y * 0.77;
 
     // Tambah Scenery
     scenery = StageScenery(stageNumber: currentStage, groundY: groundY);

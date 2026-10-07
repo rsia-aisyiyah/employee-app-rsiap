@@ -116,6 +116,7 @@ flutter:
     - assets/images/logo-text-rsiap2.png
     - assets/images/depan-rsia.jpg
     - assets/images/logo-rsia-aisyiyah.png
+    - assets/images/virus_buster/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
