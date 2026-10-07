@@ -23,6 +23,16 @@ class IconMapper {
         i == 'kantin_rsia') {
       return '🍱';
     }
+    if (r == 'virus_buster' ||
+        r == 'super_doctor' ||
+        r == 'game_dokter' ||
+        r == 'dokter_virus' ||
+        r == 'menu_virus_buster' ||
+        r == 'menu_super_doctor' ||
+        i == 'virus_buster' ||
+        i == 'super_doctor') {
+      return '🩺';
+    }
     return null;
   }
 
@@ -58,6 +68,13 @@ class IconMapper {
         case 'menu_ambulans':
         case 'menu_emergency_rush':
           return Icons.airport_shuttle_rounded;
+        case 'virus_buster':
+        case 'super_doctor':
+        case 'game_dokter':
+        case 'dokter_virus':
+        case 'menu_virus_buster':
+        case 'menu_super_doctor':
+          return Icons.vaccines_rounded;
         case 'kantin':
         case 'menu_kantin':
         case 'kantin_rsia':
@@ -109,6 +126,13 @@ class IconMapper {
       case 'menu_ambulans':
       case 'menu_emergency_rush':
         return Icons.airport_shuttle_rounded;
+      case 'virus_buster':
+      case 'super_doctor':
+      case 'game_dokter':
+      case 'dokter_virus':
+      case 'menu_virus_buster':
+      case 'menu_super_doctor':
+        return Icons.vaccines_rounded;
       case 'menu_tts':
       case 'tts':
       case 'game_tts':

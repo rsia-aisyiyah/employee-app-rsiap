@@ -636,6 +636,18 @@ class _HomePageState extends State<HomePage> {
         'route': 'kantin',
       });
     }
+    final hasVirusBuster = list.any((m) =>
+        (m['route'] ?? '').toString().toLowerCase() == 'virus_buster' ||
+        (m['nama_menu'] ?? '').toString().toLowerCase().contains('super doctor') ||
+        (m['nama_menu'] ?? '').toString().toLowerCase().contains('virus'));
+    if (!hasVirusBuster) {
+      list.add({
+        'id_menu': 256,
+        'nama_menu': 'Super Doctor',
+        'icon': 'virus_buster',
+        'route': 'virus_buster',
+      });
+    }
     return list;
   }
 
@@ -712,7 +724,7 @@ class _HomePageState extends State<HomePage> {
         title: "Ruang Rehat & Mini Games",
         icon: Icons.sports_esports_rounded,
         themeColor: const Color(0xFF00A896),
-        keywords: ['emergency_rush', 'ambulans', 'tts', 'game', 'arcade', 'rehat', 'hiburan', 'gesit'],
+        keywords: ['emergency_rush', 'ambulans', 'tts', 'game', 'arcade', 'rehat', 'hiburan', 'gesit', 'virus_buster', 'super_doctor', 'dokter', 'virus'],
       ),
     ];
 

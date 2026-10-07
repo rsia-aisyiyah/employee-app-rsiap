@@ -37,10 +37,18 @@ import 'package:rsia_employee_app/screen/menu/kebugaran_saya.dart';
 import 'package:rsia_employee_app/screen/menu/tts/tts_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/emergency_rush/emergency_rush_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/kantin/kantin_screen.dart';
+import 'package:rsia_employee_app/screen/menu/virus_buster/virus_buster_home_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
     switch (routeKey) {
+      case 'virus_buster':
+      case 'super_doctor':
+      case 'game_dokter':
+      case 'dokter_virus':
+      case 'menu_virus_buster':
+      case 'menu_super_doctor':
+        return const VirusBusterHomeScreen();
       case 'kantin':
       case 'menu_kantin':
       case 'kantin_rsia':
