@@ -9,6 +9,8 @@ import 'package:rsia_employee_app/screen/menu/virus_buster/game/components/virus
 import 'package:rsia_employee_app/screen/menu/virus_buster/models/virus_buster_models.dart';
 
 class VirusBusterGame extends FlameGame with HasCollisionDetection {
+  final HeroConfig heroConfig;
+  final GameDifficulty difficulty;
   final void Function(VirusBusterStats stats)? onStatsUpdated;
   final void Function(int finalScore, int stage, int defeated)? onGameOverCallback;
   final void Function(int clearedStage, int currentScore)? onStageClearedCallback;
@@ -17,10 +19,12 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
   late StageScenery scenery;
 
   int currentStage = 1;
+  int loopCount = 1;
   int score = 0;
+  int stageScore = 0; // Skor khusus yang dikumpulkan di stage berjalan
   int virusesDefeated = 0;
-  int lives = 3;
-  static const int maxLives = 3;
+  late int lives;
+  late int maxLives;
 
   double groundY = 0.0;
   bool isBossSpawned = false;
@@ -33,10 +37,15 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
   final Random random = Random();
 
   VirusBusterGame({
+    HeroConfig? heroConfig,
+    this.difficulty = GameDifficulty.medium,
     this.onStatsUpdated,
     this.onGameOverCallback,
     this.onStageClearedCallback,
-  });
+  }) : heroConfig = heroConfig ?? HeroConfig.heroes.first {
+    maxLives = difficulty.baseLives + this.heroConfig.bonusLives;
+    lives = maxLives;
+  }
 
   @override
   Color backgroundColor() => const Color(0xFF0D1117);
@@ -52,17 +61,27 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
     scenery = StageScenery(stageNumber: currentStage, groundY: groundY);
     add(scenery);
 
-    // Tambah Player Doctor
-    player = PlayerDoctor();
+    // Tambah Karakter Hero Nakes yang Dipilih
+    player = PlayerDoctor(heroConfig: heroConfig);
     player.setupGround(groundY);
     add(player);
 
     _notifyStats();
   }
 
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    groundY = size.y * 0.77;
+    if (isLoaded) {
+      player.setupGround(groundY);
+    }
+  }
+
   void _notifyStats() {
     final stageConfig = StageConfig.stages[currentStage - 1];
-    final progress = (score / stageConfig.targetScoreToBoss).clamp(0.0, 1.0);
+    // Progress stage dihitung dari pencapaian skor musuh di stage saat ini
+    final progress = (stageScore / stageConfig.targetScoreToBoss).clamp(0.0, 1.0);
 
     String powerupName = '';
     double powerupRemaining = 0.0;
@@ -91,25 +110,24 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
     if (isGameOver || isStageCleared) return;
     super.update(dt);
 
-    // Parallax scrolling scenery berdasarkan gerak player
+    // Parallax scrolling scenery seirama dengan langkah gerak kaki hero
     if (player.isMoving) {
       final delta = player.velocityX * dt;
       scenery.scroll(delta);
-    } else {
-      // Auto slow-scroll untuk memberi sensasi dinamis
-      scenery.scroll(30 * dt);
     }
 
-    // Cek target Boss Stage
+    // Cek target Boss Stage (Berdasarkan stageScore yang dikumpulkan di stage ini)
     final stageConfig = StageConfig.stages[currentStage - 1];
-    if (score >= stageConfig.targetScoreToBoss && !isBossSpawned) {
+    if (stageScore >= stageConfig.targetScoreToBoss && !isBossSpawned) {
       _spawnBoss();
     }
 
     // Spawn Musuh Biasa jika Boss belum muncul
     if (!isBossSpawned) {
       enemySpawnTimer += dt;
-      final spawnInterval = max(1.2, 2.6 - (currentStage * 0.4));
+      final loopSpeedBonus = (loopCount - 1) * 0.15;
+      final baseInterval = max(0.8, 2.6 - (currentStage * 0.4) - loopSpeedBonus);
+      final spawnInterval = max(0.65, baseInterval + difficulty.spawnIntervalDelta);
       if (enemySpawnTimer >= spawnInterval) {
         enemySpawnTimer = 0.0;
         _spawnEnemy();
@@ -131,25 +149,56 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
     VirusType type;
     double spawnY;
 
-    if (r < 0.45) {
-      // Flu Goo (di lantai)
-      type = VirusType.fluGoo;
-      spawnY = groundY - 16;
-    } else if (r < 0.78) {
-      // Spike Corona (melayang agak tinggi)
-      type = VirusType.spikeCorona;
-      spawnY = groundY - 70 - random.nextDouble() * 50;
-    } else {
-      // Mosquito (terbang tinggi lalu menukik)
-      type = VirusType.mosquito;
-      spawnY = groundY - 110 - random.nextDouble() * 40;
+    switch (currentStage) {
+      case 1:
+        // STAGE 1: Drop-Off IGD 24 Jam
+        if (r < 0.45) {
+          type = VirusType.fluGoo; // Lendir merayap di tanah (bisa diinjak)
+          spawnY = groundY - 22;
+        } else if (r < 0.78) {
+          type = VirusType.dustMite; // Partikel debu/alergen melayang
+          spawnY = groundY - 75 - random.nextDouble() * 50;
+        } else {
+          type = VirusType.mosquito; // Nyamuk Aedes menukik cepat
+          spawnY = groundY - 125 - random.nextDouble() * 45;
+        }
+        break;
+
+      case 2:
+        // STAGE 2: Lobi & Ruang Tunggu Poliklinik
+        if (r < 0.40) {
+          type = VirusType.spikeCorona; // Virus duri berputar sinusoidal
+          spawnY = groundY - 85 - random.nextDouble() * 55;
+        } else if (r < 0.74) {
+          type = VirusType.bacillus; // Bakteri batang melompat di darat
+          spawnY = groundY - 35;
+        } else {
+          type = VirusType.toxicDroplet; // Droplet batuk meluncur diagonal
+          spawnY = groundY - 105 - random.nextDouble() * 50;
+        }
+        break;
+
+      case 3:
+      default:
+        // STAGE 3: Nurse Station & Koridor Rawat
+        if (r < 0.38) {
+          type = VirusType.superbugMrsa; // Bakteri lapis baja kebal antibiotik
+          spawnY = groundY - 28;
+        } else if (r < 0.72) {
+          type = VirusType.fungalSpore; // Spora jamur candida melayang
+          spawnY = groundY - 95 - random.nextDouble() * 50;
+        } else {
+          type = VirusType.shadowPathogen; // Patogen bayangan melesat cepat
+          spawnY = groundY - 120 - random.nextDouble() * 45;
+        }
+        break;
     }
 
     final enemy = VirusEnemy(
       type: type,
       position: Vector2(size.x + 40, spawnY),
       initialGroundY: groundY,
-      moveSpeed: 80.0 + (currentStage * 20.0),
+      moveSpeed: (75.0 + (currentStage * 22.0)) * difficulty.enemySpeedMultiplier,
       onDefeated: _handleEnemyDefeated,
       onHitPlayer: _handlePlayerHit,
     );
@@ -158,11 +207,25 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
 
   void _spawnBoss() {
     isBossSpawned = true;
+    VirusType bossType;
+    switch (currentStage) {
+      case 1:
+        bossType = VirusType.bossStage1;
+        break;
+      case 2:
+        bossType = VirusType.bossStage2;
+        break;
+      case 3:
+      default:
+        bossType = VirusType.bossStage3;
+        break;
+    }
+
     final boss = VirusEnemy(
-      type: VirusType.bossMega,
-      position: Vector2(size.x + 60, groundY - 80),
+      type: bossType,
+      position: Vector2(size.x + 80, groundY - 110),
       initialGroundY: groundY,
-      moveSpeed: 30.0,
+      moveSpeed: 30.0 * difficulty.enemySpeedMultiplier,
       onDefeated: _handleBossDefeated,
       onHitPlayer: _handlePlayerHit,
     );
@@ -189,13 +252,16 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
   }
 
   void _handleEnemyDefeated(VirusEnemy enemy, int scoreAwarded) {
-    score += scoreAwarded;
+    final adjustedScore = (scoreAwarded * difficulty.scoreMultiplier).round();
+    score += adjustedScore;
+    stageScore += adjustedScore;
     virusesDefeated++;
     _notifyStats();
   }
 
   void _handleBossDefeated(VirusEnemy boss, int scoreAwarded) {
-    score += scoreAwarded;
+    final adjustedScore = (scoreAwarded * difficulty.scoreMultiplier).round();
+    score += adjustedScore;
     virusesDefeated++;
     isStageCleared = true;
     _notifyStats();
@@ -211,6 +277,8 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
 
     if (lives <= 0) {
       isGameOver = true;
+      player.stopMoving();
+      player.standUp();
       onGameOverCallback?.call(score, currentStage, virusesDefeated);
     }
   }
@@ -235,7 +303,7 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
         // Bersihkan semua musuh di layar
         final enemies = children.whereType<VirusEnemy>().toList();
         for (var e in enemies) {
-          if (e.type != VirusType.bossMega) {
+          if (!e.isBoss) {
             e.takeDamage(10);
           } else {
             e.takeDamage(4);
@@ -262,41 +330,69 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
     player.stopMoving();
   }
 
+  void playerCrouch() {
+    player.crouch();
+  }
+
+  void playerStandUp() {
+    player.standUp();
+  }
+
   void playerJump() {
     player.jump();
   }
 
   void playerShoot() {
+    if (isGameOver || isStageCleared) return;
+
     final muzzle = player.muzzlePosition;
     final dirX = player.facingDirection.toDouble();
+    final bulletSpeed = 560.0 * heroConfig.bulletSpeedMultiplier;
+    final maxDist = heroConfig.profession == HeroProfession.farmasi ? 1100.0 : 850.0;
 
     if (player.isSpreadShotActive) {
       // Contra Spread Shot: 3 Peluru menyebar
       add(AntisepticBullet(
         startPosition: muzzle,
+        speed: bulletSpeed,
         directionX: dirX,
         directionY: 0.0,
         isEnhanced: true,
+        maxDistance: maxDist,
+        customBulletColor: heroConfig.bulletColor,
+        customGlowColor: heroConfig.bulletGlowColor,
       ));
       add(AntisepticBullet(
         startPosition: muzzle,
+        speed: bulletSpeed,
         directionX: dirX,
         directionY: -0.28,
         isEnhanced: true,
+        maxDistance: maxDist,
+        customBulletColor: heroConfig.bulletColor,
+        customGlowColor: heroConfig.bulletGlowColor,
       ));
       add(AntisepticBullet(
         startPosition: muzzle,
+        speed: bulletSpeed,
         directionX: dirX,
         directionY: 0.28,
         isEnhanced: true,
+        maxDistance: maxDist,
+        customBulletColor: heroConfig.bulletColor,
+        customGlowColor: heroConfig.bulletGlowColor,
       ));
     } else {
-      // Single Syringe Shot
+      // Single Shot Sesuai Karakter Hero
       add(AntisepticBullet(
         startPosition: muzzle,
+        speed: bulletSpeed,
         directionX: dirX,
         directionY: 0.0,
         isEnhanced: false,
+        maxDistance: maxDist,
+        customBulletColor: heroConfig.bulletColor,
+        customGlowColor: heroConfig.bulletGlowColor,
       ));
     }
   }
@@ -306,9 +402,11 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
     if (currentStage < StageConfig.stages.length) {
       currentStage++;
     } else {
-      // Loop kembali dengan tingkat kesulitan lebih tinggi
+      // Loop kembali dengan tingkat kesulitan lebih tinggi (Mode Endless)
+      loopCount++;
       currentStage = 1;
     }
+    stageScore = 0;
     isStageCleared = false;
     isBossSpawned = false;
 
@@ -317,12 +415,13 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
     scenery = StageScenery(stageNumber: currentStage, groundY: groundY);
     add(scenery);
 
-    // Hapus semua musuh & bullet lama
+    // Hapus semua musuh, proyektil musuh, bullet, & powerup lama
     children.whereType<VirusEnemy>().forEach((e) => e.removeFromParent());
+    children.whereType<VirusProjectile>().forEach((vp) => vp.removeFromParent());
     children.whereType<AntisepticBullet>().forEach((b) => b.removeFromParent());
     children.whereType<PowerupItem>().forEach((p) => p.removeFromParent());
 
-    // Reset posisi dokter
+    // Reset posisi hero
     player.setupGround(groundY);
 
     _notifyStats();
@@ -331,9 +430,12 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
   /// Restart dari awal
   void restartGame() {
     score = 0;
+    stageScore = 0;
     virusesDefeated = 0;
+    maxLives = difficulty.baseLives + heroConfig.bonusLives;
     lives = maxLives;
     currentStage = 1;
+    loopCount = 1;
     isGameOver = false;
     isBossSpawned = false;
     isStageCleared = false;
@@ -345,6 +447,7 @@ class VirusBusterGame extends FlameGame with HasCollisionDetection {
 
     // Bersihkan entitas
     children.whereType<VirusEnemy>().forEach((e) => e.removeFromParent());
+    children.whereType<VirusProjectile>().forEach((vp) => vp.removeFromParent());
     children.whereType<AntisepticBullet>().forEach((b) => b.removeFromParent());
     children.whereType<PowerupItem>().forEach((p) => p.removeFromParent());
 

@@ -603,51 +603,6 @@ class _HomePageState extends State<HomePage> {
     for (var m in _menus) {
       if (m is Map) list.add(Map<String, dynamic>.from(m));
     }
-    final hasAmbulans = list.any((m) =>
-        (m['route'] ?? '').toString().toLowerCase() == 'emergency_rush' ||
-        (m['nama_menu'] ?? '').toString().toLowerCase().contains('ambulans'));
-    if (!hasAmbulans) {
-      list.add({
-        'id_menu': 253,
-        'nama_menu': 'Ambulans Gesit',
-        'icon': 'emergency_rush',
-        'route': 'emergency_rush',
-      });
-    }
-    final hasTts = list.any((m) =>
-        (m['route'] ?? '').toString().toLowerCase() == 'menu_tts' ||
-        (m['nama_menu'] ?? '').toString().toLowerCase().contains('tts'));
-    if (!hasTts) {
-      list.add({
-        'id_menu': 254,
-        'nama_menu': 'TTS Mini RSIA',
-        'icon': 'menu_tts',
-        'route': 'menu_tts',
-      });
-    }
-    final hasKantin = list.any((m) =>
-        (m['route'] ?? '').toString().toLowerCase() == 'kantin' ||
-        (m['nama_menu'] ?? '').toString().toLowerCase().contains('kantin'));
-    if (!hasKantin) {
-      list.add({
-        'id_menu': 255,
-        'nama_menu': 'Kantin RSIA',
-        'icon': 'kantin',
-        'route': 'kantin',
-      });
-    }
-    final hasVirusBuster = list.any((m) =>
-        (m['route'] ?? '').toString().toLowerCase() == 'virus_buster' ||
-        (m['nama_menu'] ?? '').toString().toLowerCase().contains('super doctor') ||
-        (m['nama_menu'] ?? '').toString().toLowerCase().contains('virus'));
-    if (!hasVirusBuster) {
-      list.add({
-        'id_menu': 256,
-        'nama_menu': 'Super Doctor',
-        'icon': 'virus_buster',
-        'route': 'virus_buster',
-      });
-    }
     return list;
   }
 

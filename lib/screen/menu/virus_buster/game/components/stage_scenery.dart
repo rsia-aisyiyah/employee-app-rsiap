@@ -9,7 +9,6 @@ class StageScenery extends PositionComponent with HasGameRef {
   double scrollOffset = 0.0;
 
   ui.Image? _backdropImage;
-  bool _isLoading = true;
 
   StageScenery({
     required this.stageNumber,
@@ -45,8 +44,6 @@ class StageScenery extends PositionComponent with HasGameRef {
       _backdropImage = frame.image;
     } catch (_) {
       // Fallback graceful
-    } finally {
-      _isLoading = false;
     }
   }
 

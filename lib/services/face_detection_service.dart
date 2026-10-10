@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
 class FaceDetectionService {
@@ -23,14 +22,15 @@ class FaceDetectionService {
       return false;
     }
 
-    // Both eyes closed < 0.2 (or adjusted threshold)
-    return face.leftEyeOpenProbability! < 0.2 &&
-        face.rightEyeOpenProbability! < 0.2;
+    // Both eyes closed < 0.35 (tolerant to glasses, glare, and Asian eye shape)
+    return face.leftEyeOpenProbability! < 0.35 &&
+        face.rightEyeOpenProbability! < 0.35;
   }
 
   bool detectSmile(Face face) {
     if (face.smilingProbability == null) return false;
-    return face.smilingProbability! > 0.7;
+    // Lowered slightly from 0.7 to 0.55 for natural subtle smile
+    return face.smilingProbability! > 0.55;
   }
 
   bool detectLookLeft(Face face) {

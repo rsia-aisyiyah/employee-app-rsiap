@@ -15,11 +15,6 @@ class HealthService {
   // Health instance for Health Connect (Android) and Apple HealthKit (iOS)
   static final Health _health = Health();
 
-  // Android: STRICTLY STEPS ONLY (Health Connect policy compliance)
-  static final List<HealthDataType> _androidHealthTypes = [
-    HealthDataType.STEPS,
-  ];
-
   // iOS: Apple HealthKit / Apple Watch
   static final List<HealthDataType> _iosHealthTypes = [
     HealthDataType.STEPS,
@@ -31,13 +26,13 @@ class HealthService {
 
   /// Initialize sensors on app start
   static Future<void> init() async {
-    try {
-      _health.configure();
-    } catch (e) {
-      debugPrint("Health configure error: $e");
-    }
-
-    if (defaultTargetPlatform == TargetPlatform.android) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      try {
+        _health.configure();
+      } catch (e) {
+        debugPrint("Health configure error: $e");
+      }
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
       try {
         var status = await Permission.activityRecognition.status;
         if (status.isGranted) {
@@ -53,30 +48,13 @@ class HealthService {
   static Future<bool> requestPermissions() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
       try {
-        _health.configure();
-
-        // Also request activity recognition for fallback
-        try {
-          await Permission.activityRecognition.request();
-        } catch (_) {}
-
-        var status = await _health.getHealthConnectSdkStatus();
-        if (status == HealthConnectSdkStatus.sdkAvailable) {
-          bool? hasPermission = await _health.hasPermissions(_androidHealthTypes);
-          if (hasPermission == true) return true;
-          return await _health.requestAuthorization(_androidHealthTypes);
-        } else if (status == HealthConnectSdkStatus.sdkUnavailableProviderUpdateRequired) {
-          await _health.installHealthConnect();
+        var actStatus = await Permission.activityRecognition.request();
+        if (actStatus.isGranted) {
+          _startListening();
+          return true;
         }
       } catch (e) {
-        debugPrint("Android Health Connect check error: $e");
-      }
-
-      // If Health Connect not available, check activity recognition
-      var actStatus = await Permission.activityRecognition.status;
-      if (actStatus.isGranted) {
-        _startListening();
-        return true;
+        debugPrint("Android activity recognition request error: $e");
       }
       return false;
     } else if (defaultTargetPlatform == TargetPlatform.iOS) {
@@ -143,47 +121,16 @@ class HealthService {
   }
 
   static Future<Map<String, dynamic>> _fetchAndroidHealthData(DateTime midnight, DateTime now) async {
-    String statusLog = "";
     int totalSteps = 0;
-    String sumberDevice = "Sensor Pedometer HP";
+    const String sumberDevice = "Sensor Pedometer HP";
 
-    // 1. Prioritize Health Connect (smartwatch sync for steps)
-    try {
-      _health.configure();
-      var hcStatus = await _health.getHealthConnectSdkStatus();
-      if (hcStatus == HealthConnectSdkStatus.sdkAvailable) {
-        bool? authorized = await _health.hasPermissions(_androidHealthTypes);
-        if (authorized != true) {
-          authorized = await _health.requestAuthorization(_androidHealthTypes);
-        }
-
-        if (authorized == true) {
-          int? steps = await _health.getTotalStepsInInterval(midnight, now);
-          if (steps != null && steps > 0) {
-            totalSteps = steps;
-            sumberDevice = "Smartwatch / Health Connect";
-            statusLog += "Smartwatch Steps (Health Connect): $steps. ";
-          }
-        }
-      }
-    } catch (e) {
-      statusLog += "Health Connect: $e. ";
-      debugPrint("Health Connect fetch steps error: $e");
-    }
-
-    // 2. Fallback to hardware pedometer if Health Connect yields 0 or unavailable
-    if (totalSteps == 0) {
-      _startListening();
-      await Future.delayed(const Duration(milliseconds: 350));
-      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final lastDate = _box.read('pedometer_last_date');
-      if (lastDate == today) {
-        totalSteps = _box.read('pedometer_today_steps') ?? 0;
-        if (totalSteps > 0) {
-          sumberDevice = "Sensor Pedometer HP";
-          statusLog += "Sensor Pedometer HP: $totalSteps langkah. ";
-        }
-      }
+    // Read steps from hardware pedometer
+    _startListening();
+    await Future.delayed(const Duration(milliseconds: 350));
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final lastDate = _box.read('pedometer_last_date');
+    if (lastDate == today) {
+      totalSteps = _box.read('pedometer_today_steps') ?? 0;
     }
 
     double distanceKm = double.parse((totalSteps * 0.00075).toStringAsFixed(2));
@@ -204,7 +151,7 @@ class HealthService {
       'spo2_avg': null,
       'sumber_device': sumberDevice,
       'has_real_sensor_data': totalSteps > 0,
-      'status_log': statusLog.isEmpty ? "Langkah hari ini terbaca: $totalSteps." : statusLog,
+      'status_log': "Sensor Pedometer HP: $totalSteps langkah.",
     };
   }
 
