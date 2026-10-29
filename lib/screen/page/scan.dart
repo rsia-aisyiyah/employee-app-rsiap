@@ -20,106 +20,374 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
 
   Barcode? result;
   bool isLoading = false;
+  bool isProcessing = false;
+  bool isFlashOn = false;
   QRViewController? controller;
 
-  // In order to get hot reload to work we need to pause the camera if the platform
-  // is android, or resume the camera if the platform is iOS.
   @override
   void reassemble() {
     super.reassemble();
     if (Platform.isAndroid) {
-      controller!.pauseCamera();
+      controller?.pauseCamera();
     } else if (Platform.isIOS) {
-      controller!.resumeCamera();
+      controller?.resumeCamera();
     }
   }
 
-  // attendance to api using post method
   void _handleAttendance(String qrCode) async {
+    if (isProcessing) return;
     setState(() {
-      isLoading = true; // Set isLoading menjadi true saat request dimulai
+      isProcessing = true;
+      isLoading = true;
     });
 
     try {
-      var res = await Api().postData({'no_surat': qrCode}, '/undangan/kehadiran');
+      controller?.pauseCamera();
+      var res =
+          await Api().postData({'no_surat': qrCode}, '/undangan/kehadiran');
       var body = json.decode(res.body);
 
-      if (res.statusCode == 200) {
-        Msg.success(context, body['message']);
-        Navigator.pop(context);
-      } else {
-        Msg.error(context, body['message']);
-        Navigator.pop(context);
-      }
+      if (!mounted) return;
 
+      if (res.statusCode == 200) {
+        Msg.success(context, body['message'] ?? 'Kehadiran berhasil dicatat');
+        Navigator.pop(context, true);
+      } else {
+        Msg.error(context, body['message'] ?? 'Presensi gagal');
+        // Beri jeda sejenak sebelum kamera aktif kembali agar tidak langsung scan ulang
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          controller?.resumeCamera();
+          setState(() {
+            isProcessing = false;
+            isLoading = false;
+          });
+        }
+      }
     } catch (e) {
-      Msg.error(context, 'Failed to connect to server');
-    } finally {
-      setState(() {
-        isLoading = false; // Set isLoading menjadi false setelah request selesai
-      });
+      if (mounted) {
+        Msg.error(context, 'Gagal terhubung ke server');
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          controller?.resumeCamera();
+          setState(() {
+            isProcessing = false;
+            isLoading = false;
+          });
+        }
+      }
     }
   }
 
   void _requestPermission() async {
     final status = await Permission.camera.status;
-    if (status.isGranted) {
-      return;
-    }
+    if (status.isGranted) return;
     if (status.isPermanentlyDenied) {
       openAppSettings();
       return;
     }
     final result = await [Permission.camera].request();
-    if (result[Permission.camera]!.isGranted) {
-      return;
-    }
+    if (result[Permission.camera]!.isGranted) return;
   }
 
-  // init state
   @override
   void initState() {
     super.initState();
     _requestPermission();
   }
 
+  void _toggleFlashlight() async {
+    try {
+      await controller?.toggleFlash();
+      final status = await controller?.getFlashStatus();
+      setState(() {
+        isFlashOn = status ?? !isFlashOn;
+      });
+    } catch (_) {}
+  }
+
+  void _flipCamera() async {
+    try {
+      await controller?.flipCamera();
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
-    var scanArea = (MediaQuery.of(context).size.width < 400 ||  MediaQuery.of(context).size.height < 400)
-        ? 300.0
-        : 600.0;
+    final scanArea = (MediaQuery.of(context).size.width < 400 ||
+            MediaQuery.of(context).size.height < 400)
+        ? 260.0
+        : 320.0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan QR Code'),
-        backgroundColor: primaryColor,
-      ),
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Column(
-            children: <Widget>[
-              Expanded(
-                child: QRView(
-                  key: qrKey,
-                  onQRViewCreated: _onQRViewCreated,
-                  overlay: QrScannerOverlayShape(
-                    borderColor: primaryColor,
-                    borderRadius: 10,
-                    borderLength: 30,
-                    borderWidth: 10,
-                    cutOutSize: scanArea,
-                  ),
-                ),
-              ),
-            ],
+          // Camera QR View
+          QRView(
+            key: qrKey,
+            onQRViewCreated: _onQRViewCreated,
+            overlay: QrScannerOverlayShape(
+              borderColor: primaryColor,
+              borderRadius: 24,
+              borderLength: 40,
+              borderWidth: 6,
+              cutOutSize: scanArea,
+              overlayColor: Colors.black.withOpacity(0.65),
+            ),
           ),
 
-          // Widget untuk menampilkan loading/pesan di atas QRView
+          // Top Header & Back Button
+          SafeArea(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(50),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                        border:
+                            Border.all(color: Colors.white.withOpacity(0.2)),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          "Scan Presensi Kehadiran",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          "Arahkan kamera ke QR Code rapat",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.75),
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Instruction Pill above scanning area
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 70,
+            left: 20,
+            right: 20,
+            child: Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.45),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.15)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.qr_code_scanner_rounded,
+                        color: primaryColor, size: 16),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "Posisikan QR tepat di tengah bingkai",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom Controls Dock
+          Positioned(
+            bottom: 40,
+            left: 24,
+            right: 24,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B).withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: Colors.white.withOpacity(0.12)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      // Torch / Flash button
+                      InkWell(
+                        onTap: _toggleFlashlight,
+                        borderRadius: BorderRadius.circular(50),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isFlashOn
+                                    ? primaryColor
+                                    : Colors.white.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isFlashOn
+                                    ? Icons.flash_on_rounded
+                                    : Icons.flash_off_rounded,
+                                color: isFlashOn ? Colors.black : Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              isFlashOn ? "Lampu Nyala" : "Lampu Mati",
+                              style: TextStyle(
+                                color: isFlashOn
+                                    ? primaryColor
+                                    : Colors.white.withOpacity(0.7),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      Container(
+                        width: 1,
+                        height: 36,
+                        color: Colors.white.withOpacity(0.15),
+                      ),
+
+                      // Flip Camera button
+                      InkWell(
+                        onTap: _flipCamera,
+                        borderRadius: BorderRadius.circular(50),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.flip_camera_ios_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              "Putar Kamera",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Presensi kehadiran tercatat otomatis setelah kode terbaca",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.55),
+                    fontSize: 11,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+          // Loading Overlay during API verification
           if (isLoading)
             Container(
-              color: Colors.black.withOpacity(0.5), // Background transparan
-              child: const Center(
-                child: CircularProgressIndicator(), // Indikator loading
+              color: Colors.black.withOpacity(0.75),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 28, vertical: 22),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.4),
+                        blurRadius: 25,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(primaryColor),
+                        strokeWidth: 3,
+                      ),
+                      const SizedBox(height: 18),
+                      const Text(
+                        "Memverifikasi Presensi...",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Mohon tunggu sebentar",
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.65),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
         ],
@@ -130,10 +398,9 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      setState(() {
-        result = scanData;
-        _handleAttendance(result!.code!);
-      });
+      if (!isProcessing && scanData.code != null && scanData.code!.isNotEmpty) {
+        _handleAttendance(scanData.code!);
+      }
     });
   }
 
