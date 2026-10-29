@@ -6,6 +6,7 @@ import 'package:shimmer/shimmer.dart';
 import '../../api/request.dart';
 import '../../config/colors.dart';
 import '../../utils/fonts.dart';
+import 'scan.dart';
 
 class DaftarHadirPage extends StatefulWidget {
   final Map dataUdgn;
@@ -124,6 +125,30 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final res = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const QRAttendanceScanPage(),
+            ),
+          );
+          if (res == true) {
+            fetchUndangan();
+          }
+        },
+        backgroundColor: primaryColor,
+        elevation: 4,
+        icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
+        label: const Text(
+          "Scan Presensi",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/screen/page/daftar_hadir.dart';
 import 'package:rsia_employee_app/screen/page/notulen.dart';
+import 'package:rsia_employee_app/screen/page/scan.dart';
 import 'package:rsia_employee_app/components/skeletons/skeleton_list.dart';
 
 import 'package:rsia_employee_app/utils/fonts.dart';
@@ -46,6 +47,17 @@ class _UndanganState extends State<Undangan> {
       });
     });
     super.initState();
+  }
+
+  Future<void> _onRefresh() async {
+    final value = await fetchUndangan();
+    _setData(value['data'] ?? []);
+    if (mounted) {
+      setState(() {
+        meta = value['meta'] ?? {};
+        links = value['links'] ?? {};
+      });
+    }
   }
 
   Future fetchUndangan() async {
@@ -160,25 +172,72 @@ class _UndanganState extends State<Undangan> {
       child: Column(
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_back, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  const Text(
+                    "Undangan",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
               InkWell(
-                onTap: () => Navigator.pop(context),
+                onTap: () async {
+                  final res = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const QRAttendanceScanPage(),
+                    ),
+                  );
+                  if (res == true) {
+                    _onRefresh();
+                  }
+                },
+                borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
                   ),
-                  child: const Icon(Icons.arrow_back, color: Colors.white),
-                ),
-              ),
-              const SizedBox(width: 15),
-              const Text(
-                "Undangan",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      Icon(Icons.qr_code_scanner_rounded,
+                          color: Colors.white, size: 18),
+                      SizedBox(width: 6),
+                      Text(
+                        "Scan QR",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -447,13 +506,15 @@ class _UndanganState extends State<Undangan> {
                                               ),
                                             ],
                                           ),
-                                          child: Row(
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Expanded(
+                                              SizedBox(
+                                                width: double.infinity,
                                                 child: ElevatedButton.icon(
                                                   icon: const Icon(
                                                       Icons
-                                                          .assignment_ind_outlined,
+                                                          .qr_code_scanner_rounded,
                                                       size: 20),
                                                   style:
                                                       ElevatedButton.styleFrom(
@@ -468,56 +529,111 @@ class _UndanganState extends State<Undangan> {
                                                     ),
                                                     padding: const EdgeInsets
                                                         .symmetric(
-                                                        vertical: 16),
+                                                        vertical: 14),
                                                     elevation: 0,
                                                   ),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                DaftarHadirPage(
-                                                                    dataUdgn:
-                                                                        dataUdgn)));
+                                                  onPressed: () async {
+                                                    Navigator.pop(context);
+                                                    final res =
+                                                        await Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            const QRAttendanceScanPage(),
+                                                      ),
+                                                    );
+                                                    if (res == true) {
+                                                      _onRefresh();
+                                                    }
                                                   },
                                                   label: const Text(
-                                                      "Daftar Hadir"),
+                                                    "Scan Presensi Kehadiran",
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: OutlinedButton.icon(
-                                                  icon: const Icon(
-                                                      Icons
-                                                          .description_outlined,
-                                                      size: 20),
-                                                  style:
-                                                      OutlinedButton.styleFrom(
-                                                    foregroundColor:
-                                                        primaryColor,
-                                                    side: BorderSide(
-                                                        color: primaryColor),
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
+                                              const SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: OutlinedButton.icon(
+                                                      icon: const Icon(
+                                                          Icons
+                                                              .assignment_ind_outlined,
+                                                          size: 18),
+                                                      style:
+                                                          OutlinedButton.styleFrom(
+                                                        foregroundColor:
+                                                            primaryColor,
+                                                        side: BorderSide(
+                                                            color: primaryColor),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(12),
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 12),
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    DaftarHadirPage(
+                                                                        dataUdgn:
+                                                                            dataUdgn)));
+                                                      },
+                                                      label: const Text(
+                                                          "Daftar Hadir"),
                                                     ),
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        vertical: 16),
                                                   ),
-                                                  onPressed: () {
-                                                    Navigator.push(
-                                                        context,
-                                                        MaterialPageRoute(
-                                                            builder: (context) =>
-                                                                NotulenPage(
-                                                                    dataUdgn:
-                                                                        dataUdgn)));
-                                                  },
-                                                  label: const Text("Notulen"),
-                                                ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: OutlinedButton.icon(
+                                                      icon: const Icon(
+                                                          Icons
+                                                              .description_outlined,
+                                                          size: 18),
+                                                      style:
+                                                          OutlinedButton.styleFrom(
+                                                        foregroundColor:
+                                                            Colors.grey[700],
+                                                        side: BorderSide(
+                                                            color: Colors
+                                                                .grey[300]!),
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(12),
+                                                        ),
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                vertical: 12),
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.push(
+                                                            context,
+                                                            MaterialPageRoute(
+                                                                builder: (context) =>
+                                                                    NotulenPage(
+                                                                        dataUdgn:
+                                                                            dataUdgn)));
+                                                      },
+                                                      label:
+                                                          const Text("Notulen"),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -683,6 +799,30 @@ class _UndanganState extends State<Undangan> {
                   ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final res = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const QRAttendanceScanPage(),
+            ),
+          );
+          if (res == true) {
+            _onRefresh();
+          }
+        },
+        backgroundColor: primaryColor,
+        elevation: 4,
+        icon: const Icon(Icons.qr_code_scanner_rounded, color: Colors.white),
+        label: const Text(
+          "Scan Presensi",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
       ),
     );
   }
