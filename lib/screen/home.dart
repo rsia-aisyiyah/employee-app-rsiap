@@ -1337,7 +1337,8 @@ class _HomePageState extends State<HomePage> {
                 color: primaryColor,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.only(bottom: 90),
+                  padding: EdgeInsets.only(
+                      bottom: 90 + MediaQuery.of(context).padding.bottom),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1363,7 +1364,12 @@ class _HomePageState extends State<HomePage> {
       isScrollControlled: true,
       builder: (context) {
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            25,
+            20,
+            25 + MediaQuery.of(context).padding.bottom,
+          ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.only(

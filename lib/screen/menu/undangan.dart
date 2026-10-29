@@ -365,6 +365,8 @@ class _UndanganState extends State<Undangan> {
 
                               return InkWell(
                                 onTap: () => showModalBottomSheet(
+                                  useSafeArea: true,
+                                  isScrollControlled: true,
                                   showDragHandle: true,
                                   context: context,
                                   shape: const RoundedRectangleBorder(
@@ -375,7 +377,7 @@ class _UndanganState extends State<Undangan> {
                                   ),
                                   builder: (context) => Container(
                                     height: MediaQuery.of(context).size.height *
-                                        0.55,
+                                        0.65,
                                     decoration: const BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.only(
@@ -493,21 +495,33 @@ class _UndanganState extends State<Undangan> {
                                         ),
 
                                         // Bottom Buttons
-                                        Container(
-                                          padding: const EdgeInsets.all(24),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.grey
-                                                    .withOpacity(0.1),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, -5),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
+                                        SafeArea(
+                                          top: false,
+                                          child: Container(
+                                            padding: EdgeInsets.fromLTRB(
+                                              20,
+                                              14,
+                                              20,
+                                              MediaQuery.of(context)
+                                                          .padding
+                                                          .bottom >
+                                                      0
+                                                  ? 10
+                                                  : 20,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.grey
+                                                      .withOpacity(0.1),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, -5),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
                                             children: [
                                               SizedBox(
                                                 width: double.infinity,
@@ -638,7 +652,8 @@ class _UndanganState extends State<Undangan> {
                                             ],
                                           ),
                                         ),
-                                      ],
+                                      ),
+                                    ],
                                     ),
                                   ),
                                 ),
