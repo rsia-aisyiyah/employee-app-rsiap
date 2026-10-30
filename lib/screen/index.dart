@@ -459,7 +459,7 @@ class _IndexScreenState extends State<IndexScreen>
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: EdgeInsets.only(
-                        bottom: (Platform.isIOS ? 90.0 : 70.0) + 75.0), 
+                        bottom: (Platform.isIOS ? 75.0 : 62.0) + 75.0), 
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
                       transitionBuilder: (child, animation) => ScaleTransition(
@@ -573,7 +573,7 @@ class _IndexScreenState extends State<IndexScreen>
   }) {
     double radius = 140.0; // Ample radius to give clean gaps between all icons
     double radians = angle * math.pi / 180.0;
-    double appBarHeight = Platform.isIOS ? 90 : 70;
+    double appBarHeight = Platform.isIOS ? 75 : 62;
     double x = radius * math.cos(radians);
     double y = radius * math.sin(radians);
 
@@ -639,7 +639,7 @@ class _IndexScreenState extends State<IndexScreen>
           shape: const CircularNotchedRectangle(),
           notchMargin: 8.0,
           padding: const EdgeInsets.symmetric(horizontal: 10),
-          height: Platform.isIOS ? 90 : 70,
+          height: Platform.isIOS ? 75 : 62,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
