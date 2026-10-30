@@ -418,9 +418,9 @@ class _IndexScreenState extends State<IndexScreen>
                       if (count == 0) return const SizedBox.shrink();
 
                       // For 1 item: center at 90°
-                      // For 2+ items: evenly spread from 180° to 0°
-                      final double startAngle = count == 1 ? 90.0 : 180.0;
-                      final double endAngle = count == 1 ? 90.0 : 0.0;
+                      // For 2+ items: evenly spread from 165° to 15° to lift endpoints clear of navbar curve
+                      final double startAngle = count == 1 ? 90.0 : 165.0;
+                      final double endAngle = count == 1 ? 90.0 : 15.0;
                       final double step = count <= 1
                           ? 0.0
                           : (startAngle - endAngle) / (count - 1);
@@ -571,7 +571,7 @@ class _IndexScreenState extends State<IndexScreen>
     required int index,
     required bool isSelected,
   }) {
-    double radius = 115.0; // Clean circular radius
+    double radius = 125.0; // Clean circular radius with ample breathing room
     double radians = angle * math.pi / 180.0;
     double appBarHeight = Platform.isIOS ? 90 : 70;
     double x = radius * math.cos(radians);
@@ -580,7 +580,7 @@ class _IndexScreenState extends State<IndexScreen>
     return Align(
       alignment: Alignment.bottomCenter,
       child: Transform.translate(
-        offset: Offset(x, -(y + appBarHeight + 30)),
+        offset: Offset(x, -(y + appBarHeight + 25)),
         child: ScaleTransition(
           scale: _expandAnimation,
           child: FadeTransition(
