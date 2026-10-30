@@ -387,25 +387,10 @@ class _UndanganState extends State<Undangan> {
                                     ),
                                     child: Column(
                                       children: [
-                                        // Header Handle
-                                        Center(
-                                          child: Container(
-                                            margin: const EdgeInsets.only(
-                                                top: 10, bottom: 20),
-                                            width: 40,
-                                            height: 4,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                              borderRadius:
-                                                  BorderRadius.circular(2),
-                                            ),
-                                          ),
-                                        ),
-
                                         Expanded(
                                           child: SingleChildScrollView(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 24),
+                                            padding: const EdgeInsets.fromLTRB(
+                                                24, 8, 24, 0),
                                             child: Column(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
