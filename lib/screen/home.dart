@@ -1337,8 +1337,7 @@ class _HomePageState extends State<HomePage> {
                 color: primaryColor,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.only(
-                      bottom: 90 + MediaQuery.of(context).padding.bottom),
+                  padding: const EdgeInsets.only(bottom: 90),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

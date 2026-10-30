@@ -459,7 +459,7 @@ class _IndexScreenState extends State<IndexScreen>
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: EdgeInsets.only(
-                        bottom: 65.0 + MediaQuery.of(context).padding.bottom + 75.0), 
+                        bottom: (Platform.isIOS ? 75.0 : 62.0) + 75.0), 
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 300),
                       transitionBuilder: (child, animation) => ScaleTransition(
@@ -573,7 +573,7 @@ class _IndexScreenState extends State<IndexScreen>
   }) {
     double radius = 115.0; // Clean circular radius
     double radians = angle * math.pi / 180.0;
-    double appBarHeight = 65.0 + MediaQuery.of(context).padding.bottom;
+    double appBarHeight = Platform.isIOS ? 75 : 62;
     double x = radius * math.cos(radians);
     double y = radius * math.sin(radians);
 
@@ -612,8 +612,6 @@ class _IndexScreenState extends State<IndexScreen>
   }
 
   Widget _buildBottomNavigationBar() {
-    final double bottomInset = MediaQuery.of(context).padding.bottom;
-    final double totalHeight = 65.0 + bottomInset;
     const radius = Radius.circular(24);
 
     return Container(
@@ -641,12 +639,8 @@ class _IndexScreenState extends State<IndexScreen>
           elevation: 0,
           shape: const CircularNotchedRectangle(),
           notchMargin: 8.0,
-          padding: EdgeInsets.only(
-            left: 10,
-            right: 10,
-            bottom: bottomInset,
-          ),
-          height: totalHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          height: Platform.isIOS ? 75 : 62,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
