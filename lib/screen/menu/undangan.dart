@@ -36,6 +36,12 @@ class _UndanganState extends State<Undangan> {
   bool btnLoading = false;
   TextEditingController searchController = TextEditingController();
 
+  DateTime? _parseTanggal(dynamic dateStr) {
+    if (dateStr == null) return null;
+    final dt = DateTime.tryParse(dateStr.toString());
+    return dt?.toLocal();
+  }
+
   @override
   void initState() {
     fetchUndangan().then((value) {
@@ -357,11 +363,9 @@ class _UndanganState extends State<Undangan> {
                             itemCount: filteredUndangan.length,
                             itemBuilder: (context, i) {
                               var dataUdgn = filteredUndangan[i];
-                              bool isUpcoming = false;
-                              if (dataUdgn['tanggal'] != null) {
-                                isUpcoming = DateTime.parse(dataUdgn['tanggal'])
-                                    .isAfter(DateTime.now());
-                              }
+                              final parsedDate = _parseTanggal(dataUdgn['tanggal']);
+                              bool isUpcoming = parsedDate != null &&
+                                  parsedDate.isAfter(DateTime.now());
 
                               return InkWell(
                                 onTap: () => showModalBottomSheet(
@@ -429,16 +433,12 @@ class _UndanganState extends State<Undangan> {
                                                         Icons
                                                             .calendar_today_outlined,
                                                         "Tanggal",
-                                                        dataUdgn['tanggal'] !=
-                                                                null
+                                                        parsedDate != null
                                                             ? DateFormat(
                                                                     'EEEE, dd MMMM yyyy',
                                                                     'id_ID')
-                                                                .format(DateTime.tryParse(
-                                                                        dataUdgn[
-                                                                            'tanggal']) ??
-                                                                    DateTime
-                                                                        .now())
+                                                                .format(
+                                                                    parsedDate)
                                                             : '-',
                                                       ),
                                                       const Padding(
@@ -452,9 +452,8 @@ class _UndanganState extends State<Undangan> {
                                                         Icons
                                                             .access_time_outlined,
                                                         "Waktu",
-                                                        dataUdgn['tanggal'] !=
-                                                                null
-                                                            ? "${DateFormat('HH:mm').format(DateTime.tryParse(dataUdgn['tanggal']) ?? DateTime.now())} WIB"
+                                                        parsedDate != null
+                                                            ? "${DateFormat('HH:mm').format(parsedDate)} WIB"
                                                             : '-',
                                                       ),
                                                       const Padding(
@@ -674,10 +673,9 @@ class _UndanganState extends State<Undangan> {
                                         child: Column(
                                           children: [
                                             Text(
-                                              dataUdgn['tanggal'] != null
+                                              parsedDate != null
                                                   ? DateFormat('dd').format(
-                                                      DateTime.parse(
-                                                          dataUdgn['tanggal']))
+                                                      parsedDate)
                                                   : '--',
                                               style: TextStyle(
                                                 color: isUpcoming
@@ -688,10 +686,9 @@ class _UndanganState extends State<Undangan> {
                                               ),
                                             ),
                                             Text(
-                                              dataUdgn['tanggal'] != null
+                                              parsedDate != null
                                                   ? DateFormat('MMM').format(
-                                                      DateTime.parse(
-                                                          dataUdgn['tanggal']))
+                                                      parsedDate)
                                                   : '-',
                                               style: TextStyle(
                                                 color: isUpcoming
@@ -702,10 +699,9 @@ class _UndanganState extends State<Undangan> {
                                               ),
                                             ),
                                             Text(
-                                              dataUdgn['tanggal'] != null
+                                              parsedDate != null
                                                   ? DateFormat('yyyy').format(
-                                                      DateTime.parse(
-                                                          dataUdgn['tanggal']))
+                                                      parsedDate)
                                                   : '-',
                                               style: TextStyle(
                                                 color: isUpcoming
@@ -730,11 +726,9 @@ class _UndanganState extends State<Undangan> {
                                                     BorderRadius.circular(4),
                                               ),
                                               child: Text(
-                                                dataUdgn['tanggal'] != null
+                                                parsedDate != null
                                                     ? DateFormat('HH:mm')
-                                                        .format(DateTime.parse(
-                                                            dataUdgn[
-                                                                'tanggal']))
+                                                        .format(parsedDate)
                                                     : '--:--',
                                                 style: const TextStyle(
                                                   color: Colors.white,
