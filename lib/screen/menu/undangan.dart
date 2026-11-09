@@ -112,7 +112,7 @@ class _UndanganState extends State<Undangan> {
       } else {
         filteredUndangan = dataUndangan.where((undangan) {
           final subject = undangan['perihal']?.toString().toLowerCase() ?? '';
-          final location = undangan['tempat']?.toString().toLowerCase() ?? '';
+          final location = (undangan['lokasi'] ?? undangan['tempat'])?.toString().toLowerCase() ?? '';
           return subject.contains(query.toLowerCase()) ||
               location.contains(query.toLowerCase());
         }).toList();
@@ -467,7 +467,8 @@ class _UndanganState extends State<Undangan> {
                                                         Icons
                                                             .location_on_outlined,
                                                         "Tempat",
-                                                        dataUdgn['tempat'] ??
+                                                        dataUdgn['lokasi'] ??
+                                                            dataUdgn['tempat'] ??
                                                             '-',
                                                       ),
                                                     ],
@@ -768,7 +769,8 @@ class _UndanganState extends State<Undangan> {
                                                 const SizedBox(width: 4),
                                                 Expanded(
                                                   child: Text(
-                                                    dataUdgn['tempat'] ??
+                                                    dataUdgn['lokasi'] ??
+                                                        dataUdgn['tempat'] ??
                                                         'Tempat belum ditentukan',
                                                     style: TextStyle(
                                                       fontSize: 12,

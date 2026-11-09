@@ -160,7 +160,7 @@ class _NotulenPageState extends State<NotulenPage> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                data['tempat'] ?? '-',
+                                data['lokasi'] ?? data['tempat'] ?? '-',
                                 style: TextStyle(color: Colors.grey[800]),
                               ),
                             ),
