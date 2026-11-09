@@ -233,19 +233,30 @@ class _HomePageState extends State<HomePage> {
         final todayStart = DateTime(now.year, now.month, now.day);
 
         List<Map<String, dynamic>> upcoming = [];
-        List<Map<String, dynamic>> past = [];
 
         for (var item in items) {
           if (item is Map) {
+            // FILTER: Hanya tampilkan jika surat undangan sudah disetujui
+            final surat = item['surat'];
+            if (surat is Map) {
+              final status = surat['status']?.toString().toLowerCase();
+              if (status != 'disetujui') {
+                continue; // Jangan infokan jika belum disetujui!
+              }
+            } else {
+              final status = item['status']?.toString().toLowerCase();
+              if (status != null && status != 'disetujui') {
+                continue;
+              }
+            }
+
             final raw = item['tanggal'] ?? item['tgl_terbit'];
             if (raw != null) {
               final dt = DateTime.tryParse(raw.toString())?.toLocal();
               if (dt != null) {
-                // Invitations from today onwards or within 3 hours prior today
+                // Hanya undangan mendatang (hari ini atau ke depan)
                 if (dt.isAfter(todayStart.subtract(const Duration(hours: 3)))) {
                   upcoming.add(Map<String, dynamic>.from(item));
-                } else {
-                  past.add(Map<String, dynamic>.from(item));
                 }
               }
             }
@@ -259,17 +270,10 @@ class _HomePageState extends State<HomePage> {
           return da.compareTo(db);
         });
 
-        // If upcoming exists, use them. If none in future, show the latest recent 1 if exists
-        final displayList = upcoming.isNotEmpty
-            ? upcoming
-            : (past.isNotEmpty ? [past.first] : <Map<String, dynamic>>[]);
-
         if (mounted) {
           setState(() {
-            _upcomingUndangan = displayList;
-            if (_currentTicketIndex >= _upcomingUndangan.length) {
-              _currentTicketIndex = 0;
-            }
+            _upcomingUndangan = upcoming;
+            _currentTicketIndex = 0;
           });
         }
       }
@@ -1417,25 +1421,7 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       if (_upcomingUndangan.isNotEmpty) ...[
                         CardUndanganTicket(
-                          data: _upcomingUndangan[_currentTicketIndex],
-                          totalCount: _upcomingUndangan.length,
-                          currentIndex: _currentTicketIndex,
-                          onNext: () {
-                            setState(() {
-                              _currentTicketIndex =
-                                  (_currentTicketIndex + 1) %
-                                      _upcomingUndangan.length;
-                            });
-                          },
-                          onPrev: () {
-                            setState(() {
-                              _currentTicketIndex =
-                                  (_currentTicketIndex -
-                                          1 +
-                                          _upcomingUndangan.length) %
-                                      _upcomingUndangan.length;
-                            });
-                          },
+                          items: _upcomingUndangan,
                         ),
                         const SizedBox(height: 12),
                       ],
