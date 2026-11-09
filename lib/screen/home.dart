@@ -15,6 +15,7 @@ import 'package:rsia_employee_app/utils/icon_mapper.dart';
 import 'package:rsia_employee_app/utils/menu_navigator.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/components/cards/card_health_widget.dart';
+import 'package:rsia_employee_app/components/cards/card_undangan_ticket.dart';
 
 class _MenuCategory {
   final String title;
@@ -52,6 +53,10 @@ class _HomePageState extends State<HomePage> {
   List<String> _favoriteKeys = [];
   Timer? _timer;
   DateTime _now = DateTime.now();
+
+  // ── Undangan Ticket ─────────────────────────────────────────────────────
+  List<Map<String, dynamic>> _upcomingUndangan = [];
+  int _currentTicketIndex = 0;
 
   // ── Mood ────────────────────────────────────────────────────────────────
   bool _moodDone = false;
@@ -99,6 +104,7 @@ class _HomePageState extends State<HomePage> {
     await _getPresensiStatus();
     await _getMenus();
     await _getMoodStatus();
+    await _getUpcomingUndangan();
 
     if (mounted) {
       setState(() {
@@ -202,6 +208,74 @@ class _HomePageState extends State<HomePage> {
         }
       }
     } catch (_) {}
+  }
+
+  Future<void> _getUpcomingUndangan() async {
+    try {
+      final nik = box.read('sub');
+      if (nik == null) return;
+      var payload = {
+        "scopes": [
+          {
+            "name": "filterByPenerima",
+            "parameters": [nik]
+          }
+        ],
+        "sort": [
+          {"field": "tanggal", "direction": "desc"}
+        ]
+      };
+      var res = await Api().postData(payload, '/undangan/search');
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        List items = body['data'] ?? [];
+        final now = DateTime.now();
+        final todayStart = DateTime(now.year, now.month, now.day);
+
+        List<Map<String, dynamic>> upcoming = [];
+        List<Map<String, dynamic>> past = [];
+
+        for (var item in items) {
+          if (item is Map) {
+            final raw = item['tanggal'] ?? item['tgl_terbit'];
+            if (raw != null) {
+              final dt = DateTime.tryParse(raw.toString())?.toLocal();
+              if (dt != null) {
+                // Invitations from today onwards or within 3 hours prior today
+                if (dt.isAfter(todayStart.subtract(const Duration(hours: 3)))) {
+                  upcoming.add(Map<String, dynamic>.from(item));
+                } else {
+                  past.add(Map<String, dynamic>.from(item));
+                }
+              }
+            }
+          }
+        }
+
+        // Sort upcoming ascending (soonest event first)
+        upcoming.sort((a, b) {
+          final da = DateTime.tryParse(a['tanggal']?.toString() ?? '') ?? DateTime(2099);
+          final db = DateTime.tryParse(b['tanggal']?.toString() ?? '') ?? DateTime(2099);
+          return da.compareTo(db);
+        });
+
+        // If upcoming exists, use them. If none in future, show the latest recent 1 if exists
+        final displayList = upcoming.isNotEmpty
+            ? upcoming
+            : (past.isNotEmpty ? [past.first] : <Map<String, dynamic>>[]);
+
+        if (mounted) {
+          setState(() {
+            _upcomingUndangan = displayList;
+            if (_currentTicketIndex >= _upcomingUndangan.length) {
+              _currentTicketIndex = 0;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching upcoming undangan: $e");
+    }
   }
 
   String _getGreeting() {
@@ -1341,6 +1415,30 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (_upcomingUndangan.isNotEmpty) ...[
+                        CardUndanganTicket(
+                          data: _upcomingUndangan[_currentTicketIndex],
+                          totalCount: _upcomingUndangan.length,
+                          currentIndex: _currentTicketIndex,
+                          onNext: () {
+                            setState(() {
+                              _currentTicketIndex =
+                                  (_currentTicketIndex + 1) %
+                                      _upcomingUndangan.length;
+                            });
+                          },
+                          onPrev: () {
+                            setState(() {
+                              _currentTicketIndex =
+                                  (_currentTicketIndex -
+                                          1 +
+                                          _upcomingUndangan.length) %
+                                      _upcomingUndangan.length;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       _buildFavoritesCard(),
                       ...categorized.map((cat) => _buildCategoryCard(cat)),
                     ],
