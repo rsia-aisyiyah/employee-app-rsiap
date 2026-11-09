@@ -1336,7 +1336,7 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
     int frameCount = 0;
     _cameraController?.startImageStream((CameraImage image) async {
       frameCount++;
-      if (frameCount % 10 != 0) return;
+      if (frameCount % 3 != 0) return;
       if (_isProcessing || _livenessPassed) return;
 
       _isProcessing = true;
@@ -1344,7 +1344,14 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
         final inputImage = _inputImageFromCameraImage(image);
         if (inputImage == null || inputImage.metadata == null) return;
         final faces = await _faceDetectionService.processImage(inputImage);
-        if (mounted) await _processFaces(faces, inputImage.metadata!.size);
+        if (mounted) {
+          final rotation = inputImage.metadata!.rotation;
+          final bool isRotated = rotation == InputImageRotation.rotation90deg ||
+                                 rotation == InputImageRotation.rotation270deg;
+          final double effectiveW = isRotated ? image.height.toDouble() : image.width.toDouble();
+          final double effectiveH = isRotated ? image.width.toDouble() : image.height.toDouble();
+          await _processFaces(faces, Size(effectiveW, effectiveH));
+        }
       } catch (e) {
         print("Error processing image: $e");
       } finally {
@@ -1382,9 +1389,11 @@ class _PresensiDokterState extends State<PresensiDokter> with SingleTickerProvid
     final double nh = faceRect.height / imageSize.height;
     final Rect normalizedFace = Rect.fromLTWH(nx, ny, nw, nh);
 
-    final bool isInPosition = _targetRect.contains(normalizedFace.center) &&
-        normalizedFace.width > 0.25 && 
-        normalizedFace.height > 0.25;
+    final faceCenter = normalizedFace.center;
+
+    final bool isInPosition = _targetRect.contains(faceCenter) &&
+        normalizedFace.width > 0.18 && 
+        normalizedFace.height > 0.18;
 
     if (isInPosition != _isFaceInPosition) {
       setState(() {

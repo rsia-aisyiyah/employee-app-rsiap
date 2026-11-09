@@ -217,7 +217,8 @@ class _EPresensiScreenState extends State<EPresensiScreen>
     int frameCount = 0;
     _cameraController?.startImageStream((CameraImage image) async {
       frameCount++;
-      if (frameCount % 10 != 0) return;
+      // Process every 3rd frame (~10 fps) for smooth and responsive liveness/face tracking
+      if (frameCount % 3 != 0) return;
       if (_isProcessing || _livenessPassed) return;
 
       _isProcessing = true;
@@ -225,7 +226,14 @@ class _EPresensiScreenState extends State<EPresensiScreen>
         final inputImage = _inputImageFromCameraImage(image);
         if (inputImage == null || inputImage.metadata == null) return;
         final faces = await _faceDetectionService.processImage(inputImage);
-        if (mounted) await _processFaces(faces, inputImage.metadata!.size);
+        if (mounted) {
+          final rotation = inputImage.metadata!.rotation;
+          final bool isRotated = rotation == InputImageRotation.rotation90deg ||
+                                 rotation == InputImageRotation.rotation270deg;
+          final double effectiveW = isRotated ? image.height.toDouble() : image.width.toDouble();
+          final double effectiveH = isRotated ? image.width.toDouble() : image.height.toDouble();
+          await _processFaces(faces, Size(effectiveW, effectiveH));
+        }
       } catch (e) {
         debugPrint("Error processing image: $e");
       } finally {
@@ -235,11 +243,12 @@ class _EPresensiScreenState extends State<EPresensiScreen>
   }
 
   Future<void> _processFaces(List<Face> faces, Size imageSize) async {
-    if (_livenessPassed || _countdown > 0 && _isFaceInPosition) return;
+    if (_livenessPassed || (_countdown > 0 && _isFaceInPosition)) return;
 
     if (faces.isEmpty) {
       setState(() {
         _isFaceDetected = false;
+        _isFaceInPosition = false;
         _livenessInstruction = "Posisikan wajah di dalam bingkai";
       });
       return;
@@ -248,6 +257,7 @@ class _EPresensiScreenState extends State<EPresensiScreen>
     if (faces.length > 1) {
       setState(() {
         _isFaceDetected = false;
+        _isFaceInPosition = false;
         _livenessInstruction = "Hanya satu wajah diperbolehkan";
       });
       return;
@@ -263,9 +273,11 @@ class _EPresensiScreenState extends State<EPresensiScreen>
     final double nh = faceRect.height / imageSize.height;
     final Rect normalizedFace = Rect.fromLTWH(nx, ny, nw, nh);
 
-    final bool isInPosition = _targetRect.contains(normalizedFace.center) &&
-        normalizedFace.width > 0.25 && 
-        normalizedFace.height > 0.25;
+    final faceCenter = normalizedFace.center;
+
+    final bool isInPosition = _targetRect.contains(faceCenter) &&
+        normalizedFace.width > 0.18 && 
+        normalizedFace.height > 0.18;
 
     if (isInPosition != _isFaceInPosition) {
       setState(() {
@@ -302,21 +314,18 @@ class _EPresensiScreenState extends State<EPresensiScreen>
         }
       }
     } else {
-      _resetCountdown();
-      if (_livenessSuccessInFrame) setState(() => _livenessSuccessInFrame = false);
+      if (!_livenessSuccessInFrame) {
+        _resetCountdown();
+      }
     }
   }
 
   void _startCountdown() {
-    setState(() => _countdown = 3);
-    _stabilizationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) { timer.cancel(); return; }
-      if (_countdown > 1) {
-        setState(() => _countdown--);
-      } else {
-        _resetCountdown();
-        _handleSuccessfulStabilization();
-      }
+    setState(() => _countdown = 1);
+    _stabilizationTimer = Timer(const Duration(milliseconds: 1100), () {
+      if (!mounted) return;
+      _resetCountdown();
+      _handleSuccessfulStabilization();
     });
   }
 
@@ -771,17 +780,41 @@ class _EPresensiScreenState extends State<EPresensiScreen>
 
   Future<File> _compressImage(File file) async {
     try {
-      final bytes = await file.readAsBytes();
-      img.Image? image = img.decodeImage(bytes);
-      if (image == null) return file;
-      if (image.width > 800 || image.height > 800) {
-        image = img.copyResize(image, width: image.width > image.height ? 800 : null, height: image.height > image.width ? 800 : null);
-      }
-      final compressedBytes = img.encodeJpg(image, quality: 85);
+      final String inputPath = file.path;
       final tempDir = await getTemporaryDirectory();
-      final tempFile = File(p.join(tempDir.path, "presensi_${DateTime.now().millisecondsSinceEpoch}.jpg"));
-      return await tempFile.writeAsBytes(compressedBytes);
-    } catch (e) { return file; }
+      final String outputPath = p.join(tempDir.path, "presensi_${DateTime.now().millisecondsSinceEpoch}.jpg");
+      
+      final resultPath = await compute(_compressImageIsolate, {
+        'inputPath': inputPath,
+        'outputPath': outputPath,
+      });
+
+      return File(resultPath);
+    } catch (e) {
+      debugPrint("Compression fallback: $e");
+      return file;
+    }
+  }
+
+  static Future<String> _compressImageIsolate(Map<String, String> params) async {
+    final inputFile = File(params['inputPath']!);
+    final bytes = await inputFile.readAsBytes();
+    img.Image? image = img.decodeImage(bytes);
+    if (image == null) return params['inputPath']!;
+
+    if (image.width > 640 || image.height > 640) {
+      image = img.copyResize(
+        image,
+        width: image.width > image.height ? 640 : null,
+        height: image.height > image.width ? 640 : null,
+        interpolation: img.Interpolation.linear,
+      );
+    }
+
+    final compressedBytes = img.encodeJpg(image, quality: 75);
+    final outputFile = File(params['outputPath']!);
+    await outputFile.writeAsBytes(compressedBytes);
+    return outputFile.path;
   }
 }
 
