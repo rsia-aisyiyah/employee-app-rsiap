@@ -1437,7 +1437,7 @@ class _HomePageState extends State<HomePage> {
                             });
                           },
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                       ],
                       _buildFavoritesCard(),
                       ...categorized.map((cat) => _buildCategoryCard(cat)),
