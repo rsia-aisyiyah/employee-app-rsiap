@@ -289,7 +289,12 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getPendingPjSurat() async {
     try {
-      var res = await Api().getData('/surat/internal/approval-pj?limit=10');
+      final nik = box.read('sub');
+      var url = '/surat/internal/approval-pj?limit=10';
+      if (nik != null && nik.toString().isNotEmpty) {
+        url += '&nik=$nik';
+      }
+      var res = await Api().getData(url);
       if (res.statusCode == 200) {
         var body = json.decode(res.body);
         var data = body['data'];
