@@ -16,6 +16,7 @@ import 'package:rsia_employee_app/utils/menu_navigator.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/components/cards/card_health_widget.dart';
 import 'package:rsia_employee_app/components/cards/card_undangan_ticket.dart';
+import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_screen.dart';
 
 class _MenuCategory {
   final String title;
@@ -57,6 +58,9 @@ class _HomePageState extends State<HomePage> {
   // ── Undangan Ticket ─────────────────────────────────────────────────────
   List<Map<String, dynamic>> _upcomingUndangan = [];
   int _currentTicketIndex = 0;
+
+  // ── Pending PJ Approval ─────────────────────────────────────────────────
+  List<Map<String, dynamic>> _pendingPjSurat = [];
 
   // ── Mood ────────────────────────────────────────────────────────────────
   bool _moodDone = false;
@@ -105,6 +109,7 @@ class _HomePageState extends State<HomePage> {
     await _getMenus();
     await _getMoodStatus();
     await _getUpcomingUndangan();
+    await _getPendingPjSurat();
 
     if (mounted) {
       setState(() {
@@ -279,6 +284,29 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       debugPrint("Error fetching upcoming undangan: $e");
+    }
+  }
+
+  Future<void> _getPendingPjSurat() async {
+    try {
+      var res = await Api().getData('/surat/internal/approval-pj?limit=10');
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        var data = body['data'];
+        List items = [];
+        if (data is Map && data['data'] is List) {
+          items = data['data'];
+        } else if (data is List) {
+          items = data;
+        }
+        if (mounted) {
+          setState(() {
+            _pendingPjSurat = items.map((e) => Map<String, dynamic>.from(e)).toList();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching pending PJ surat in home: $e");
     }
   }
 
@@ -919,6 +947,167 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildPendingPjApprovalCard() {
+    final count = _pendingPjSurat.length;
+    final firstItem = _pendingPjSurat.first;
+    final perihal = firstItem['perihal']?.toString() ?? 'Pengajuan Surat Internal';
+    final tglRaw = firstItem['tgl_terbit']?.toString() ?? '';
+    String tglFormatted = '';
+    if (tglRaw.isNotEmpty) {
+      try {
+        final dt = DateTime.parse(tglRaw);
+        tglFormatted = DateFormat('d MMM yyyy', 'id_ID').format(dt);
+      } catch (_) {
+        tglFormatted = tglRaw;
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD97706).withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SuratInternalScreen(
+                  initialFilterOnlyMyApproval: true,
+                ),
+              ),
+            ).then((_) {
+              _getPendingPjSurat();
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.assignment_late_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Persetujuan Penanggung Jawab",
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                          Text(
+                            "$count pengajuan memerlukan persetujuan Anda",
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFFB45309),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            "Tinjau",
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 2),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: const Color(0xFFFDE68A).withOpacity(0.8),
+                      width: 0.8,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          perihal,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F2937),
+                          ),
+                        ),
+                      ),
+                      if (tglFormatted.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          tglFormatted,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFavoritesCard() {
     final favItems = _getFavoriteMenuItems();
 
@@ -1419,6 +1608,10 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (_pendingPjSurat.isNotEmpty) ...[
+                        _buildPendingPjApprovalCard(),
+                        const SizedBox(height: 12),
+                      ],
                       if (_upcomingUndangan.isNotEmpty) ...[
                         CardUndanganTicket(
                           items: _upcomingUndangan,

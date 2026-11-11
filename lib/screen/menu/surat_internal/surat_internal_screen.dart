@@ -9,7 +9,11 @@ import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_deta
 import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_add_screen.dart';
 
 class SuratInternalScreen extends StatefulWidget {
-  const SuratInternalScreen({super.key});
+  final bool initialFilterOnlyMyApproval;
+  const SuratInternalScreen({
+    super.key,
+    this.initialFilterOnlyMyApproval = false,
+  });
 
   @override
   State<SuratInternalScreen> createState() => _SuratInternalScreenState();
@@ -30,13 +34,17 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
   int _lastPage = 1;
 
   String _searchQuery = "";
+  int _pendingApprovalCount = 0;
+  bool _filterOnlyMyApproval = false;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _filterOnlyMyApproval = widget.initialFilterOnlyMyApproval;
     _fetchStats();
+    _fetchMyPendingApprovalCount();
     _fetchData();
     _scrollController.addListener(_onScroll);
   }
@@ -81,6 +89,22 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
     }
   }
 
+  Future<void> _fetchMyPendingApprovalCount() async {
+    try {
+      var res = await Api().getData("/surat/internal/approval-pj?limit=1");
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        if (body['success'] == true && body['data'] != null) {
+          setState(() {
+            _pendingApprovalCount = body['data']['total'] ?? 0;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching approval count: $e");
+    }
+  }
+
   Future<void> _fetchData({int page = 1}) async {
     setState(() {
       if (page == 1) _isLoading = true;
@@ -88,6 +112,25 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
     });
 
     try {
+      if (_filterOnlyMyApproval) {
+        var res = await Api().getData("/surat/internal/approval-pj?page=$page&limit=10");
+        if (res.statusCode == 200) {
+          var body = json.decode(res.body);
+          var paginated = body['data'] ?? {};
+          var newData = paginated['data'] ?? [];
+          setState(() {
+            if (page == 1) {
+              _data = newData;
+            } else {
+              _data.addAll(newData);
+            }
+            _lastPage = paginated['last_page'] ?? 1;
+            _pendingApprovalCount = paginated['total'] ?? 0;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
       final box = GetStorage();
       String? dept = box.read('dep');
 
@@ -284,6 +327,67 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
     );
   }
 
+  Widget _buildApprovalNotice() {
+    if (_pendingApprovalCount == 0 && !_filterOnlyMyApproval) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _filterOnlyMyApproval ? const Color(0xFFEFF6FF) : const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _filterOnlyMyApproval ? const Color(0xFFBFDBFE) : const Color(0xFFFDE68A),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _filterOnlyMyApproval ? Icons.filter_alt : Icons.notifications_active,
+              color: _filterOnlyMyApproval ? const Color(0xFF2563EB) : const Color(0xFFD97706),
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                _filterOnlyMyApproval
+                    ? "Menampilkan $_pendingApprovalCount pengajuan yang butuh approval Anda"
+                    : "Ada $_pendingApprovalCount surat/undangan menunggu persetujuan Anda sebagai PJ",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: _filterOnlyMyApproval ? const Color(0xFF1E40AF) : const Color(0xFF92400E),
+                ),
+              ),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                backgroundColor: _filterOnlyMyApproval ? const Color(0xFFDBEAFE) : const Color(0xFFFEF3C7),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () {
+                setState(() {
+                  _filterOnlyMyApproval = !_filterOnlyMyApproval;
+                });
+                _fetchData(page: 1);
+              },
+              child: Text(
+                _filterOnlyMyApproval ? "Semua" : "Tinjau",
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: _filterOnlyMyApproval ? const Color(0xFF1E40AF) : const Color(0xFFB45309),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -292,11 +396,13 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
         children: [
           _buildHeader(),
           _buildStatusBar(),
+          _buildApprovalNotice(),
           _buildSearchBar(),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () async {
                 _fetchStats();
+                _fetchMyPendingApprovalCount();
                 await _fetchData(page: 1);
               },
               color: primaryColor,
