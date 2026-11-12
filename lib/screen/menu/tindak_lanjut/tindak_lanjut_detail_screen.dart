@@ -130,11 +130,13 @@ class _TindakLanjutDetailScreenState extends State<TindakLanjutDetailScreen> {
     setState(() => _isSubmitting = true);
 
     try {
+      final myNik = box.read('sub')?.toString();
       Map<String, String> fields = {
         'pesan': pesan.isNotEmpty ? pesan : 'Mengirimkan berkas lampiran',
         'tipe': _selectedTipe,
         'progress_percent': _selectedProgress.toString(),
         'status': _selectedStatus,
+        if (myNik != null && myNik.isNotEmpty) 'nik': myNik,
       };
 
       final res = await Api().postMultipart(
@@ -155,8 +157,17 @@ class _TindakLanjutDetailScreenState extends State<TindakLanjutDetailScreen> {
         await _loadDetail();
       } else {
         var body = json.decode(res.body);
+        String errorMessage = body['message'] ?? 'Gagal mengirim respon';
+        if (body['errors'] is Map && (body['errors'] as Map).isNotEmpty) {
+          final firstError = (body['errors'] as Map).values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            errorMessage = firstError.first.toString();
+          } else if (firstError is String) {
+            errorMessage = firstError;
+          }
+        }
         if (mounted) {
-          Msg.error(context, body['message'] ?? 'Gagal mengirim respon');
+          Msg.error(context, errorMessage);
         }
       }
     } catch (e) {
