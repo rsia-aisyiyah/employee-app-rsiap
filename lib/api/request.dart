@@ -126,7 +126,7 @@ class Api {
         .timeout(timeoutDuration);
   }
 
-  postMultipart(Map<String, String> fields, File file, String pathUrl,
+  postMultipart(Map<String, String> fields, File? file, String pathUrl,
       {String fieldName = 'file'}) async {
     await _getToken();
     var fullUrl = apiUrl + pathUrl;
@@ -142,7 +142,7 @@ class Api {
       request.fields[key] = value;
     });
 
-    if (await file.exists()) {
+    if (file != null && await file.exists()) {
       request.files.add(
         await http.MultipartFile.fromPath(fieldName, file.path),
       );

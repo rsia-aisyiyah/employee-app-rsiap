@@ -253,6 +253,10 @@ class IconMapper {
       case 'pesan':
       case 'undangan':
         return Icons.mail_outline;
+      case 'tindak_lanjut':
+      case 'tindak_lanjut_rapat':
+      case 'action_item':
+        return Icons.assignment_turned_in_outlined;
       case 'template_dokumen':
       case 'template':
         return Icons.copy_all_rounded;

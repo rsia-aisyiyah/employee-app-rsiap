@@ -38,6 +38,7 @@ import 'package:rsia_employee_app/screen/menu/tts/tts_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/emergency_rush/emergency_rush_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/kantin/kantin_screen.dart';
 import 'package:rsia_employee_app/screen/menu/virus_buster/virus_buster_home_screen.dart';
+import 'package:rsia_employee_app/screen/menu/tindak_lanjut/tindak_lanjut_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -103,6 +104,10 @@ class MenuNavigator {
         return const SuratEksternalScreen();
       case 'menu_undangan':
         return const Undangan();
+      case 'menu_tindak_lanjut':
+      case 'tindak_lanjut':
+      case 'tindak_lanjut_rapat':
+        return const TindakLanjutScreen();
       case 'menu_sertifikasi':
         return const Sertifikasi();
       case 'pengajuan_jadwal':

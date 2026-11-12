@@ -16,6 +16,7 @@ import 'package:rsia_employee_app/utils/menu_navigator.dart';
 import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/components/cards/card_health_widget.dart';
 import 'package:rsia_employee_app/components/cards/card_undangan_ticket.dart';
+import 'package:rsia_employee_app/components/cards/card_tindak_lanjut_ticket.dart';
 import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_screen.dart';
 
 class _MenuCategory {
@@ -58,6 +59,9 @@ class _HomePageState extends State<HomePage> {
   // ── Undangan Ticket ─────────────────────────────────────────────────────
   List<Map<String, dynamic>> _upcomingUndangan = [];
   int _currentTicketIndex = 0;
+
+  // ── Tindak Lanjut Rapat ─────────────────────────────────────────────────
+  List<Map<String, dynamic>> _assignedTindakLanjut = [];
 
   // ── Pending PJ Approval ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _pendingPjSurat = [];
@@ -109,6 +113,7 @@ class _HomePageState extends State<HomePage> {
     await _getMenus();
     await _getMoodStatus();
     await _getUpcomingUndangan();
+    await _getAssignedTindakLanjut();
     await _getPendingPjSurat();
 
     if (mounted) {
@@ -284,6 +289,29 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       debugPrint("Error fetching upcoming undangan: $e");
+    }
+  }
+
+  Future<void> _getAssignedTindakLanjut() async {
+    try {
+      final nik = box.read('sub');
+      if (nik == null) return;
+      var res = await Api().getData('/undangan/tindak-lanjut/saya?status=active');
+      if (res.statusCode == 200) {
+        var body = json.decode(res.body);
+        List rawList = body['data'] ?? [];
+        List<Map<String, dynamic>> items = rawList
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+
+        if (mounted) {
+          setState(() {
+            _assignedTindakLanjut = items;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching tindak lanjut: $e");
     }
   }
 
@@ -1620,6 +1648,13 @@ class _HomePageState extends State<HomePage> {
                       if (_upcomingUndangan.isNotEmpty) ...[
                         CardUndanganTicket(
                           items: _upcomingUndangan,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (_assignedTindakLanjut.isNotEmpty) ...[
+                        CardTindakLanjutTicket(
+                          items: _assignedTindakLanjut,
+                          onRefresh: _getAssignedTindakLanjut,
                         ),
                         const SizedBox(height: 12),
                       ],

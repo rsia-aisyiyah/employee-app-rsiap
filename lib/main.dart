@@ -14,6 +14,7 @@ import 'package:rsia_employee_app/screen/profile.dart';
 import 'package:rsia_employee_app/screen/menu/helpdesk_main.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_history.dart';
+import 'package:rsia_employee_app/screen/menu/tindak_lanjut/tindak_lanjut_screen.dart';
 // import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:rsia_employee_app/services/health_service.dart';
@@ -105,6 +106,7 @@ class MyApp extends StatelessWidget {
         '/undangan': (context) => const Undangan(),
         '/helpdesk_main': (context) => const HelpdeskMainScreen(),
         '/lapor-ikp': (context) => const LaporIkpHistoryScreen(),
+        '/tindak-lanjut': (context) => const TindakLanjutScreen(),
       },
     );
   }

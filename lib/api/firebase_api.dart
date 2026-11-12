@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:rsia_employee_app/screen/menu/tindak_lanjut/tindak_lanjut_detail_screen.dart';
 import 'package:rsia_employee_app/utils/menu_navigator.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -38,6 +39,17 @@ Future<void> handleNotificationAction(
 
   final BuildContext? context = navigatorKey.currentContext;
   if (context != null) {
+    if (routeKey == 'tindak_lanjut' && data['id'] != null) {
+      final id = int.tryParse(data['id'].toString());
+      if (id != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => TindakLanjutDetailScreen(id: id)),
+        );
+        return;
+      }
+    }
+
     final widget = MenuNavigator.getWidget(routeKey);
     if (widget != null) {
       Navigator.push(
