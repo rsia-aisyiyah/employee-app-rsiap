@@ -266,30 +266,19 @@ class _EPresensiScreenState extends State<EPresensiScreen>
     Face face = faces.first;
     setState(() => _isFaceDetected = true);
 
-    final faceRect = face.boundingBox;
-    final double nx = faceRect.left / imageSize.width;
-    final double ny = faceRect.top / imageSize.height;
-    final double nw = faceRect.width / imageSize.width;
-    final double nh = faceRect.height / imageSize.height;
-    final Rect normalizedFace = Rect.fromLTWH(nx, ny, nw, nh);
+    final validation = _faceDetectionService.validateFacePosition(
+      face: face,
+      imageSize: imageSize,
+      targetRect: _targetRect,
+      livenessChallenge: _livenessChallenge,
+    );
 
-    final faceCenter = normalizedFace.center;
+    final bool isInPosition = validation.isValid;
 
-    final bool isInPosition = _targetRect.contains(faceCenter) &&
-        normalizedFace.width > 0.18 && 
-        normalizedFace.height > 0.18;
-
-    if (isInPosition != _isFaceInPosition) {
+    if (isInPosition != _isFaceInPosition || (!isInPosition && _livenessInstruction != validation.instruction)) {
       setState(() {
         _isFaceInPosition = isInPosition;
-        if (isInPosition) {
-          String instruction = "";
-          if (_livenessChallenge == 'blink') instruction = "Silakan KEDIPKAN MATA";
-          if (_livenessChallenge == 'smile') instruction = "Silakan TERSENYUM";
-          _livenessInstruction = instruction;
-        } else {
-          _livenessInstruction = "Posisikan wajah di dalam bingkai";
-        }
+        _livenessInstruction = validation.instruction;
       });
     }
 
@@ -439,7 +428,7 @@ class _EPresensiScreenState extends State<EPresensiScreen>
         });
       }
 
-      final File compressedFile = await _compressImage(imageFile);
+      final File compressedFile = await FaceDetectionService.compressImage(imageFile);
       if (mounted) setState(() => _statusMessage = "Memverifikasi Wajah...");
 
       final body = {
@@ -776,45 +765,6 @@ class _EPresensiScreenState extends State<EPresensiScreen>
         ),
       ),
     );
-  }
-
-  Future<File> _compressImage(File file) async {
-    try {
-      final String inputPath = file.path;
-      final tempDir = await getTemporaryDirectory();
-      final String outputPath = p.join(tempDir.path, "presensi_${DateTime.now().millisecondsSinceEpoch}.jpg");
-      
-      final resultPath = await compute(_compressImageIsolate, {
-        'inputPath': inputPath,
-        'outputPath': outputPath,
-      });
-
-      return File(resultPath);
-    } catch (e) {
-      debugPrint("Compression fallback: $e");
-      return file;
-    }
-  }
-
-  static Future<String> _compressImageIsolate(Map<String, String> params) async {
-    final inputFile = File(params['inputPath']!);
-    final bytes = await inputFile.readAsBytes();
-    img.Image? image = img.decodeImage(bytes);
-    if (image == null) return params['inputPath']!;
-
-    if (image.width > 640 || image.height > 640) {
-      image = img.copyResize(
-        image,
-        width: image.width > image.height ? 640 : null,
-        height: image.height > image.width ? 640 : null,
-        interpolation: img.Interpolation.linear,
-      );
-    }
-
-    final compressedBytes = img.encodeJpg(image, quality: 75);
-    final outputFile = File(params['outputPath']!);
-    await outputFile.writeAsBytes(compressedBytes);
-    return outputFile.path;
   }
 }
 

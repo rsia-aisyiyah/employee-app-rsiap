@@ -260,28 +260,19 @@ class _LemburScreenState extends State<LemburScreen> with SingleTickerProviderSt
     Face face = faces.first;
     setState(() => _isFaceDetected = true);
 
-    final faceRect = face.boundingBox;
-    final double nx = faceRect.left / imageSize.width;
-    final double ny = faceRect.top / imageSize.height;
-    final double nw = faceRect.width / imageSize.width;
-    final double nh = faceRect.height / imageSize.height;
-    final Rect normalizedFace = Rect.fromLTWH(nx, ny, nw, nh);
+    final validation = _faceDetectionService.validateFacePosition(
+      face: face,
+      imageSize: imageSize,
+      targetRect: _targetRect,
+      livenessChallenge: _livenessChallenge,
+    );
 
-    final bool isInPosition = _targetRect.contains(normalizedFace.center) &&
-        normalizedFace.width > 0.25 && 
-        normalizedFace.height > 0.25;
+    final bool isInPosition = validation.isValid;
 
-    if (isInPosition != _isFaceInPosition) {
+    if (isInPosition != _isFaceInPosition || (!isInPosition && _livenessInstruction != validation.instruction)) {
       setState(() {
         _isFaceInPosition = isInPosition;
-        if (isInPosition) {
-          String instruction = "";
-          if (_livenessChallenge == 'blink') instruction = "Silakan KEDIPKAN MATA";
-          if (_livenessChallenge == 'smile') instruction = "Silakan TERSENYUM";
-          _livenessInstruction = instruction;
-        } else {
-          _livenessInstruction = "Posisikan wajah Anda di dalam bingkai";
-        }
+        _livenessInstruction = validation.instruction;
       });
     }
 
@@ -368,6 +359,14 @@ class _LemburScreenState extends State<LemburScreen> with SingleTickerProviderSt
       if (mounted) {
         setState(() {
           _isLoading = true;
+          _statusMessage = "Mengompres Gambar...";
+          _livenessInstruction = "Mengompres...";
+        });
+      }
+
+      final File compressedFile = await FaceDetectionService.compressImage(imageFile);
+      if (mounted) {
+        setState(() {
           _statusMessage = "Memverifikasi Wajah...";
           _livenessInstruction = "Mengirim data...";
         });
@@ -383,7 +382,8 @@ class _LemburScreenState extends State<LemburScreen> with SingleTickerProviderSt
       };
 
       final response = await Api()
-          .postMultipart(body, imageFile, _endpoint, fieldName: 'photo');
+          .postMultipart(body, compressedFile, _endpoint, fieldName: 'photo');
+      if (await compressedFile.exists()) await compressedFile.delete();
       final json = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
