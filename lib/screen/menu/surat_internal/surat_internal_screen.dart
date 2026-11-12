@@ -57,8 +57,8 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       if (_currentPage < _lastPage && !_isLoadingMore) {
         _fetchMoreData();
       }
@@ -91,7 +91,13 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
 
   Future<void> _fetchMyPendingApprovalCount() async {
     try {
-      var res = await Api().getData("/surat/internal/approval-pj?limit=1");
+      final box = GetStorage();
+      final nik = box.read('sub');
+      String url = "/surat/internal/approval-pj?limit=1";
+      if (nik != null && nik.toString().isNotEmpty) {
+        url += "&nik=$nik";
+      }
+      var res = await Api().getData(url);
       if (res.statusCode == 200) {
         var body = json.decode(res.body);
         if (body['success'] == true && body['data'] != null) {
@@ -113,7 +119,13 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
 
     try {
       if (_filterOnlyMyApproval) {
-        var res = await Api().getData("/surat/internal/approval-pj?page=$page&limit=10");
+        final box = GetStorage();
+        final nik = box.read('sub');
+        String url = "/surat/internal/approval-pj?page=$page&limit=25";
+        if (nik != null && nik.toString().isNotEmpty) {
+          url += "&nik=$nik";
+        }
+        var res = await Api().getData(url);
         if (res.statusCode == 200) {
           var body = json.decode(res.body);
           var paginated = body['data'] ?? {};
@@ -136,7 +148,7 @@ class _SuratInternalScreenState extends State<SuratInternalScreen> {
 
       var payload = {
         "page": page,
-        "limit": 10,
+        "limit": 25,
         "sort": [
           {"field": "created_at", "direction": "desc"}
         ],
