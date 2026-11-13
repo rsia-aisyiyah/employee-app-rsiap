@@ -302,6 +302,11 @@ class _HomePageState extends State<HomePage> {
         List rawList = body['data'] ?? [];
         List<Map<String, dynamic>> items = rawList
             .map((e) => Map<String, dynamic>.from(e))
+            .where((item) {
+              final pct = int.tryParse(item['progress_percent']?.toString() ?? '0') ?? 0;
+              final status = item['status']?.toString().toLowerCase();
+              return pct < 100 && status != 'selesai' && status != 'completed' && status != 'dibatalkan';
+            })
             .toList();
 
         if (mounted) {
