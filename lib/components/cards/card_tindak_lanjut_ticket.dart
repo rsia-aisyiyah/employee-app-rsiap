@@ -24,6 +24,7 @@ class CardTindakLanjutTicket extends StatefulWidget {
 class _CardTindakLanjutTicketState extends State<CardTindakLanjutTicket> {
   int _currentIndex = 0;
   int _slideDirection = 1; // 1 for next (from right), -1 for prev (from left)
+  double _dragDistance = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -97,14 +98,21 @@ class _CardTindakLanjutTicketState extends State<CardTindakLanjutTicket> {
             right: 20,
             height: cardHeight,
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onHorizontalDragStart: (_) {
+                _dragDistance = 0;
+              },
+              onHorizontalDragUpdate: (details) {
+                _dragDistance += details.delta.dx;
+              },
               onHorizontalDragEnd: (details) {
-                if (details.primaryVelocity != null) {
-                  if (details.primaryVelocity! < -100) {
-                    _goToNext(total); // Swipe left -> Next
-                  } else if (details.primaryVelocity! > 100) {
-                    _goToPrev(total); // Swipe right -> Prev
-                  }
+                final velocity = details.primaryVelocity ?? 0;
+                if (velocity < -100 || _dragDistance < -35) {
+                  _goToNext(total); // Swipe left -> Next
+                } else if (velocity > 100 || _dragDistance > 35) {
+                  _goToPrev(total); // Swipe right -> Prev
                 }
+                _dragDistance = 0;
               },
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
