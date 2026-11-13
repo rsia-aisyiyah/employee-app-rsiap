@@ -289,41 +289,47 @@ class _CardTindakLanjutTicketState extends State<CardTindakLanjutTicket> {
                     children: [
                       // Radial Progress Ring
                       SizedBox(
-                        width: 44,
-                        height: 44,
+                        width: 46,
+                        height: 46,
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
                             CircularProgressIndicator(
                               value: pct / 100.0,
-                              strokeWidth: 4.0,
+                              strokeWidth: 3.5,
                               backgroundColor: themeColor.withValues(alpha: 0.18),
                               valueColor: AlwaysStoppedAnimation<Color>(themeColor),
                               strokeCap: StrokeCap.round,
                             ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text(
-                                  '$pct',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w900,
-                                    color: themeColor,
-                                    letterSpacing: -0.5,
-                                  ),
+                            Padding(
+                              padding: const EdgeInsets.all(7.0),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      '$pct',
+                                      style: TextStyle(
+                                        fontSize: pct >= 100 ? 12 : 14,
+                                        fontWeight: FontWeight.w900,
+                                        color: themeColor,
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                    Text(
+                                      '%',
+                                      style: TextStyle(
+                                        fontSize: pct >= 100 ? 7.5 : 8.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: themeColor,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                Text(
-                                  '%',
-                                  style: TextStyle(
-                                    fontSize: 8.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: themeColor,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ],
                         ),
