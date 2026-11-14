@@ -48,13 +48,16 @@ class TindakLanjutItem {
 
     return TindakLanjutItem(
       id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
-      suratNomor: json['surat_nomor']?.toString() ?? '',
+      suratNomor: json['surat_nomor']?.toString() ??
+          json['undangan']?['surat']?['no_surat']?.toString() ??
+          json['undangan']?['surat_nomor']?.toString() ??
+          '',
       timelineProgramId: json['timeline_program_id'] != null
           ? int.tryParse(json['timeline_program_id'].toString())
           : null,
-      deskripsi: json['deskripsi']?.toString() ?? '',
+      deskripsi: (json['deskripsi'] ?? json['tugas'])?.toString() ?? '',
       picNik: json['pic_nik']?.toString() ?? '',
-      targetSelesai: json['target_selesai']?.toString(),
+      targetSelesai: (json['target_selesai'] ?? json['deadline'])?.toString(),
       progressPercent: int.tryParse(json['progress_percent']?.toString() ?? '0') ?? 0,
       status: json['status']?.toString() ?? 'pending',
       createdBy: json['created_by']?.toString(),

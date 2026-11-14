@@ -224,7 +224,7 @@ class _CardTindakLanjutTicketState extends State<CardTindakLanjutTicket> {
     }
 
     final countdownLabel = _getCountdownLabel(deadline, isOverdue);
-    final ticketNo = "TL-${item.id.toString().padLeft(4, '0')}";
+    final ticketNo = "RTL-${item.id.toString().padLeft(4, '0')}";
 
     return Container(
       key: key,
@@ -587,7 +587,7 @@ class _CardTindakLanjutTicketState extends State<CardTindakLanjutTicket> {
 
   String _getCountdownLabel(DateTime? deadline, bool isOverdue) {
     if (isOverdue) return "TERLAMBAT";
-    if (deadline == null) return "TINDAK LANJUT";
+    if (deadline == null) return "RTL RAPAT";
 
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
