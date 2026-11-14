@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rsia_employee_app/screen/menu/tindak_lanjut/tindak_lanjut_detail_screen.dart';
+import 'package:rsia_employee_app/screen/menu/mutu/mutu_unit_screen.dart';
 import 'package:rsia_employee_app/utils/menu_navigator.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -48,6 +49,23 @@ Future<void> handleNotificationAction(
         );
         return;
       }
+    }
+
+    if (routeKey == 'mutu_validasi' || routeKey == 'mutu') {
+      final depId = data['dep_id']?.toString();
+      final bulan = int.tryParse(data['bulan']?.toString() ?? '');
+      final tahun = int.tryParse(data['tahun']?.toString() ?? '');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MutuUnitScreen(
+            initialDepId: depId,
+            initialBulan: bulan,
+            initialTahun: tahun,
+          ),
+        ),
+      );
+      return;
     }
 
     final widget = MenuNavigator.getWidget(routeKey);

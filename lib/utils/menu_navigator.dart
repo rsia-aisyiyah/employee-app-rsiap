@@ -39,6 +39,7 @@ import 'package:rsia_employee_app/screen/menu/emergency_rush/emergency_rush_home
 import 'package:rsia_employee_app/screen/menu/kantin/kantin_screen.dart';
 import 'package:rsia_employee_app/screen/menu/virus_buster/virus_buster_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/tindak_lanjut/tindak_lanjut_screen.dart';
+import 'package:rsia_employee_app/screen/menu/mutu/mutu_unit_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
@@ -108,6 +109,12 @@ class MenuNavigator {
       case 'tindak_lanjut':
       case 'tindak_lanjut_rapat':
         return const TindakLanjutScreen();
+      case 'menu_mutu':
+      case 'mutu':
+      case 'mutu_validasi':
+      case 'pmkp':
+      case 'indikator_mutu':
+        return const MutuUnitScreen();
       case 'menu_sertifikasi':
         return const Sertifikasi();
       case 'pengajuan_jadwal':
