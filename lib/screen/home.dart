@@ -61,6 +61,7 @@ class _HomePageState extends State<HomePage> {
 
   // ── Undangan Ticket ─────────────────────────────────────────────────────
   List<Map<String, dynamic>> _upcomingUndangan = [];
+  int _currentTicketIndex = 0;
 
   // ── Tindak Lanjut Rapat ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _assignedTindakLanjut = [];
