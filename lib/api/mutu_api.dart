@@ -137,8 +137,39 @@ class MutuApi {
     }
   }
 
-  /// Mengirim push notification permintaan validasi dari PIC ke Validator
+  /// Mengirim permintaan validasi dari PIC ke Validator beserta catatan dan guardrails
   static Future<Map<String, dynamic>> requestValidation({
+    required String depId,
+    required int bulan,
+    required int tahun,
+    String? catatan,
+    bool? force,
+  }) async {
+    try {
+      final payload = {
+        'dep_id': depId,
+        'bulan': bulan,
+        'tahun': tahun,
+        if (catatan != null && catatan.isNotEmpty) 'catatan': catatan,
+        if (force == true) 'force': 1,
+      };
+
+      final res = await Api().postData(payload, '/indikator-mutu/request-validation');
+      final body = json.decode(res.body);
+      return {
+        'success': res.statusCode == 200 && (body['success'] == true),
+        'message': body['message'] ?? 'Status: ${res.statusCode}',
+        'code': body['code'],
+        'unfilled': body['unfilled'],
+      };
+    } catch (e) {
+      debugPrint('[MutuApi] Error requestValidation: $e');
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Menarik kembali pengajuan validasi oleh PIC (jika belum divalidasi validator)
+  static Future<Map<String, dynamic>> cancelValidation({
     required String depId,
     required int bulan,
     required int tahun,
@@ -150,14 +181,41 @@ class MutuApi {
         'tahun': tahun,
       };
 
-      final res = await Api().postData(payload, '/indikator-mutu/request-validation');
+      final res = await Api().postData(payload, '/indikator-mutu/cancel-validation');
       final body = json.decode(res.body);
       return {
         'success': res.statusCode == 200 && (body['success'] == true),
         'message': body['message'] ?? 'Status: ${res.statusCode}',
       };
     } catch (e) {
-      debugPrint('[MutuApi] Error requestValidation: $e');
+      debugPrint('[MutuApi] Error cancelValidation: $e');
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  /// Mengembalikan data validasi ke PIC untuk revisi/koreksi oleh Validator
+  static Future<Map<String, dynamic>> returnRevision({
+    required String depId,
+    required int bulan,
+    required int tahun,
+    required String catatan,
+  }) async {
+    try {
+      final payload = {
+        'dep_id': depId,
+        'bulan': bulan,
+        'tahun': tahun,
+        'catatan': catatan,
+      };
+
+      final res = await Api().postData(payload, '/indikator-mutu/return-revision');
+      final body = json.decode(res.body);
+      return {
+        'success': res.statusCode == 200 && (body['success'] == true),
+        'message': body['message'] ?? 'Status: ${res.statusCode}',
+      };
+    } catch (e) {
+      debugPrint('[MutuApi] Error returnRevision: $e');
       return {'success': false, 'message': e.toString()};
     }
   }

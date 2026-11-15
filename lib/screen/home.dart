@@ -17,6 +17,9 @@ import 'package:rsia_employee_app/screen/menu/mood_checkin.dart';
 import 'package:rsia_employee_app/components/cards/card_health_widget.dart';
 import 'package:rsia_employee_app/components/cards/card_undangan_ticket.dart';
 import 'package:rsia_employee_app/components/cards/card_tindak_lanjut_ticket.dart';
+import 'package:rsia_employee_app/components/cards/card_mutu_ticket.dart';
+import 'package:rsia_employee_app/models/inmut_model.dart';
+import 'package:rsia_employee_app/api/mutu_api.dart';
 import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_screen.dart';
 
 class _MenuCategory {
@@ -58,10 +61,12 @@ class _HomePageState extends State<HomePage> {
 
   // ── Undangan Ticket ─────────────────────────────────────────────────────
   List<Map<String, dynamic>> _upcomingUndangan = [];
-  int _currentTicketIndex = 0;
 
   // ── Tindak Lanjut Rapat ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _assignedTindakLanjut = [];
+
+  // ── Indikator Mutu Unit ─────────────────────────────────────────────────
+  List<InmutUnitItem> _pendingMutuUnits = [];
 
   // ── Pending PJ Approval ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _pendingPjSurat = [];
@@ -115,6 +120,7 @@ class _HomePageState extends State<HomePage> {
     await _getUpcomingUndangan();
     await _getAssignedTindakLanjut();
     await _getPendingPjSurat();
+    await _getPendingMutuUnits();
 
     if (mounted) {
       setState(() {
@@ -345,6 +351,36 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       debugPrint("Error fetching pending PJ surat in home: $e");
+    }
+  }
+
+  Future<void> _getPendingMutuUnits() async {
+    try {
+      final units = await MutuApi.getMyUnits();
+      final now = DateTime.now();
+      final isEndOfMonth = now.day >= 25;
+
+      final pending = units.where((u) {
+        if (u.isValidator) {
+          return u.submissionStatus == 'requested' ||
+              (u.pendingIndicators > 0 && isEndOfMonth) ||
+              (u.pendingAnalyses > 0 && u.verifiedIndicators == u.totalIndicators && u.totalIndicators > 0);
+        }
+        if (u.isPic) {
+          return u.submissionStatus == 'revision' ||
+              (u.submissionStatus == 'draft' && isEndOfMonth && u.unfilledIndicators > 0) ||
+              (u.submissionStatus == 'draft' && isEndOfMonth && u.canRequest);
+        }
+        return false;
+      }).toList();
+
+      if (mounted) {
+        setState(() {
+          _pendingMutuUnits = pending;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching pending mutu units: $e");
     }
   }
 
@@ -1660,6 +1696,13 @@ class _HomePageState extends State<HomePage> {
                         CardTindakLanjutTicket(
                           items: _assignedTindakLanjut,
                           onRefresh: _getAssignedTindakLanjut,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      if (_pendingMutuUnits.isNotEmpty) ...[
+                        CardMutuTicket(
+                          items: _pendingMutuUnits,
+                          onRefresh: _getPendingMutuUnits,
                         ),
                         const SizedBox(height: 12),
                       ],

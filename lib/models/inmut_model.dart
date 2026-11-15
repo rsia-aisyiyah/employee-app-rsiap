@@ -9,10 +9,21 @@ class InmutUnitItem {
   final String? nikValidator;
   final String? namaValidator;
   final int totalIndicators;
+  final int filledIndicators;
+  final int unfilledIndicators;
+  final bool isAllFilled;
   final int verifiedIndicators;
   final int pendingIndicators;
   final int analyzedIndicators;
   final int pendingAnalyses;
+  final String submissionStatus; // 'draft' | 'requested' | 'revision' | 'verified'
+  final String? requestedAt;
+  final String? requestedBy;
+  final String? requestNote;
+  final String? revisionNote;
+  final bool canRequest;
+  final bool canCancel;
+  final bool isPremature;
 
   InmutUnitItem({
     required this.depId,
@@ -25,10 +36,21 @@ class InmutUnitItem {
     this.nikValidator,
     this.namaValidator,
     this.totalIndicators = 0,
+    this.filledIndicators = 0,
+    this.unfilledIndicators = 0,
+    this.isAllFilled = false,
     this.verifiedIndicators = 0,
     this.pendingIndicators = 0,
     this.analyzedIndicators = 0,
     this.pendingAnalyses = 0,
+    this.submissionStatus = 'draft',
+    this.requestedAt,
+    this.requestedBy,
+    this.requestNote,
+    this.revisionNote,
+    this.canRequest = false,
+    this.canCancel = false,
+    this.isPremature = false,
   });
 
   factory InmutUnitItem.fromJson(Map<String, dynamic> json) {
@@ -43,10 +65,21 @@ class InmutUnitItem {
       nikValidator: json['nik_validator']?.toString(),
       namaValidator: json['nama_validator']?.toString(),
       totalIndicators: int.tryParse(json['total_indicators']?.toString() ?? '0') ?? 0,
+      filledIndicators: int.tryParse(json['filled_indicators']?.toString() ?? '0') ?? 0,
+      unfilledIndicators: int.tryParse(json['unfilled_indicators']?.toString() ?? '0') ?? 0,
+      isAllFilled: json['is_all_filled'] == true,
       verifiedIndicators: int.tryParse(json['verified_indicators']?.toString() ?? '0') ?? 0,
       pendingIndicators: int.tryParse(json['pending_indicators']?.toString() ?? '0') ?? 0,
       analyzedIndicators: int.tryParse(json['analyzed_indicators']?.toString() ?? '0') ?? 0,
       pendingAnalyses: int.tryParse(json['pending_analyses']?.toString() ?? '0') ?? 0,
+      submissionStatus: json['submission_status']?.toString() ?? 'draft',
+      requestedAt: json['requested_at']?.toString(),
+      requestedBy: json['requested_by']?.toString(),
+      requestNote: json['request_note']?.toString(),
+      revisionNote: json['revision_note']?.toString(),
+      canRequest: json['can_request'] == true,
+      canCancel: json['can_cancel'] == true,
+      isPremature: json['is_premature'] == true,
     );
   }
 }
@@ -72,6 +105,11 @@ class InmutValidationItem {
   final String? verifiedBy;
   final String? validatorNama;
   final String? verifiedAt;
+  final String? requestedAt;
+  final String? requestedBy;
+  final String? requesterNama;
+  final String? requestNote;
+  final String? revisionNote;
 
   InmutValidationItem({
     required this.idInmut,
@@ -94,6 +132,11 @@ class InmutValidationItem {
     this.verifiedBy,
     this.validatorNama,
     this.verifiedAt,
+    this.requestedAt,
+    this.requestedBy,
+    this.requesterNama,
+    this.requestNote,
+    this.revisionNote,
   });
 
   factory InmutValidationItem.fromJson(Map<String, dynamic> json) {
@@ -118,6 +161,11 @@ class InmutValidationItem {
       verifiedBy: json['verified_by']?.toString(),
       validatorNama: json['validator_nama']?.toString(),
       verifiedAt: json['verified_at']?.toString(),
+      requestedAt: json['requested_at']?.toString(),
+      requestedBy: json['requested_by']?.toString(),
+      requesterNama: json['requester_nama']?.toString(),
+      requestNote: json['request_note']?.toString(),
+      revisionNote: json['revision_note']?.toString(),
     );
   }
 
