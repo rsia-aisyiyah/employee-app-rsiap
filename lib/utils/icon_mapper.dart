@@ -106,6 +106,12 @@ class IconMapper {
           return Icons.more_time_rounded;
         case 'menu_approval_jadwal_tambahan':
           return Icons.fact_check_rounded;
+        case 'mutu':
+        case 'menu_mutu':
+        case 'indikator_mutu':
+        case 'mutu_validasi':
+        case 'pmkp':
+          return Icons.insights_rounded;
       }
     }
 
@@ -203,7 +209,10 @@ class IconMapper {
       case 'dashboard':
       case 'analytics':
       case 'overview':
-        return Icons.analytics_rounded;
+      case 'mutu':
+      case 'indikator_mutu':
+      case 'pmkp':
+        return Icons.insights_rounded;
       case 'fingerprint':
       case 'presensi':
       case 'absensi':
