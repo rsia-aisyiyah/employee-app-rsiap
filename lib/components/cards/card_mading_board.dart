@@ -52,7 +52,7 @@ class CardMadingBoard extends StatelessWidget {
     final totalAgenda = memos.fold<int>(0, (sum, m) => sum + m.count);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: const Color(0xFFF0F9FF).withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(20),
