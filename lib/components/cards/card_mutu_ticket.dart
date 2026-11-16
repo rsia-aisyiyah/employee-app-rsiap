@@ -50,20 +50,20 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
       );
     }
 
-    const stackHeight = cardHeight + 8.0;
+    final double frontRight = total >= 3 ? 32.0 : (total == 2 ? 26.0 : 20.0);
 
     return SizedBox(
-      height: stackHeight,
+      height: cardHeight,
       child: Stack(
         clipBehavior: Clip.none,
-        alignment: Alignment.topCenter,
+        alignment: Alignment.centerLeft,
         children: [
           if (total >= 3)
             Positioned(
-              top: 8,
-              left: 28,
-              right: 28,
-              height: cardHeight,
+              top: 5,
+              bottom: 5,
+              left: 26,
+              right: 12,
               child: _buildDummyStackedTicket(
                 stubWidth: stubWidth,
                 notchRadius: notchRadius,
@@ -71,23 +71,24 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                 borderColor: primaryColor.withValues(alpha: 0.15),
               ),
             ),
-          Positioned(
-            top: 4,
-            left: 24,
-            right: 24,
-            height: cardHeight,
-            child: _buildDummyStackedTicket(
-              stubWidth: stubWidth,
-              notchRadius: notchRadius,
-              opacity: 0.75,
-              borderColor: primaryColor.withValues(alpha: 0.25),
+          if (total >= 2)
+            Positioned(
+              top: total >= 3 ? 2.5 : 3.0,
+              bottom: total >= 3 ? 2.5 : 3.0,
+              left: total >= 3 ? 23 : 24,
+              right: total >= 3 ? 22 : 16,
+              child: _buildDummyStackedTicket(
+                stubWidth: stubWidth,
+                notchRadius: notchRadius,
+                opacity: 0.75,
+                borderColor: primaryColor.withValues(alpha: 0.25),
+              ),
             ),
-          ),
           Positioned(
             top: 0,
+            bottom: 0,
             left: 20,
-            right: 20,
-            height: cardHeight,
+            right: frontRight,
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onHorizontalDragStart: (_) => _dragDistance = 0,
@@ -161,9 +162,9 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 6,
-              offset: const Offset(0, 2),
+              offset: const Offset(2, 0),
             ),
           ],
         ),
