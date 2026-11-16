@@ -21,6 +21,9 @@ import 'package:rsia_employee_app/components/cards/card_mutu_ticket.dart';
 import 'package:rsia_employee_app/models/inmut_model.dart';
 import 'package:rsia_employee_app/api/mutu_api.dart';
 import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_screen.dart';
+import 'package:rsia_employee_app/components/cards/card_mading_board.dart';
+import 'package:rsia_employee_app/screen/menu/approval_cuti.dart';
+import 'package:rsia_employee_app/screen/menu/approval_lembur.dart';
 
 class _MenuCategory {
   final String title;
@@ -70,6 +73,13 @@ class _HomePageState extends State<HomePage> {
 
   // ── Pending PJ Approval ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _pendingPjSurat = [];
+
+  // ── Approval Cuti & Lembur ──────────────────────────────────────────────
+  List<Map<String, dynamic>> _pendingApprovalCuti = [];
+  List<Map<String, dynamic>> _pendingApprovalLembur = [];
+
+  // ── Selected Mading Tab ─────────────────────────────────────────────────
+  String _selectedMadingKey = 'undangan';
 
   // ── Mood ────────────────────────────────────────────────────────────────
   bool _moodDone = false;
@@ -121,6 +131,9 @@ class _HomePageState extends State<HomePage> {
     await _getAssignedTindakLanjut();
     await _getPendingPjSurat();
     await _getPendingMutuUnits();
+    await _getPendingApprovalCuti();
+    await _getPendingApprovalLembur();
+    _autoSelectMadingKey();
 
     if (mounted) {
       setState(() {
@@ -402,6 +415,73 @@ class _HomePageState extends State<HomePage> {
       }
     } catch (e) {
       debugPrint("Error fetching pending mutu units: $e");
+    }
+  }
+
+  Future<void> _getPendingApprovalCuti() async {
+    try {
+      final nik = box.read('sub');
+      if (nik == null) return;
+      final year = DateTime.now().year;
+      final res = await Api().getData("/pegawai/$nik/cuti/approval?year=$year");
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        final list = body['data'] ?? [];
+        if (list is List) {
+          // Status '0' = Menunggu persetujuan
+          final pending = list.where((item) {
+            final st = (item['status'] ?? item['status_cuti']).toString();
+            return st == '0';
+          }).toList();
+          if (mounted) {
+            setState(() {
+              _pendingApprovalCuti = pending.map((e) => Map<String, dynamic>.from(e)).toList();
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching pending approval cuti: $e");
+    }
+  }
+
+  Future<void> _getPendingApprovalLembur() async {
+    try {
+      final now = DateTime.now();
+      final res = await Api().getData(
+        "/sdi/lembur/approval?limit=20&status=PENGAJUAN&month=${now.month}&year=${now.year}",
+      );
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        final list = body['data']?['data'] ?? body['data'] ?? [];
+        if (list is List) {
+          if (mounted) {
+            setState(() {
+              _pendingApprovalLembur = list.map((e) => Map<String, dynamic>.from(e)).toList();
+            });
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching pending approval lembur: $e");
+    }
+  }
+
+  void _autoSelectMadingKey() {
+    if (_upcomingUndangan.isNotEmpty) {
+      _selectedMadingKey = 'undangan';
+    } else if (_assignedTindakLanjut.isNotEmpty) {
+      _selectedMadingKey = 'rtl';
+    } else if (_pendingMutuUnits.isNotEmpty) {
+      _selectedMadingKey = 'mutu';
+    } else if (_pendingPjSurat.isNotEmpty) {
+      _selectedMadingKey = 'surat';
+    } else if (_pendingApprovalCuti.isNotEmpty) {
+      _selectedMadingKey = 'cuti';
+    } else if (_pendingApprovalLembur.isNotEmpty) {
+      _selectedMadingKey = 'lembur';
+    } else {
+      _selectedMadingKey = 'undangan';
     }
   }
 
@@ -1203,6 +1283,387 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildMadingBoardSection() {
+    final memos = [
+      MadingMemoItem(
+        key: 'undangan',
+        title: 'Undangan',
+        count: _upcomingUndangan.length,
+        pinColor: const Color(0xFFEF4444),
+        paperColor: const Color(0xFFFEF9C3),
+        accentColor: const Color(0xFF0284C7),
+        icon: Icons.mark_email_unread_outlined,
+        rotation: -0.02,
+      ),
+      MadingMemoItem(
+        key: 'rtl',
+        title: 'Tindak Lanjut',
+        count: _assignedTindakLanjut.length,
+        pinColor: const Color(0xFFF59E0B),
+        paperColor: const Color(0xFFFFE4E6),
+        accentColor: const Color(0xFFE11D48),
+        icon: Icons.assignment_turned_in_outlined,
+        rotation: 0.015,
+      ),
+      MadingMemoItem(
+        key: 'mutu',
+        title: 'Indikator Mutu',
+        count: _pendingMutuUnits.length,
+        pinColor: const Color(0xFF10B981),
+        paperColor: const Color(0xFFDCFCE7),
+        accentColor: const Color(0xFF16A34A),
+        icon: Icons.analytics_outlined,
+        rotation: -0.01,
+      ),
+      MadingMemoItem(
+        key: 'surat',
+        title: 'Surat PJ',
+        count: _pendingPjSurat.length,
+        pinColor: const Color(0xFF8B5CF6),
+        paperColor: const Color(0xFFFEF3C7),
+        accentColor: const Color(0xFFD97706),
+        icon: Icons.approval_rounded,
+        rotation: 0.02,
+      ),
+      MadingMemoItem(
+        key: 'cuti',
+        title: 'Appr. Cuti',
+        count: _pendingApprovalCuti.length,
+        pinColor: const Color(0xFF0284C7),
+        paperColor: const Color(0xFFF3E8FF),
+        accentColor: const Color(0xFF7C3AED),
+        icon: Icons.beach_access_rounded,
+        rotation: -0.018,
+      ),
+      MadingMemoItem(
+        key: 'lembur',
+        title: 'Appr. Lembur',
+        count: _pendingApprovalLembur.length,
+        pinColor: const Color(0xFFEA580C),
+        paperColor: const Color(0xFFE0F2FE),
+        accentColor: const Color(0xFFEA580C),
+        icon: Icons.more_time_rounded,
+        rotation: 0.012,
+      ),
+    ];
+
+    return CardMadingBoard(
+      memos: memos,
+      selectedKey: _selectedMadingKey,
+      onSelectMemo: (key) {
+        setState(() {
+          _selectedMadingKey = key;
+        });
+      },
+      activeCard: _buildActiveMadingCard(),
+    );
+  }
+
+  Widget _buildActiveMadingCard() {
+    switch (_selectedMadingKey) {
+      case 'undangan':
+        if (_upcomingUndangan.isEmpty) {
+          return _buildEmptyMadingDetail("Tidak ada agenda atau undangan baru.", Icons.mail_outline_rounded);
+        }
+        return CardUndanganTicket(
+          key: const ValueKey('mading_undangan'),
+          items: _upcomingUndangan,
+        );
+      case 'rtl':
+        if (_assignedTindakLanjut.isEmpty) {
+          return _buildEmptyMadingDetail("Tidak ada tindak lanjut rapat aktif.", Icons.assignment_turned_in_outlined);
+        }
+        return CardTindakLanjutTicket(
+          key: const ValueKey('mading_rtl'),
+          items: _assignedTindakLanjut,
+          onRefresh: _getAssignedTindakLanjut,
+        );
+      case 'mutu':
+        if (_pendingMutuUnits.isEmpty) {
+          return _buildEmptyMadingDetail("Semua indikator mutu telah divalidasi.", Icons.analytics_outlined);
+        }
+        return CardMutuTicket(
+          key: const ValueKey('mading_mutu'),
+          items: _pendingMutuUnits,
+          onRefresh: _getPendingMutuUnits,
+        );
+      case 'surat':
+        if (_pendingPjSurat.isEmpty) {
+          return _buildEmptyMadingDetail("Tidak ada surat menunggu persetujuan PJ.", Icons.approval_rounded);
+        }
+        return KeyedSubtree(
+          key: const ValueKey('mading_surat'),
+          child: _buildPendingPjApprovalCard(),
+        );
+      case 'cuti':
+        if (_pendingApprovalCuti.isEmpty) {
+          return _buildEmptyMadingDetail("Tidak ada pengajuan cuti yang menunggu persetujuan.", Icons.beach_access_rounded);
+        }
+        return KeyedSubtree(
+          key: const ValueKey('mading_cuti'),
+          child: _buildPendingCutiCard(),
+        );
+      case 'lembur':
+        if (_pendingApprovalLembur.isEmpty) {
+          return _buildEmptyMadingDetail("Tidak ada pengajuan lembur yang menunggu persetujuan.", Icons.more_time_rounded);
+        }
+        return KeyedSubtree(
+          key: const ValueKey('mading_lembur'),
+          child: _buildPendingLemburCard(),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildPendingCutiCard() {
+    final count = _pendingApprovalCuti.length;
+    final firstItem = _pendingApprovalCuti.first;
+    final nama = firstItem['nama']?.toString() ?? 'Staf';
+    final jenis = firstItem['urgensi']?.toString() ?? firstItem['jenis']?.toString() ?? 'Cuti';
+    final tglMulai = firstItem['tanggal_mulai']?.toString() ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        height: 88,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ApprovalCuti()),
+              ).then((_) => _getPendingApprovalCuti());
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3E8FF),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.beach_access_rounded, color: Color(0xFF8B5CF6), size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                "PERSETUJUAN CUTI",
+                                style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFF8B5CF6)),
+                              ),
+                            ),
+                            if (count > 1) ...[
+                              const SizedBox(width: 6),
+                              Text("+$count pengajuan", style: const TextStyle(fontSize: 9.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          nama,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+                        ),
+                        Text(
+                          "Pengajuan $jenis ${tglMulai.isNotEmpty ? '• $tglMulai' : ''}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("Tinjau", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFF8B5CF6))),
+                        SizedBox(width: 2),
+                        Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFF8B5CF6)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingLemburCard() {
+    final count = _pendingApprovalLembur.length;
+    final firstItem = _pendingApprovalLembur.first;
+    final nama = firstItem['pegawai']?['nama']?.toString() ?? firstItem['nama']?.toString() ?? 'Staf';
+    final tanggal = firstItem['tanggal']?.toString() ?? '';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        height: 88,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ApprovalLemburScreen()),
+              ).then((_) => _getPendingApprovalLembur());
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.more_time_rounded, color: Color(0xFFEA580C), size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEA580C).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                "PERSETUJUAN LEMBUR",
+                                style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFFEA580C)),
+                              ),
+                            ),
+                            if (count > 1) ...[
+                              const SizedBox(width: 6),
+                              Text("+$count pengajuan", style: const TextStyle(fontSize: 9.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          nama,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+                        ),
+                        Text(
+                          "Pengajuan lembur ${tanggal.isNotEmpty ? '• $tanggal' : ''}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 10.5, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("Tinjau", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFEA580C))),
+                        SizedBox(width: 2),
+                        Icon(Icons.arrow_forward_rounded, size: 10, color: Color(0xFFEA580C)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyMadingDetail(String message, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        height: 72,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2D6C0), width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: Colors.grey.shade400),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(fontSize: 11.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFavoritesCard() {
     final favItems = _getFavoriteMenuItems();
 
@@ -1703,30 +2164,8 @@ class _HomePageState extends State<HomePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (_pendingPjSurat.isNotEmpty) ...[
-                        _buildPendingPjApprovalCard(),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_upcomingUndangan.isNotEmpty) ...[
-                        CardUndanganTicket(
-                          items: _upcomingUndangan,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_assignedTindakLanjut.isNotEmpty) ...[
-                        CardTindakLanjutTicket(
-                          items: _assignedTindakLanjut,
-                          onRefresh: _getAssignedTindakLanjut,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      if (_pendingMutuUnits.isNotEmpty) ...[
-                        CardMutuTicket(
-                          items: _pendingMutuUnits,
-                          onRefresh: _getPendingMutuUnits,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                      _buildMadingBoardSection(),
+                      const SizedBox(height: 14),
                       _buildFavoritesCard(),
                       ...categorized.map((cat) => _buildCategoryCard(cat)),
                     ],
