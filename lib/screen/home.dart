@@ -920,6 +920,23 @@ class _HomePageState extends State<HomePage> {
     for (var m in _menus) {
       if (m is Map) list.add(Map<String, dynamic>.from(m));
     }
+
+    // Pastikan game RSIA Baby Care selalu tersedia di menu Mini Games
+    final hasBabyGame = list.any((m) {
+      final r = (m['route'] ?? '').toString().toLowerCase();
+      final n = (m['nama_menu'] ?? '').toString().toLowerCase();
+      return r.contains('baby_bath') || n.contains('baby spa') || n.contains('mandi bayi');
+    });
+
+    if (!hasBabyGame) {
+      list.add({
+        'nama_menu': 'Mandi Bayi',
+        'route': 'baby_bath',
+        'icon': 'child_care',
+        'disabled': false,
+      });
+    }
+
     return list;
   }
 
@@ -996,7 +1013,7 @@ class _HomePageState extends State<HomePage> {
         title: "Ruang Rehat & Mini Games",
         icon: Icons.sports_esports_rounded,
         themeColor: const Color(0xFF00A896),
-        keywords: ['emergency_rush', 'ambulans', 'tts', 'game', 'arcade', 'rehat', 'hiburan', 'gesit', 'virus_buster', 'super_doctor', 'dokter', 'virus'],
+        keywords: ['emergency_rush', 'ambulans', 'tts', 'game', 'arcade', 'rehat', 'hiburan', 'gesit', 'virus_buster', 'super_doctor', 'dokter', 'virus', 'baby_bath', 'mandi_bayi', 'baby_spa', 'bayi'],
       ),
     ];
 

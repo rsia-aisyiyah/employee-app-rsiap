@@ -38,12 +38,19 @@ import 'package:rsia_employee_app/screen/menu/tts/tts_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/emergency_rush/emergency_rush_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/kantin/kantin_screen.dart';
 import 'package:rsia_employee_app/screen/menu/virus_buster/virus_buster_home_screen.dart';
+import 'package:rsia_employee_app/screen/menu/baby_bath/baby_bath_home_screen.dart';
 import 'package:rsia_employee_app/screen/menu/tindak_lanjut/tindak_lanjut_screen.dart';
 import 'package:rsia_employee_app/screen/menu/mutu/mutu_unit_screen.dart';
 
 class MenuNavigator {
   static Widget? getWidget(String routeKey) {
     switch (routeKey) {
+      case 'baby_bath':
+      case 'menu_baby_bath':
+      case 'mandi_bayi':
+      case 'baby_spa':
+      case 'game_bayi':
+        return const BabyBathHomeScreen();
       case 'virus_buster':
       case 'super_doctor':
       case 'game_dokter':

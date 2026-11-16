@@ -68,6 +68,12 @@ class IconMapper {
   static IconData getIcon(String iconName, {String? routeKey}) {
     if (routeKey != null && routeKey.isNotEmpty) {
       switch (routeKey.toLowerCase()) {
+        case 'baby_bath':
+        case 'menu_baby_bath':
+        case 'mandi_bayi':
+        case 'baby_spa':
+        case 'game_bayi':
+          return Icons.child_care_rounded;
         case 'emergency_rush':
         case 'ambulans_gesit':
         case 'game_ambulans':
