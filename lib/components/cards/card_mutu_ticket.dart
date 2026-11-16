@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/models/inmut_model.dart';
 import 'package:rsia_employee_app/screen/menu/mutu/mutu_unit_screen.dart';
 
@@ -56,34 +55,36 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
       height: cardHeight,
       child: Stack(
         clipBehavior: Clip.none,
-        alignment: Alignment.centerLeft,
         children: [
+          // ── Layer 3: Kertas lembar ke-3 (paling belakang) ──
           if (total >= 3)
             Positioned(
-              top: 5,
-              bottom: 5,
-              left: 26,
+              top: 0,
+              bottom: 0,
+              left: 20,
               right: 12,
               child: _buildDummyStackedTicket(
-                stubWidth: stubWidth,
-                notchRadius: notchRadius,
-                opacity: 0.45,
-                borderColor: primaryColor.withValues(alpha: 0.15),
+                backgroundColor: const Color(0xFFF1F5F9),
+                borderColor: const Color(0xFFCBD5E1),
+                shadowAlpha: 0.04,
               ),
             ),
+
+          // ── Layer 2: Kertas lembar ke-2 (tengah) ──
           if (total >= 2)
             Positioned(
-              top: total >= 3 ? 2.5 : 3.0,
-              bottom: total >= 3 ? 2.5 : 3.0,
-              left: total >= 3 ? 23 : 24,
+              top: 0,
+              bottom: 0,
+              left: 20,
               right: total >= 3 ? 22 : 16,
               child: _buildDummyStackedTicket(
-                stubWidth: stubWidth,
-                notchRadius: notchRadius,
-                opacity: 0.75,
-                borderColor: primaryColor.withValues(alpha: 0.25),
+                backgroundColor: const Color(0xFFF8FAFC),
+                borderColor: const Color(0xFFE2E8F0),
+                shadowAlpha: 0.05,
               ),
             ),
+
+          // ── Layer 1: Kertas lembar aktif (paling depan) ──
           Positioned(
             top: 0,
             bottom: 0,
@@ -150,38 +151,22 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
   }
 
   Widget _buildDummyStackedTicket({
-    required double stubWidth,
-    required double notchRadius,
-    required double opacity,
+    required Color backgroundColor,
     required Color borderColor,
+    required double shadowAlpha,
   }) {
-    return Opacity(
-      opacity: opacity,
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 6,
-              offset: const Offset(2, 0),
-            ),
-          ],
-        ),
-        child: ClipPath(
-          clipper: _MiniTicketClipper(
-            stubWidth: stubWidth,
-            notchRadius: notchRadius,
-            cornerRadius: 16.0,
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: shadowAlpha),
+            blurRadius: 5,
+            offset: const Offset(2.5, 1),
           ),
-          child: Container(
-            color: Colors.white,
-            foregroundDecoration: BoxDecoration(
-              border: Border.all(color: borderColor, width: 1.0),
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -231,9 +216,14 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 7,
+            offset: const Offset(3, 1),
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 3,
+            offset: const Offset(0, 2),
           ),
         ],
       ),

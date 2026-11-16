@@ -163,39 +163,36 @@ class _CardUndanganTicketState extends State<CardUndanganTicket> {
       height: cardHeight,
       child: Stack(
         clipBehavior: Clip.none,
-        alignment: Alignment.centerLeft,
         children: [
-          // ── Layer 3: Deepest card peek (if >= 3 items) ──────────────────
+          // ── Layer 3: Kertas lembar ke-3 (paling belakang) ──
           if (total >= 3)
             Positioned(
-              top: 5,
-              bottom: 5,
-              left: 26,
+              top: 0,
+              bottom: 0,
+              left: 20,
               right: 12,
               child: _buildDummyStackedTicket(
-                stubWidth: stubWidth,
-                notchRadius: notchRadius,
-                opacity: 0.45,
-                borderColor: primaryColor.withValues(alpha: 0.15),
+                backgroundColor: const Color(0xFFF1F5F9),
+                borderColor: const Color(0xFFCBD5E1),
+                shadowAlpha: 0.04,
               ),
             ),
 
-          // ── Layer 2: Middle card peek (if >= 2 items) ───────────────────
+          // ── Layer 2: Kertas lembar ke-2 (tengah) ──
           if (total >= 2)
             Positioned(
-              top: total >= 3 ? 2.5 : 3.0,
-              bottom: total >= 3 ? 2.5 : 3.0,
-              left: total >= 3 ? 23 : 24,
+              top: 0,
+              bottom: 0,
+              left: 20,
               right: total >= 3 ? 22 : 16,
               child: _buildDummyStackedTicket(
-                stubWidth: stubWidth,
-                notchRadius: notchRadius,
-                opacity: 0.75,
-                borderColor: primaryColor.withValues(alpha: 0.25),
+                backgroundColor: const Color(0xFFF8FAFC),
+                borderColor: const Color(0xFFE2E8F0),
+                shadowAlpha: 0.05,
               ),
             ),
 
-          // ── Layer 1: Active Front Ticket ───────────────────────────────
+          // ── Layer 1: Kertas lembar aktif (paling depan) ──
           Positioned(
             top: 0,
             bottom: 0,
@@ -244,34 +241,22 @@ class _CardUndanganTicketState extends State<CardUndanganTicket> {
 
   /// Builds the background dummy ticket for the stacked layers behind
   Widget _buildDummyStackedTicket({
-    required double stubWidth,
-    required double notchRadius,
-    required double opacity,
+    required Color backgroundColor,
     required Color borderColor,
+    required double shadowAlpha,
   }) {
     return Container(
       decoration: BoxDecoration(
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: 1.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(2, 0),
+            color: Colors.black.withValues(alpha: shadowAlpha),
+            blurRadius: 5,
+            offset: const Offset(2.5, 1),
           ),
         ],
-      ),
-      child: ClipPath(
-        clipper: _MiniTicketClipper(
-          stubWidth: stubWidth,
-          notchRadius: notchRadius,
-          cornerRadius: 16.0,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: opacity),
-            border: Border.all(color: borderColor, width: 0.8),
-          ),
-        ),
       ),
     );
   }
@@ -301,18 +286,18 @@ class _CardUndanganTicketState extends State<CardUndanganTicket> {
       key: key,
       height: cardHeight,
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.10),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
-            spreadRadius: -2,
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 7,
+            offset: const Offset(3, 1),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 3,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
