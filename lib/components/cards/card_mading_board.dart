@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Model item memo di papan mading dengan karakteristik fisik acak
+/// Model item memo di papan mading dengan karakteristik fisik alami
 class MadingMemoItem {
   final String key;
   final String title;
@@ -10,9 +10,9 @@ class MadingMemoItem {
   final Color paperColor;
   final Color accentColor;
   final IconData icon;
-  final double rotation; // Sudut kemiringan kertas memo
-  final double pinXOffset; // Posisi tancapan pin horizontal (acak)
-  final int tearVariant; // Variasi pola sobekan kertas
+  final double rotation;
+  final double pinXOffset;
+  final int seed;
 
   const MadingMemoItem({
     required this.key,
@@ -24,11 +24,11 @@ class MadingMemoItem {
     required this.icon,
     this.rotation = 0.0,
     this.pinXOffset = 42.0,
-    this.tearVariant = 0,
+    this.seed = 0,
   });
 }
 
-/// Widget Papan Mading (Bulletin Board) bergaya Corkboard Realistis dengan kertas sobekan & pin acak
+/// Widget Papan Mading (Bulletin Board) bergaya Corkboard Realistis
 class CardMadingBoard extends StatelessWidget {
   final List<MadingMemoItem> memos;
   final String selectedKey;
@@ -45,6 +45,7 @@ class CardMadingBoard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Hanya tampilkan jika ada memo aktif (count > 0)
     if (memos.isEmpty) return const SizedBox.shrink();
 
     final totalAgenda = memos.fold<int>(0, (sum, m) => sum + m.count);
@@ -52,92 +53,62 @@ class CardMadingBoard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        // Nuansa gabus hangat dengan bingkai kayu lembut
-        color: const Color(0xFFF7F2E7),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFDFD1B8), width: 2.0),
+        color: const Color(0xFFF9F5EC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2D6C0), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF7A542C).withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 5),
+            color: const Color(0xFF6B4E2E).withValues(alpha: 0.08),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 4,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(19),
         child: CustomPaint(
-          painter: _CorkboardTexturePainter(),
+          painter: _SubtleCorkPainter(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header Papan Mading Kayu Realistis ──
+              // ── Header Mading Bergaya Plakat Kayu Tipis ──
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+                padding: const EdgeInsets.fromLTRB(16, 13, 16, 6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Plakat Kayu / Craft Label
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFE5D2),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFD3C2A3), width: 1.2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6B4E2E).withValues(alpha: 0.10),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1.5),
+                    Row(
+                      children: [
+                        _buildHeaderPin(),
+                        const SizedBox(width: 8),
+                        const Text(
+                          "MADING AGENDA & TUGAS",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF63472A),
+                            letterSpacing: 0.6,
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildMiniPin(const Color(0xFFEF4444)),
-                          const SizedBox(width: 7),
-                          const Text(
-                            "MADING TUGAS & AGENDA",
-                            style: TextStyle(
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w900,
-                              color: Color(0xFF5E4226),
-                              letterSpacing: 0.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Counter Pill
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: totalAgenda > 0
-                            ? const Color(0xFFEF4444).withValues(alpha: 0.14)
-                            : const Color(0xFF10B981).withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: totalAgenda > 0
-                              ? const Color(0xFFEF4444).withValues(alpha: 0.3)
-                              : const Color(0xFF10B981).withValues(alpha: 0.3),
-                          width: 1,
                         ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        totalAgenda > 0 ? "$totalAgenda Perlu Respon" : "Semua Beres ✓",
-                        style: TextStyle(
+                        "$totalAgenda Perlu Respon",
+                        style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: totalAgenda > 0
-                              ? const Color(0xFFDC2626)
-                              : const Color(0xFF047857),
+                          color: Color(0xFFDC2626),
                         ),
                       ),
                     ),
@@ -147,82 +118,52 @@ class CardMadingBoard extends StatelessWidget {
 
               const SizedBox(height: 4),
 
-              // ── Deretan Memo Kertas Sobekan Tak Beraturan (Pinned Memos) ──
+              // ── Deretan Kertas Memo Sobekan Fisik Nyata ──
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(14, 10, 14, 16),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: memos.map((memo) {
                     final isSelected = memo.key == selectedKey;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: _buildRealTornStickyNote(memo, isSelected),
+                      padding: const EdgeInsets.only(right: 14),
+                      child: _buildRealPhysicalMemo(memo, isSelected),
                     );
                   }).toList(),
                 ),
               ),
 
-              // ── Divider Tali / Serat Papan ──
+              // ── Divider Serat Halus ──
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 1.2,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              const Color(0xFFD8C7A9).withValues(alpha: 0.8),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Container(
+                  height: 1,
+                  color: const Color(0xFFE2D6C0).withValues(alpha: 0.7),
                 ),
               ),
 
               const SizedBox(height: 12),
 
-              // ── Kartu Tiket Aktif di Bawah Papan (dengan Pin Penancap di Atasnya) ──
+              // ── Area Tiket Detail yang Dipilih ──
               Padding(
-                padding: const EdgeInsets.only(bottom: 14),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 260),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0.04, 0),
-                              end: Offset.zero,
-                            ).animate(animation),
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: activeCard,
-                    ),
-
-                    // Jarum Pin 3D Penancap di Atas Tiket Aktif (Realistis ala Mading)
-                    Positioned(
-                      top: -6,
-                      child: _build3dPushPin(
-                        _getActivePinColor(),
-                        size: 16,
-                        angle: -0.15,
+                padding: const EdgeInsets.only(bottom: 12),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 240),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.03, 0),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
                       ),
-                    ),
-                  ],
+                    );
+                  },
+                  child: activeCard,
                 ),
               ),
             ],
@@ -232,45 +173,35 @@ class CardMadingBoard extends StatelessWidget {
     );
   }
 
-  Color _getActivePinColor() {
-    final active = memos.firstWhere(
-      (m) => m.key == selectedKey,
-      orElse: () => memos.first,
-    );
-    return active.pinColor;
-  }
-
-  /// Membuat kertas sticky note dengan SOBEKAN TAK BERATURAN (Torn Paper Edge) dan pin acak
-  Widget _buildRealTornStickyNote(MadingMemoItem memo, bool isSelected) {
-    const cardWidth = 86.0;
-    const cardHeight = 92.0;
-
-    // Sudut rotasi: saat dipilih sedikit lebih tegak tapi tetap berkarakter
-    final currentAngle = isSelected ? memo.rotation * 0.3 : memo.rotation;
+  /// Membuat kertas memo dengan efek sobekan tangan alami & paper curl
+  Widget _buildRealPhysicalMemo(MadingMemoItem memo, bool isSelected) {
+    const memoWidth = 88.0;
+    const memoHeight = 94.0;
+    final angle = isSelected ? memo.rotation * 0.25 : memo.rotation;
 
     return Transform.rotate(
-      angle: currentAngle,
+      angle: angle,
       child: GestureDetector(
         onTap: () => onSelectMemo(memo.key),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 180),
           curve: Curves.easeOutCubic,
-          width: cardWidth,
-          height: cardHeight,
+          width: memoWidth,
+          height: memoHeight,
           transform: isSelected
-              ? Matrix4.translationValues(0, -5, 0)
+              ? Matrix4.translationValues(0, -4, 0)
               : Matrix4.identity(),
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // ── Bayangan Jatuh Kertas (Asymmetrical Paper Shadow) ──
+              // ── Bayangan Melengkung Kertas (Paper Curl Shadow) ──
               Positioned(
                 top: 8,
-                left: 2,
-                right: 2,
+                left: 3,
+                right: 1,
                 bottom: 2,
                 child: Transform.rotate(
-                  angle: 0.02,
+                  angle: 0.03,
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(
@@ -282,49 +213,29 @@ class CardMadingBoard extends StatelessWidget {
                 ),
               ),
 
-              // ── Lapisan Serat Sobekan Putih Belakang (Paper Fiber Backing) ──
-              Positioned(
+              // ── Kertas Memo Sobekan Alami (Real Hand-Torn Edge) ──
+              Positioned.fill(
                 top: 6,
-                left: 0,
-                right: 0,
-                bottom: 0,
                 child: ClipPath(
-                  clipper: _TornPaperClipper(variant: memo.tearVariant, offsetY: 2.0),
+                  clipper: _RealTornPaperClipper(seed: memo.seed),
                   child: Container(
-                    color: const Color(0xFFF1EFEA), // Serat kertas sobekan
-                  ),
-                ),
-              ),
-
-              // ── Kertas Utama Sobekan (Torn Paper Note Body) ──
-              Positioned(
-                top: 6,
-                left: 0,
-                right: 0,
-                bottom: 2,
-                child: ClipPath(
-                  clipper: _TornPaperClipper(variant: memo.tearVariant),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: memo.paperColor,
-                      border: Border.all(
-                        color: isSelected ? memo.accentColor : const Color(0xFFE5D8BE),
-                        width: isSelected ? 1.6 : 0.8,
-                      ),
-                    ),
+                    color: memo.paperColor,
                     child: Stack(
                       children: [
-                        // Garis-garis halus kertas binder/memo (Notebook lines)
-                        CustomPaint(
-                          size: const Size(cardWidth, cardHeight),
-                          painter: _NotepadLinesPainter(
-                            lineColor: Colors.black.withValues(alpha: 0.04),
+                        // Serat kertas sobekan putih tipis di tepi bawah
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 4,
+                          child: Container(
+                            color: Colors.white.withValues(alpha: 0.35),
                           ),
                         ),
 
-                        // Konten Memo (Icon + Judul)
+                        // Konten Catatan Memo
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(6, 14, 6, 8),
+                          padding: const EdgeInsets.fromLTRB(6, 12, 6, 8),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -333,17 +244,17 @@ class CardMadingBoard extends StatelessWidget {
                                 size: 21,
                                 color: memo.accentColor,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 5),
                               Text(
                                 memo.title,
                                 textAlign: TextAlign.center,
-                                maxLines: 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                                  color: const Color(0xFF2D3748),
-                                  letterSpacing: 0.1,
+                                  color: const Color(0xFF334155),
+                                  height: 1.1,
                                 ),
                               ),
                             ],
@@ -355,28 +266,28 @@ class CardMadingBoard extends StatelessWidget {
                 ),
               ),
 
-              // ── Badge Counter Jumlah di Sudut Kanan Atas Kertas ──
+              // ── Badge Angka Alami (Red Paper Tag) ──
               if (memo.count > 0)
                 Positioned(
                   top: 2,
-                  right: -4,
+                  right: -3,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5.5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                     decoration: BoxDecoration(
                       color: memo.accentColor,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.20),
-                          blurRadius: 3,
-                          offset: const Offset(0, 1.5),
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 2.5,
+                          offset: const Offset(0, 1),
                         ),
                       ],
                     ),
                     child: Text(
                       memo.count.toString(),
                       style: const TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 9,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                       ),
@@ -384,15 +295,11 @@ class CardMadingBoard extends StatelessWidget {
                   ),
                 ),
 
-              // ── Jarum Pin 3D yang Menancap Acak di Kertas ──
+              // ── Pushpin 3D Menancap di Kertas ──
               Positioned(
                 top: 0,
-                left: memo.pinXOffset.clamp(14.0, cardWidth - 28.0),
-                child: _build3dPushPin(
-                  memo.pinColor,
-                  size: 15,
-                  angle: (memo.pinXOffset % 2 == 0) ? -0.2 : 0.2,
-                ),
+                left: memo.pinXOffset.clamp(14.0, memoWidth - 28.0),
+                child: _buildRealPushPin(memo.pinColor),
               ),
             ],
           ),
@@ -401,89 +308,101 @@ class CardMadingBoard extends StatelessWidget {
     );
   }
 
-  /// Pushpin 3D dengan refleksi cahaya, bayangan miring, dan jarum logam perak
-  Widget _build3dPushPin(Color color, {double size = 14, double angle = 0.0}) {
-    return Transform.rotate(
-      angle: angle,
-      child: SizedBox(
-        width: size + 6,
-        height: size + 6,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Bayangan pin yang jatuh ke permukaan kertas miring
-            Positioned(
-              right: 1,
-              bottom: 1,
-              child: Container(
-                width: size * 0.85,
-                height: size * 0.45,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
+  /// Membuat Pushpin 3D dengan sorot cahaya, bayangan di kertas, dan lubang jarum
+  Widget _buildRealPushPin(Color color) {
+    const double size = 15.0;
 
-            // Ujung jarum perak kecil yang menusuk
-            Positioned(
-              bottom: 2,
-              child: Container(
-                width: 2.2,
-                height: 4.5,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF94A3B8),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              ),
-            ),
-
-            // Kepala pin bulat jamur 3D mengilap (Glossy dome)
-            Container(
-              width: size,
-              height: size,
+    return SizedBox(
+      width: size + 8,
+      height: size + 8,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Bayangan pin yang jatuh ke kertas di arah kanan bawah
+          Positioned(
+            right: 1,
+            bottom: 2,
+            child: Container(
+              width: size * 0.8,
+              height: size * 0.45,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color,
-                gradient: RadialGradient(
-                  center: const Alignment(-0.35, -0.38),
-                  radius: 0.75,
-                  colors: [
-                    Colors.white.withValues(alpha: 0.85),
-                    color,
-                    Color.lerp(color, Colors.black, 0.55) ?? Colors.black,
-                  ],
-                  stops: const [0.0, 0.55, 1.0],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.28),
-                    blurRadius: 3,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: Colors.black.withValues(alpha: 0.22),
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-          ],
-        ),
+          ),
+
+          // Lubang tancap jarum mikro (Pinhole)
+          Positioned(
+            bottom: 3,
+            child: Container(
+              width: 2.5,
+              height: 2.5,
+              decoration: const BoxDecoration(
+                color: Color(0xFF334155),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+
+          // Jarum pin logam perak kecil
+          Positioned(
+            bottom: 3.5,
+            child: Container(
+              width: 1.8,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFCBD5E1),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ),
+
+          // Kepala pin bulat kubah 3D (Glossy dome pushpin)
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              gradient: RadialGradient(
+                center: const Alignment(-0.35, -0.38),
+                radius: 0.72,
+                colors: [
+                  Colors.white.withValues(alpha: 0.9),
+                  color,
+                  Color.lerp(color, Colors.black, 0.5) ?? Colors.black,
+                ],
+                stops: const [0.0, 0.55, 1.0],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 3,
+                  offset: const Offset(0, 1.5),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildMiniPin(Color color) {
+  Widget _buildHeaderPin() {
     return Container(
-      width: 8,
-      height: 8,
+      width: 9,
+      height: 9,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color,
+        color: const Color(0xFFDC2626),
         gradient: RadialGradient(
           center: const Alignment(-0.3, -0.3),
           radius: 0.7,
           colors: [
             Colors.white.withValues(alpha: 0.8),
-            color,
-            Colors.black.withValues(alpha: 0.5),
+            const Color(0xFFDC2626),
+            const Color(0xFF7F1D1D),
           ],
         ),
       ),
@@ -491,97 +410,67 @@ class CardMadingBoard extends StatelessWidget {
   }
 }
 
-/// Clipper untuk menghasilkan Sobekan Kertas Tak Beraturan (Real Torn Paper Edge)
-class _TornPaperClipper extends CustomClipper<Path> {
-  final int variant;
-  final double offsetY;
+/// Clipper untuk menghasilkan Sobekan Kertas Tangan Alami (Deckle Edge / Hand-Torn Paper)
+class _RealTornPaperClipper extends CustomClipper<Path> {
+  final int seed;
 
-  _TornPaperClipper({this.variant = 0, this.offsetY = 0.0});
+  _RealTornPaperClipper({this.seed = 0});
 
   @override
   Path getClip(Size size) {
     final path = Path();
     final w = size.width;
-    final h = size.height + offsetY;
+    final h = size.height;
 
-    // Mulai dari kiri atas (sedikit tidak lurus penggaris agar organik)
-    path.moveTo(0, 2);
-    path.quadraticBezierTo(w * 0.5, 0, w, 2); // Garis atas melengkung mikro
-    path.lineTo(w, h - 12);
+    // Sisi atas sedikit lengkungan kertas alami
+    path.moveTo(0, 0);
+    path.lineTo(w, 0);
 
-    // ── Tepi Bawah: Gerigi Sobekan Kertas Organik Tak Beraturan ──
-    final List<double> ripDeltas;
-    switch (variant % 4) {
-      case 0:
-        ripDeltas = [2, -6, 5, -8, 3, -11, 4, -7, 6, -10, 2, -6, 0];
-        break;
-      case 1:
-        ripDeltas = [4, -9, 3, -5, 7, -12, 2, -8, 5, -6, 4, -10, 0];
-        break;
-      case 2:
-        ripDeltas = [1, -5, 6, -11, 2, -7, 8, -13, 3, -6, 5, -8, 0];
-        break;
-      default:
-        ripDeltas = [3, -8, 4, -12, 6, -6, 2, -10, 5, -7, 3, -11, 0];
+    // Sisi kanan lurus sedikit bernafas
+    path.lineTo(w, h - 7);
+
+    // ── Tepi Bawah: Sobekan serat kertas bergelombang mikro halus ──
+    const int segments = 14;
+    final double dx = w / segments;
+
+    for (int i = 0; i < segments; i++) {
+      final double x1 = w - (i + 0.5) * dx;
+      final double x2 = w - (i + 1.0) * dx;
+
+      // Variasi kurva halus 1-3px (sobekan kertas nyata, bukan gergaji tajam)
+      final double wave = math.sin((i + seed * 3) * 1.5) * 2.2 +
+          math.cos((i * 2 + seed) * 1.2) * 1.2;
+
+      final double y1 = h - 5 + wave;
+      final double y2 = h - 5 - (wave * 0.4);
+
+      path.quadraticBezierTo(x1, y1, x2, y2);
     }
 
-    final int steps = ripDeltas.length;
-    final double stepWidth = w / steps;
-
-    for (int i = 0; i < steps; i++) {
-      final double targetX = w - ((i + 1) * stepWidth);
-      final double targetY = h - 6 + ripDeltas[i];
-      path.lineTo(targetX.clamp(0.0, w), targetY);
-    }
-
-    path.lineTo(0, 2);
+    path.lineTo(0, 0);
     path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(covariant _TornPaperClipper oldClipper) {
-    return oldClipper.variant != variant || oldClipper.offsetY != offsetY;
-  }
+  bool shouldReclip(covariant _RealTornPaperClipper oldClipper) =>
+      oldClipper.seed != seed;
 }
 
-/// Melukis garis catatan buku binder halus di permukaan kertas memo
-class _NotepadLinesPainter extends CustomPainter {
-  final Color lineColor;
-
-  _NotepadLinesPainter({required this.lineColor});
-
+/// Melukis tekstur serat gabus alami papan mading
+class _SubtleCorkPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = lineColor
-      ..strokeWidth = 0.8;
-
-    double y = 28.0;
-    while (y < size.height - 15) {
-      canvas.drawLine(Offset(6, y), Offset(size.width - 6, y), paint);
-      y += 13.0;
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _NotepadLinesPainter oldDelegate) => false;
-}
-
-/// Melukis bintik-bintik serat alami papan gabus (Corkboard speckled grain)
-class _CorkboardTexturePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paintDark = Paint()..color = const Color(0xFFC7B596).withValues(alpha: 0.22);
+    final paintDark = Paint()..color = const Color(0xFFD4C5AB).withValues(alpha: 0.20);
     final paintLight = Paint()..color = Colors.white.withValues(alpha: 0.25);
 
-    final random = math.Random(42); // Seed konstan agar tidak flicker
-    const int totalDots = 90;
+    final random = math.Random(101);
+    const int totalDots = 70;
 
     for (int i = 0; i < totalDots; i++) {
       final x = random.nextDouble() * size.width;
       final y = random.nextDouble() * size.height;
-      final r = 0.6 + random.nextDouble() * 1.4;
+      final r = 0.5 + random.nextDouble() * 1.2;
 
       canvas.drawCircle(Offset(x, y), r, (i % 2 == 0) ? paintDark : paintLight);
     }

@@ -1284,7 +1284,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildMadingBoardSection() {
-    final memos = [
+    final allMemos = [
       MadingMemoItem(
         key: 'undangan',
         title: 'Undangan',
@@ -1293,9 +1293,9 @@ class _HomePageState extends State<HomePage> {
         paperColor: const Color(0xFFFFFBEB),
         accentColor: const Color(0xFF0284C7),
         icon: Icons.mark_email_unread_outlined,
-        rotation: -0.055,
-        pinXOffset: 22.0,
-        tearVariant: 0,
+        rotation: -0.05,
+        pinXOffset: 24.0,
+        seed: 0,
       ),
       MadingMemoItem(
         key: 'rtl',
@@ -1305,9 +1305,9 @@ class _HomePageState extends State<HomePage> {
         paperColor: const Color(0xFFFFEDD5),
         accentColor: const Color(0xFFE11D48),
         icon: Icons.assignment_turned_in_outlined,
-        rotation: 0.050,
-        pinXOffset: 50.0,
-        tearVariant: 1,
+        rotation: 0.045,
+        pinXOffset: 52.0,
+        seed: 1,
       ),
       MadingMemoItem(
         key: 'mutu',
@@ -1317,9 +1317,9 @@ class _HomePageState extends State<HomePage> {
         paperColor: const Color(0xFFECFDF5),
         accentColor: const Color(0xFF059669),
         icon: Icons.analytics_outlined,
-        rotation: -0.040,
-        pinXOffset: 34.0,
-        tearVariant: 2,
+        rotation: -0.038,
+        pinXOffset: 36.0,
+        seed: 2,
       ),
       MadingMemoItem(
         key: 'surat',
@@ -1329,9 +1329,9 @@ class _HomePageState extends State<HomePage> {
         paperColor: const Color(0xFFFEF3C7),
         accentColor: const Color(0xFFD97706),
         icon: Icons.approval_rounded,
-        rotation: 0.060,
+        rotation: 0.055,
         pinXOffset: 26.0,
-        tearVariant: 3,
+        seed: 3,
       ),
       MadingMemoItem(
         key: 'cuti',
@@ -1341,9 +1341,9 @@ class _HomePageState extends State<HomePage> {
         paperColor: const Color(0xFFF5F3FF),
         accentColor: const Color(0xFF7C3AED),
         icon: Icons.beach_access_rounded,
-        rotation: -0.048,
+        rotation: -0.045,
         pinXOffset: 48.0,
-        tearVariant: 1,
+        seed: 4,
       ),
       MadingMemoItem(
         key: 'lembur',
@@ -1353,15 +1353,28 @@ class _HomePageState extends State<HomePage> {
         paperColor: const Color(0xFFEFF6FF),
         accentColor: const Color(0xFFEA580C),
         icon: Icons.more_time_rounded,
-        rotation: 0.042,
+        rotation: 0.040,
         pinXOffset: 20.0,
-        tearVariant: 2,
+        seed: 5,
       ),
     ];
 
+    // HANYA tampilkan memo yang memiliki data (count > 0)
+    final memos = allMemos.where((m) => m.count > 0).toList();
+
+    // Jika semua kosong, mading tidak memakan ruang sama sekali
+    if (memos.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Pastikan key yang aktif valid berada di dalam memo yang tersedia
+    final activeKey = memos.any((m) => m.key == _selectedMadingKey)
+        ? _selectedMadingKey
+        : memos.first.key;
+
     return CardMadingBoard(
       memos: memos,
-      selectedKey: _selectedMadingKey,
+      selectedKey: activeKey,
       onSelectMemo: (key) {
         setState(() {
           _selectedMadingKey = key;
