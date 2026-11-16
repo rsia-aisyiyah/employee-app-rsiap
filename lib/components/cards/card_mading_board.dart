@@ -54,17 +54,17 @@ class CardMadingBoard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F5EC),
+        color: const Color(0xFFF0F9FF).withValues(alpha: 0.65),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2D6C0), width: 1.5),
+        border: Border.all(color: const Color(0xFFBAE6FD), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6B4E2E).withValues(alpha: 0.08),
+            color: const Color(0xFF0284C7).withValues(alpha: 0.08),
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 1),
           ),
@@ -77,7 +77,7 @@ class CardMadingBoard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Header Mading Bergaya Plakat Kayu Tipis ──
+              // ── Header Agenda & Tugas ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 13, 16, 6),
                 child: Row(
@@ -88,11 +88,11 @@ class CardMadingBoard extends StatelessWidget {
                         _buildHeaderPin(),
                         const SizedBox(width: 8),
                         Text(
-                          "MADING AGENDA & TUGAS",
+                          "AGENDA & TUGAS",
                           style: GoogleFonts.kalam(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF5A3E22),
+                            color: const Color(0xFF0F172A),
                             letterSpacing: 0.4,
                           ),
                         ),
@@ -101,7 +101,7 @@ class CardMadingBoard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                        color: const Color(0xFF0284C7).withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
@@ -109,7 +109,7 @@ class CardMadingBoard extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFFDC2626),
+                          color: Color(0xFF0284C7),
                         ),
                       ),
                     ),
@@ -130,7 +130,7 @@ class CardMadingBoard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Container(
                   height: 1,
-                  color: const Color(0xFFE2D6C0).withValues(alpha: 0.7),
+                  color: const Color(0xFFBAE6FD).withValues(alpha: 0.6),
                 ),
               ),
 
@@ -565,14 +565,14 @@ class CardMadingBoard extends StatelessWidget {
       height: 9,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: const Color(0xFFDC2626),
+        color: const Color(0xFF0284C7),
         gradient: RadialGradient(
           center: const Alignment(-0.3, -0.3),
           radius: 0.7,
           colors: [
-            Colors.white.withValues(alpha: 0.8),
-            const Color(0xFFDC2626),
-            const Color(0xFF7F1D1D),
+            Colors.white.withValues(alpha: 0.85),
+            const Color(0xFF38BDF8),
+            const Color(0xFF0369A1),
           ],
         ),
       ),
@@ -647,15 +647,15 @@ class _RuledNotepadPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Melukis tekstur serat gabus alami papan mading
+/// Melukis tekstur serat papan modern yang bersih dan halus
 class _SubtleCorkPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paintDark = Paint()..color = const Color(0xFFD4C5AB).withValues(alpha: 0.20);
-    final paintLight = Paint()..color = Colors.white.withValues(alpha: 0.25);
+    final paintDark = Paint()..color = const Color(0xFF38BDF8).withValues(alpha: 0.12);
+    final paintLight = Paint()..color = Colors.white.withValues(alpha: 0.60);
 
     final random = math.Random(101);
-    const int totalDots = 70;
+    const int totalDots = 60;
 
     for (int i = 0; i < totalDots; i++) {
       final x = random.nextDouble() * size.width;
