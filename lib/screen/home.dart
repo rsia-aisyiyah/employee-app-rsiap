@@ -61,7 +61,6 @@ class _HomePageState extends State<HomePage> {
 
   // ── Undangan Ticket ─────────────────────────────────────────────────────
   List<Map<String, dynamic>> _upcomingUndangan = [];
-  int _currentTicketIndex = 0;
 
   // ── Tindak Lanjut Rapat ─────────────────────────────────────────────────
   List<Map<String, dynamic>> _assignedTindakLanjut = [];
@@ -290,7 +289,6 @@ class _HomePageState extends State<HomePage> {
         if (mounted) {
           setState(() {
             _upcomingUndangan = upcoming;
-            _currentTicketIndex = 0;
           });
         }
       }
@@ -363,14 +361,15 @@ class _HomePageState extends State<HomePage> {
 
       final pending = units.where((u) {
         if (u.isValidator) {
+          // Tampilkan jika ada indikator yang belum divalidasi atau belum dianalisa
           return u.submissionStatus == 'requested' ||
-              (u.pendingIndicators > 0 && isEndOfMonth) ||
-              (u.pendingAnalyses > 0 && u.verifiedIndicators == u.totalIndicators && u.totalIndicators > 0);
+              u.pendingIndicators > 0 ||
+              u.pendingAnalyses > 0;
         }
         if (u.isPic) {
           return u.submissionStatus == 'revision' ||
-              (u.submissionStatus == 'draft' && isEndOfMonth && u.unfilledIndicators > 0) ||
-              (u.submissionStatus == 'draft' && isEndOfMonth && u.canRequest);
+              u.canRequest ||
+              (isEndOfMonth && u.unfilledIndicators > 0);
         }
         return false;
       }).toList();

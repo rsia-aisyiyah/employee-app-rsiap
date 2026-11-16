@@ -205,16 +205,26 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
       lightBg = const Color(0xFFFEF2F2);
       badgeText = 'PERLU REVISI';
       stubText = 'REVISI';
+    } else if (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0) {
+      accentColor = const Color(0xFFF59E0B);
+      lightBg = const Color(0xFFFFFBEB);
+      badgeText = 'VALIDASI & ANALISA';
+      stubText = 'MUTU';
+    } else if (unit.isValidator && unit.pendingIndicators > 0) {
+      accentColor = const Color(0xFFF59E0B);
+      lightBg = const Color(0xFFFFFBEB);
+      badgeText = 'BUTUH VALIDASI';
+      stubText = 'VALIDASI';
+    } else if (unit.isValidator && unit.pendingAnalyses > 0) {
+      accentColor = const Color(0xFF8B5CF6);
+      lightBg = const Color(0xFFF5F3FF);
+      badgeText = 'BUTUH ANALISA';
+      stubText = 'ANALISA';
     } else if (status == 'requested') {
       accentColor = const Color(0xFFF59E0B);
       lightBg = const Color(0xFFFFFBEB);
       badgeText = 'BUTUH VALIDASI';
       stubText = 'VALIDASI';
-    } else if (unit.pendingAnalyses > 0 && unit.verifiedIndicators == unit.totalIndicators) {
-      accentColor = const Color(0xFF8B5CF6);
-      lightBg = const Color(0xFFF5F3FF);
-      badgeText = 'BUTUH ANALISA';
-      stubText = 'ANALISA';
     } else {
       accentColor = const Color(0xFF2563EB);
       lightBg = const Color(0xFFEFF6FF);
@@ -375,11 +385,15 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                         Text(
                           status == 'revision'
                               ? (unit.revisionNote ?? 'Perlu perbaikan data entri.')
-                              : status == 'requested'
-                                  ? 'Diajukan oleh ${unit.namaPic ?? 'PIC'}. Menunggu validasi P2.'
-                                  : unit.pendingAnalyses > 0 && unit.verifiedIndicators == unit.totalIndicators
-                                      ? '${unit.pendingAnalyses} indikator menunggu analisa capaian.'
-                                      : '${unit.filledIndicators} dari ${unit.totalIndicators} indikator telah terisi.',
+                              : (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0)
+                                  ? '${unit.pendingIndicators} belum validasi • ${unit.pendingAnalyses} belum analisa.'
+                                  : (unit.isValidator && unit.pendingIndicators > 0)
+                                      ? '${unit.pendingIndicators} dari ${unit.totalIndicators} indikator menunggu validasi.'
+                                      : (unit.isValidator && unit.pendingAnalyses > 0)
+                                          ? '${unit.pendingAnalyses} dari ${unit.totalIndicators} indikator menunggu analisa.'
+                                          : status == 'requested'
+                                              ? 'Diajukan oleh ${unit.namaPic ?? 'PIC'}. Menunggu validasi P2.'
+                                              : '${unit.filledIndicators} dari ${unit.totalIndicators} indikator telah terisi.',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
