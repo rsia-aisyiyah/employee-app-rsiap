@@ -197,15 +197,10 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
     final status = unit.submissionStatus;
     Color accentColor;
     Color lightBg;
-    final now = DateTime.now();
-    final bool isPastMonth = (unit.tahun < now.year) || (unit.tahun == now.year && unit.bulan < now.month);
 
     if (status == 'revision') {
       accentColor = const Color(0xFFEF4444);
       lightBg = const Color(0xFFFEF2F2);
-    } else if (isPastMonth) {
-      accentColor = const Color(0xFFE11D48);
-      lightBg = const Color(0xFFFFF1F2);
     } else if (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0) {
       accentColor = const Color(0xFFF59E0B);
       lightBg = const Color(0xFFFFFBEB);
@@ -342,7 +337,7 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                isPastMonth ? '• TUNGGAKAN MUTU' : '• INDIKATOR MUTU',
+                                '• INDIKATOR MUTU',
                                 style: TextStyle(
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w800,
@@ -354,15 +349,15 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: isPastMonth ? const Color(0xFFFFE4E6) : const Color(0xFFF1F5F9),
+                                color: const Color(0xFFF1F5F9),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 '${unit.namaBulanSingkat} ${unit.tahun}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 8.5,
                                   fontWeight: FontWeight.w700,
-                                  color: isPastMonth ? const Color(0xFF9F1239) : const Color(0xFF475569),
+                                  color: Color(0xFF475569),
                                 ),
                               ),
                             ),
@@ -401,11 +396,11 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                           status == 'revision'
                               ? 'Bulan ${unit.namaBulan}: ${unit.revisionNote ?? 'Perlu perbaikan data entri.'}'
                               : (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0)
-                                  ? 'Bulan ${unit.namaBulan}${isPastMonth ? ' (Tunggakan)' : ''}: ${unit.pendingIndicators} belum validasi • ${unit.pendingAnalyses} belum analisa.'
+                                  ? 'Bulan ${unit.namaBulan}: ${unit.pendingIndicators} belum validasi • ${unit.pendingAnalyses} belum analisa.'
                                   : (unit.isValidator && unit.pendingIndicators > 0)
-                                      ? 'Bulan ${unit.namaBulan}${isPastMonth ? ' (Tunggakan)' : ''}: ${unit.pendingIndicators} dari ${unit.totalIndicators} belum divalidasi.'
+                                      ? 'Bulan ${unit.namaBulan}: ${unit.pendingIndicators} dari ${unit.totalIndicators} belum divalidasi.'
                                       : (unit.isValidator && unit.pendingAnalyses > 0)
-                                          ? 'Bulan ${unit.namaBulan}${isPastMonth ? ' (Tunggakan)' : ''}: ${unit.pendingAnalyses} dari ${unit.totalIndicators} belum dianalisa.'
+                                          ? 'Bulan ${unit.namaBulan}: ${unit.pendingAnalyses} dari ${unit.totalIndicators} belum dianalisa.'
                                           : status == 'requested'
                                               ? 'Bulan ${unit.namaBulan}: Diajukan oleh ${unit.namaPic ?? 'PIC'}, menunggu validasi.'
                                               : 'Bulan ${unit.namaBulan}: ${unit.filledIndicators} dari ${unit.totalIndicators} terisi.',
