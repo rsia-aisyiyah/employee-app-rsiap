@@ -355,11 +355,19 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getPendingMutuUnits() async {
     try {
-      final units = await MutuApi.getMyUnits();
       final now = DateTime.now();
       final isEndOfMonth = now.day >= 25;
 
-      final pending = units.where((u) {
+      // 1. Ambil unit bulan berjalan
+      final currentUnits = await MutuApi.getMyUnits(bulan: now.month, tahun: now.year);
+
+      // 2. Ambil unit bulan sebelumnya untuk mendeteksi tunggakan validasi/analisa
+      final prevDate = DateTime(now.year, now.month - 1, 1);
+      final prevUnits = await MutuApi.getMyUnits(bulan: prevDate.month, tahun: prevDate.year);
+
+      final combined = [...prevUnits, ...currentUnits];
+
+      final pending = combined.where((u) {
         if (u.isValidator) {
           // Tampilkan jika ada indikator yang belum divalidasi atau belum dianalisa
           return u.submissionStatus == 'requested' ||
@@ -367,8 +375,10 @@ class _HomePageState extends State<HomePage> {
               u.pendingAnalyses > 0;
         }
         if (u.isPic) {
+          final isPastMonth = (u.tahun < now.year) || (u.tahun == now.year && u.bulan < now.month);
           return u.submissionStatus == 'revision' ||
               u.canRequest ||
+              (isPastMonth && u.unfilledIndicators > 0) ||
               (isEndOfMonth && u.unfilledIndicators > 0);
         }
         return false;

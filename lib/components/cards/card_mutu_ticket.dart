@@ -197,39 +197,25 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
     final status = unit.submissionStatus;
     Color accentColor;
     Color lightBg;
-    String badgeText;
-    String stubText;
 
     if (status == 'revision') {
       accentColor = const Color(0xFFEF4444);
       lightBg = const Color(0xFFFEF2F2);
-      badgeText = 'PERLU REVISI';
-      stubText = 'REVISI';
     } else if (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0) {
       accentColor = const Color(0xFFF59E0B);
       lightBg = const Color(0xFFFFFBEB);
-      badgeText = 'VALIDASI & ANALISA';
-      stubText = 'MUTU';
     } else if (unit.isValidator && unit.pendingIndicators > 0) {
       accentColor = const Color(0xFFF59E0B);
       lightBg = const Color(0xFFFFFBEB);
-      badgeText = 'BUTUH VALIDASI';
-      stubText = 'VALIDASI';
     } else if (unit.isValidator && unit.pendingAnalyses > 0) {
       accentColor = const Color(0xFF8B5CF6);
       lightBg = const Color(0xFFF5F3FF);
-      badgeText = 'BUTUH ANALISA';
-      stubText = 'ANALISA';
     } else if (status == 'requested') {
       accentColor = const Color(0xFFF59E0B);
       lightBg = const Color(0xFFFFFBEB);
-      badgeText = 'BUTUH VALIDASI';
-      stubText = 'VALIDASI';
     } else {
       accentColor = const Color(0xFF2563EB);
       lightBg = const Color(0xFFEFF6FF);
-      badgeText = 'PENGUMPULAN DATA';
-      stubText = 'MUTU';
     }
 
     final double pct = unit.totalIndicators > 0
@@ -262,7 +248,13 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const MutuUnitScreen()),
+                MaterialPageRoute(
+                  builder: (_) => MutuUnitScreen(
+                    initialDepId: unit.depId,
+                    initialBulan: unit.bulan,
+                    initialTahun: unit.tahun,
+                  ),
+                ),
               ).then((_) => widget.onRefresh?.call());
             },
             child: Row(
@@ -303,7 +295,9 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        stubText,
+                        status == 'revision'
+                            ? 'REVISI'
+                            : '${unit.namaBulanSingkat.toUpperCase()} \'${unit.tahun.toString().substring(2)}',
                         style: TextStyle(
                           fontSize: 8.5,
                           fontWeight: FontWeight.w800,
@@ -337,17 +331,33 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.1),
+                                color: accentColor.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                '• $badgeText',
+                                '• INDIKATOR MUTU',
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: 8.5,
                                   fontWeight: FontWeight.w800,
                                   color: accentColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${unit.namaBulanSingkat} ${unit.tahun}',
+                                style: const TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF475569),
                                 ),
                               ),
                             ),
@@ -384,16 +394,16 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                         // Subtitle
                         Text(
                           status == 'revision'
-                              ? (unit.revisionNote ?? 'Perlu perbaikan data entri.')
+                              ? 'Bulan ${unit.namaBulan}: ${unit.revisionNote ?? 'Perlu perbaikan data entri.'}'
                               : (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0)
-                                  ? '${unit.pendingIndicators} belum validasi • ${unit.pendingAnalyses} belum analisa.'
+                                  ? 'Bulan ${unit.namaBulan}: ${unit.pendingIndicators} belum validasi • ${unit.pendingAnalyses} belum analisa.'
                                   : (unit.isValidator && unit.pendingIndicators > 0)
-                                      ? '${unit.pendingIndicators} dari ${unit.totalIndicators} indikator menunggu validasi.'
+                                      ? 'Bulan ${unit.namaBulan}: ${unit.pendingIndicators} dari ${unit.totalIndicators} belum divalidasi.'
                                       : (unit.isValidator && unit.pendingAnalyses > 0)
-                                          ? '${unit.pendingAnalyses} dari ${unit.totalIndicators} indikator menunggu analisa.'
+                                          ? 'Bulan ${unit.namaBulan}: ${unit.pendingAnalyses} dari ${unit.totalIndicators} belum dianalisa.'
                                           : status == 'requested'
-                                              ? 'Diajukan oleh ${unit.namaPic ?? 'PIC'}. Menunggu validasi P2.'
-                                              : '${unit.filledIndicators} dari ${unit.totalIndicators} indikator telah terisi.',
+                                              ? 'Bulan ${unit.namaBulan}: Diajukan oleh ${unit.namaPic ?? 'PIC'}, menunggu validasi.'
+                                              : 'Bulan ${unit.namaBulan}: ${unit.filledIndicators} dari ${unit.totalIndicators} terisi.',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

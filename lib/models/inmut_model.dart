@@ -24,6 +24,8 @@ class InmutUnitItem {
   final bool canRequest;
   final bool canCancel;
   final bool isPremature;
+  final int bulan;
+  final int tahun;
 
   InmutUnitItem({
     required this.depId,
@@ -51,7 +53,10 @@ class InmutUnitItem {
     this.canRequest = false,
     this.canCancel = false,
     this.isPremature = false,
-  });
+    int? bulan,
+    int? tahun,
+  })  : bulan = bulan ?? DateTime.now().month,
+        tahun = tahun ?? DateTime.now().year;
 
   factory InmutUnitItem.fromJson(Map<String, dynamic> json) {
     return InmutUnitItem(
@@ -80,7 +85,27 @@ class InmutUnitItem {
       canRequest: json['can_request'] == true,
       canCancel: json['can_cancel'] == true,
       isPremature: json['is_premature'] == true,
+      bulan: int.tryParse(json['bulan']?.toString() ?? '') ?? DateTime.now().month,
+      tahun: int.tryParse(json['tahun']?.toString() ?? '') ?? DateTime.now().year,
     );
+  }
+
+  String get namaBulan {
+    const names = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    if (bulan >= 1 && bulan <= 12) return names[bulan - 1];
+    return 'Bulan $bulan';
+  }
+
+  String get namaBulanSingkat {
+    const shortNames = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    ];
+    if (bulan >= 1 && bulan <= 12) return shortNames[bulan - 1];
+    return '$bulan';
   }
 }
 
