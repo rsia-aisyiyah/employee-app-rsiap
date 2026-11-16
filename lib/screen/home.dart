@@ -365,7 +365,7 @@ class _HomePageState extends State<HomePage> {
       final prevDate = DateTime(now.year, now.month - 1, 1);
       final prevUnits = await MutuApi.getMyUnits(bulan: prevDate.month, tahun: prevDate.year);
 
-      final combined = [...prevUnits, ...currentUnits];
+      final combined = [...currentUnits, ...prevUnits];
 
       final pending = combined.where((u) {
         if (u.isValidator) {

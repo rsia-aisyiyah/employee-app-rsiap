@@ -15,9 +15,12 @@ class MutuApi {
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
         if (body['success'] == true && body['data'] is List) {
-          return (body['data'] as List)
-              .map((e) => InmutUnitItem.fromJson(Map<String, dynamic>.from(e)))
-              .toList();
+          return (body['data'] as List).map((e) {
+            final map = Map<String, dynamic>.from(e);
+            map['bulan'] ??= b;
+            map['tahun'] ??= t;
+            return InmutUnitItem.fromJson(map);
+          }).toList();
         }
       }
     } catch (e) {
