@@ -358,14 +358,15 @@ class _HomePageState extends State<HomePage> {
       final now = DateTime.now();
       final isEndOfMonth = now.day >= 25;
 
-      // 1. Ambil unit bulan berjalan
-      final currentUnits = await MutuApi.getMyUnits(bulan: now.month, tahun: now.year);
+      // Ambil unit bulan berjalan dan hingga 3 bulan ke belakang secara paralel (November, Oktober, September, Agustus)
+      final List<Future<List<InmutUnitItem>>> futures = [];
+      for (int i = 0; i < 4; i++) {
+        final d = DateTime(now.year, now.month - i, 1);
+        futures.add(MutuApi.getMyUnits(bulan: d.month, tahun: d.year));
+      }
 
-      // 2. Ambil unit bulan sebelumnya untuk mendeteksi tunggakan validasi/analisa
-      final prevDate = DateTime(now.year, now.month - 1, 1);
-      final prevUnits = await MutuApi.getMyUnits(bulan: prevDate.month, tahun: prevDate.year);
-
-      final combined = [...currentUnits, ...prevUnits];
+      final results = await Future.wait(futures);
+      final combined = results.expand((list) => list).toList();
 
       final pending = combined.where((u) {
         if (u.isValidator) {
@@ -384,9 +385,19 @@ class _HomePageState extends State<HomePage> {
         return false;
       }).toList();
 
+      // Pastikan unik per unit, tahun, dan bulan
+      final seen = <String>{};
+      final uniquePending = <InmutUnitItem>[];
+      for (final u in pending) {
+        final key = '${u.depId}_${u.tahun}_${u.bulan}';
+        if (seen.add(key)) {
+          uniquePending.add(u);
+        }
+      }
+
       if (mounted) {
         setState(() {
-          _pendingMutuUnits = pending;
+          _pendingMutuUnits = uniquePending;
         });
       }
     } catch (e) {
