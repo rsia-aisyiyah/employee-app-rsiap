@@ -71,33 +71,39 @@ class _BabyBathGameScreenState extends State<BabyBathGameScreen>
         children: [
           // ── 1. Area Canvas Interaktif Mandi Bayi ──
           Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onPanUpdate: (details) {
-                _controller.onTouch(details.localPosition);
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final screenSize = Size(constraints.maxWidth, constraints.maxHeight);
+                return GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onPanUpdate: (details) {
+                    _controller.onTouch(details.localPosition, screenSize);
+                  },
+                  onTapDown: (details) {
+                    _controller.onTouch(details.localPosition, screenSize);
+                  },
+                  child: AnimatedBuilder(
+                    animation: Listenable.merge([_controller, _animController]),
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: BabyCharacterPainter(
+                          phase: _controller.phase,
+                          mood: _controller.mood,
+                          animationTime: _animController.value * 10.0,
+                          particleSystem: _controller.particleSystem,
+                          cleanlinessProgress: _controller.cleanlinessProgress,
+                          waterLevel: _controller.waterLevel,
+                          waterTemp: _controller.waterTemp,
+                          duckPosition: _controller.duckPosition,
+                          isDuckSqueaking: _controller.isDuckSqueaking,
+                          floatingToasts: _controller.floatingToasts,
+                        ),
+                        child: Container(),
+                      );
+                    },
+                  ),
+                );
               },
-              onTapDown: (details) {
-                _controller.onTouch(details.localPosition);
-              },
-              child: AnimatedBuilder(
-                animation: Listenable.merge([_controller, _animController]),
-                builder: (context, _) {
-                  return CustomPaint(
-                    painter: BabyCharacterPainter(
-                      phase: _controller.phase,
-                      mood: _controller.mood,
-                      animationTime: _animController.value * 10.0,
-                      particleSystem: _controller.particleSystem,
-                      cleanlinessProgress: _controller.cleanlinessProgress,
-                      waterLevel: _controller.waterLevel,
-                      waterTemp: _controller.waterTemp,
-                      duckPosition: _controller.duckPosition,
-                      isDuckSqueaking: _controller.isDuckSqueaking,
-                    ),
-                    child: Container(),
-                  );
-                },
-              ),
             ),
           ),
 

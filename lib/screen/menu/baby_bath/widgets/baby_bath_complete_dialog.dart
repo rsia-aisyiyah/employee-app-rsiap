@@ -43,6 +43,30 @@ class BabyBathCompleteDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // RSIA Header Badge
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/logo-rsia-aisyiyah.png',
+                  height: 28,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.local_hospital_rounded, size: 24, color: Color(0xFF0D9488)),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  "RSIA AISYIYAH PEKAJANGAN",
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F766E),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
             // Deretan Bintang 1-3
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

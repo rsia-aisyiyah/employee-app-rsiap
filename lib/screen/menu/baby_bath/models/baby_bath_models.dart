@@ -75,3 +75,21 @@ class WaterSplashParticle {
     required this.color,
   });
 }
+
+/// Model teks notifikasi melayang (Floating Feedback Toast)
+class BabyFloatingToast {
+  final String text;
+  final bool isWarning;
+  final Offset position;
+  double lifeTime; // in seconds
+  double yOffset;
+
+  BabyFloatingToast({
+    required this.text,
+    required this.isWarning,
+    required this.position,
+    this.lifeTime = 1.2,
+    this.yOffset = 0.0,
+  });
+}
+

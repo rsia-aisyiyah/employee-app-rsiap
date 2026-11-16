@@ -52,34 +52,60 @@ class BabyBathHomeScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    // Lingkaran Ikon Bayi & Busa
+                    // Logo RSIA Aisyiyah & Badge Perinatologi
                     Container(
-                      width: 90,
-                      height: 90,
+                      width: 95,
+                      height: 95,
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFF0284C7).withValues(alpha: 0.20),
-                            blurRadius: 14,
+                            blurRadius: 16,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.child_care_rounded,
-                          size: 48,
-                          color: Color(0xFF0284C7),
+                      child: Center(
+                        child: Image.asset(
+                          'assets/images/logo-rsia-aisyiyah.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.child_care_rounded,
+                            size: 48,
+                            color: Color(0xFF0284C7),
+                          ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
+
+                    // Badge Unit
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
+                      ),
+                      child: const Text(
+                        "RSIA AISYIYAH PEKAJANGAN",
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0369A1),
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
 
                     Text(
-                      "RSIA Baby Care Simulator",
+                      "Baby Bath & Care Simulator",
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,

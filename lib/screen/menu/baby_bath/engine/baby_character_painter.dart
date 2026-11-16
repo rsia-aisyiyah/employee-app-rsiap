@@ -14,6 +14,7 @@ class BabyCharacterPainter extends CustomPainter {
   final double waterTemp; // misal 37.0 C
   final Offset duckPosition;
   final bool isDuckSqueaking;
+  final List<BabyFloatingToast> floatingToasts;
 
   BabyCharacterPainter({
     required this.phase,
@@ -25,6 +26,7 @@ class BabyCharacterPainter extends CustomPainter {
     required this.waterTemp,
     required this.duckPosition,
     this.isDuckSqueaking = false,
+    this.floatingToasts = const [],
   });
 
   @override
@@ -48,14 +50,17 @@ class BabyCharacterPainter extends CustomPainter {
       _drawRubberDuck(canvas, duckPosition.dx, duckPosition.dy);
     }
 
-    // ── 5. Partikel Busa Sabun (Foam) & Percikan Air ──
+    // ── 5. Partikel Busa Sabun & Percikan Air ──
     _drawParticles(canvas);
 
-    // ── 6. Bibir Depan Bak Mandi (Rim depan untuk efek kedalaman 3D) ──
+    // ── 6. Bibir Depan Bak Mandi & Ornamen RSIA Aisyiyah ──
     _drawBathtubFrontRim(canvas, size, cx, cy);
+
+    // ── 7. Notifikasi Teks Melayang (Floating Feedback Toasts) ──
+    _drawFloatingToasts(canvas, size);
   }
 
-  /// Gambar Bak Mandi Bagian Belakang
+  /// Gambar Bak Mandi Bayi (Latar Belakang Dinding Dalam)
   void _drawBathtubBackground(Canvas canvas, Size size, double cx, double cy) {
     final tubRect = Rect.fromCenter(
       center: Offset(cx, cy + 30),
@@ -102,7 +107,7 @@ class BabyCharacterPainter extends CustomPainter {
       height: size.height * 0.30,
     );
 
-    final isOptimalTemp = waterTemp >= 36.0 && waterTemp <= 38.0;
+    final isOptimalTemp = waterTemp >= 36.5 && waterTemp <= 37.5;
     final waterColors = isOptimalTemp
         ? [
             const Color(0xFF38BDF8).withValues(alpha: 0.45),
@@ -155,8 +160,14 @@ class BabyCharacterPainter extends CustomPainter {
 
     // Tangan kiri & kanan mengayun
     final armSwing = math.sin(animationTime * 4.0) * 6.0;
-    canvas.drawCircle(Offset(cx - 52, babyY + 58 + armSwing), 15, skinPaint);
-    canvas.drawCircle(Offset(cx + 52, babyY + 58 - armSwing), 15, skinPaint);
+    final leftWrist = Offset(cx - 52, babyY + 58 + armSwing);
+    final rightWrist = Offset(cx + 52, babyY + 58 - armSwing);
+
+    canvas.drawCircle(leftWrist, 15, skinPaint);
+    canvas.drawCircle(rightWrist, 15, skinPaint);
+
+    // ── Gelang Pasien Bayi RSIA Aisyiyah (Newborn ID Bracelet) ──
+    _drawRsiaIdWristband(canvas, rightWrist);
 
     // ── Kepala Bayi (Chubby Cute Head) ──
     final headRect = Rect.fromCenter(
@@ -167,8 +178,10 @@ class BabyCharacterPainter extends CustomPainter {
     canvas.drawOval(headRect, skinPaint);
 
     // Pipi Chubby Kemerahan (Blush)
-    final blushPaint = Paint()
-      ..color = const Color(0xFFF472B6).withValues(alpha: 0.40);
+    final blushColor = mood == BabyMood.crying
+        ? const Color(0xFFEF4444).withValues(alpha: 0.35) // pipi memerah saat menangis
+        : const Color(0xFFF472B6).withValues(alpha: 0.40);
+    final blushPaint = Paint()..color = blushColor;
     canvas.drawOval(
       Rect.fromCenter(center: Offset(cx - 36, babyY + 14), width: 22, height: 14),
       blushPaint,
@@ -178,7 +191,7 @@ class BabyCharacterPainter extends CustomPainter {
       blushPaint,
     );
 
-    // ── Mata Bayi Dinamis (Berkedip & Emosi) ──
+    // ── Mata Bayi Dinamis (Berkedip, Sensitif Sabun, & Emosi) ──
     _drawBabyEyes(canvas, cx, babyY);
 
     // ── Mulut Bayi ──
@@ -205,6 +218,31 @@ class BabyCharacterPainter extends CustomPainter {
     }
   }
 
+  /// Gelang Pasien Identitas Bayi RSIA Aisyiyah
+  void _drawRsiaIdWristband(Canvas canvas, Offset wristPos) {
+    // Pita gelang pink muda / biru muda
+    final bandPaint = Paint()
+      ..color = const Color(0xFF0D9488) // Tosca RSIA
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.5;
+    canvas.drawCircle(wristPos, 14.5, bandPaint);
+
+    // Label tag putih bertuliskan RSIA
+    final tagPaint = Paint()..color = Colors.white;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: Offset(wristPos.dx, wristPos.dy - 12), width: 18, height: 7),
+        const Radius.circular(2),
+      ),
+      tagPaint,
+    );
+
+    final dotPaint = Paint()..color = const Color(0xFF0D9488);
+    canvas.drawCircle(Offset(wristPos.dx - 4, wristPos.dy - 12), 1.2, dotPaint);
+    canvas.drawCircle(Offset(wristPos.dx, wristPos.dy - 12), 1.2, dotPaint);
+    canvas.drawCircle(Offset(wristPos.dx + 4, wristPos.dy - 12), 1.2, dotPaint);
+  }
+
   void _drawBabyEyes(Canvas canvas, double cx, double babyY) {
     final eyePaint = Paint()..color = const Color(0xFF1E293B);
     final eyeWhite = Paint()..color = Colors.white;
@@ -213,28 +251,34 @@ class BabyCharacterPainter extends CustomPainter {
     final bool isBlinking = (animationTime % 3.5) < 0.16;
 
     if (mood == BabyMood.crying) {
-      // Mata menyipit menangis
+      // ── MATA MENYIPIT MENANGIS (Kena Sabun / Pedih) ──
       final cryEyePaint = Paint()
         ..color = const Color(0xFF1E293B)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0
+        ..strokeWidth = 3.2
         ..strokeCap = StrokeCap.round;
 
-      // Bentuk melengkung ^ ^
+      // Bentuk melengkung rapat > <
       final p1 = Path()
-        ..moveTo(cx - 32, babyY)
-        ..quadraticBezierTo(cx - 24, babyY - 6, cx - 16, babyY);
+        ..moveTo(cx - 32, babyY + 1)
+        ..quadraticBezierTo(cx - 24, babyY - 7, cx - 16, babyY + 1);
       final p2 = Path()
-        ..moveTo(cx + 16, babyY)
-        ..quadraticBezierTo(cx + 24, babyY - 6, cx + 32, babyY);
+        ..moveTo(cx + 16, babyY + 1)
+        ..quadraticBezierTo(cx + 24, babyY - 7, cx + 32, babyY + 1);
 
       canvas.drawPath(p1, cryEyePaint);
       canvas.drawPath(p2, cryEyePaint);
 
-      // Tetesan air mata
+      // Tetesan air mata mengalir di kedua pipi
       final tearPaint = Paint()..color = const Color(0xFF38BDF8);
-      canvas.drawCircle(Offset(cx - 34, babyY + 8), 3.5, tearPaint);
-      canvas.drawCircle(Offset(cx + 34, babyY + 8), 3.5, tearPaint);
+      final tearOffset = (math.sin(animationTime * 6.0) * 4.0).abs();
+      canvas.drawCircle(Offset(cx - 34, babyY + 10 + tearOffset), 3.5, tearPaint);
+      canvas.drawCircle(Offset(cx + 34, babyY + 10 + tearOffset), 3.5, tearPaint);
+
+      // Partikel buih sabun kecil pedih di dekat mata
+      final soapBubblePaint = Paint()..color = Colors.white.withValues(alpha: 0.85);
+      canvas.drawCircle(Offset(cx - 22, babyY - 6), 2.5, soapBubblePaint);
+      canvas.drawCircle(Offset(cx + 22, babyY - 6), 2.5, soapBubblePaint);
     } else if (isBlinking || mood == BabyMood.giggling) {
       // Mata menyipit senang (smile eyes)
       final happyEyePaint = Paint()
@@ -274,8 +318,8 @@ class BabyCharacterPainter extends CustomPainter {
     if (mood == BabyMood.crying) {
       // Mulut terbuka menangis
       final path = Path()
-        ..moveTo(cx - 10, babyY + 22)
-        ..quadraticBezierTo(cx, babyY + 32, cx + 10, babyY + 22)
+        ..moveTo(cx - 11, babyY + 22)
+        ..quadraticBezierTo(cx, babyY + 34, cx + 11, babyY + 22)
         ..close();
       canvas.drawPath(path, mouthPaint);
     } else if (mood == BabyMood.giggling) {
@@ -318,9 +362,9 @@ class BabyCharacterPainter extends CustomPainter {
 
     // Ekor bebek lancip di belakang
     final tailPath = Path()
-      ..moveTo(-14, -4)
-      ..lineTo(-24, -10)
-      ..lineTo(-12, 2)
+      ..moveTo(-14, -6)
+      ..lineTo(-22, -14)
+      ..lineTo(-8, -2)
       ..close();
     canvas.drawPath(tailPath, duckYellow);
 
@@ -370,7 +414,7 @@ class BabyCharacterPainter extends CustomPainter {
     }
   }
 
-  /// Gambar Bibir Depan Bak Mandi untuk Efek Kedalaman 3D
+  /// Gambar Bibir Depan Bak Mandi & Emblem Ornamen RSIA Aisyiyah
   void _drawBathtubFrontRim(Canvas canvas, Size size, double cx, double cy) {
     final tubRect = Rect.fromCenter(
       center: Offset(cx, cy + 30),
@@ -398,6 +442,104 @@ class BabyCharacterPainter extends CustomPainter {
       RRect.fromRectAndRadius(tubRect, const Radius.circular(55)),
       rimHighlight,
     );
+
+    // ── Ornamen Resmi RSIA Aisyiyah di Dinding Depan Bak Mandi ──
+    final badgeCenter = Offset(cx, cy + tubRect.height * 0.5 + 24);
+    _drawRsiaTubBadge(canvas, badgeCenter);
+  }
+
+  /// Badge Resmi RSIA Aisyiyah Pekajangan di Bak Mandi
+  void _drawRsiaTubBadge(Canvas canvas, Offset center) {
+    // Background Pill Badge
+    final badgeRect = Rect.fromCenter(center: center, width: 170, height: 26);
+    final badgeBg = Paint()..color = Colors.white;
+    final badgeBorder = Paint()
+      ..color = const Color(0xFF0D9488) // Tosca RSIA
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6;
+
+    final rrect = RRect.fromRectAndRadius(badgeRect, const Radius.circular(13));
+    canvas.drawRRect(rrect, badgeBg);
+    canvas.drawRRect(rrect, badgeBorder);
+
+    // Simbol Matahari / Bintang Hijau Aisyiyah di Sisi Kiri Badge
+    final sunCenter = Offset(center.dx - 62, center.dy);
+    final sunPaint = Paint()
+      ..color = const Color(0xFF10B981)
+      ..style = PaintingStyle.fill;
+
+    // Lingkaran pusat matahari
+    canvas.drawCircle(sunCenter, 5.0, sunPaint);
+
+    // Sinar matahari Aisyiyah
+    final rayPaint = Paint()
+      ..color = const Color(0xFF059669)
+      ..strokeWidth = 1.4;
+    for (int i = 0; i < 8; i++) {
+      final rad = (i * math.pi / 4);
+      final p1 = Offset(sunCenter.dx + math.cos(rad) * 6.5, sunCenter.dy + math.sin(rad) * 6.5);
+      final p2 = Offset(sunCenter.dx + math.cos(rad) * 9.5, sunCenter.dy + math.sin(rad) * 9.5);
+      canvas.drawLine(p1, p2, rayPaint);
+    }
+
+    // Teks Tinta "RSIA AISYIYAH"
+    const textSpan = TextSpan(
+      text: "RSIA AISYIYAH",
+      style: TextStyle(
+        color: Color(0xFF0F766E),
+        fontSize: 10,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0.8,
+      ),
+    );
+    final tp = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
+    tp.layout();
+    tp.paint(canvas, Offset(center.dx - 45, center.dy - tp.height / 2));
+
+    // Dot pemisah kecil
+    canvas.drawCircle(Offset(center.dx + 42, center.dy), 2.0, Paint()..color = const Color(0xFF10B981));
+  }
+
+  /// Gambar Notifikasi Floating Feedback di Canvas
+  void _drawFloatingToasts(Canvas canvas, Size size) {
+    for (final toast in floatingToasts) {
+      final alpha = (toast.lifeTime / 1.2).clamp(0.0, 1.0);
+      final y = toast.position.dy + toast.yOffset;
+      final x = toast.position.dx.clamp(70.0, size.width - 70.0);
+
+      final textSpan = TextSpan(
+        text: toast.text,
+        style: TextStyle(
+          color: toast.isWarning ? const Color(0xFFDC2626) : const Color(0xFF0369A1),
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+        ),
+      );
+      final tp = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+      tp.layout();
+
+      final bubbleRect = Rect.fromCenter(
+        center: Offset(x, y),
+        width: tp.width + 20,
+        height: tp.height + 10,
+      );
+
+      final bgPaint = Paint()
+        ..color = (toast.isWarning ? const Color(0xFFFEE2E2) : Colors.white).withValues(alpha: alpha * 0.95);
+      final borderPaint = Paint()
+        ..color = (toast.isWarning ? const Color(0xFFF87171) : const Color(0xFF38BDF8)).withValues(alpha: alpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2;
+
+      final rrect = RRect.fromRectAndRadius(bubbleRect, const Radius.circular(12));
+      canvas.drawRRect(rrect, bgPaint);
+      canvas.drawRRect(rrect, borderPaint);
+
+      tp.paint(canvas, Offset(bubbleRect.left + 10, bubbleRect.top + 5));
+    }
   }
 
   @override
