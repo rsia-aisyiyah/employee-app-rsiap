@@ -429,31 +429,36 @@ class CardMadingBoard extends StatelessWidget {
                 ),
               ),
 
-              // ── Badge Angka Alami (Paper Tag Sticker) ──
+              // ── Badge Angka Notifikasi Presisi di Tengah ──
               if (memo.count > 0)
                 Positioned(
                   top: 1,
                   right: 0,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1),
+                    constraints: const BoxConstraints(minWidth: 17, minHeight: 17),
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: ink,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white, width: 1.2),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.20),
-                          blurRadius: 2,
+                          color: Colors.black.withValues(alpha: 0.18),
+                          blurRadius: 3,
                           offset: const Offset(0, 1),
                         ),
                       ],
                     ),
                     child: Text(
                       memo.count.toString(),
-                      style: GoogleFonts.kalam(
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
                         fontSize: 9.5,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        height: 1.0,
+                        height: 1.05,
+                        letterSpacing: 0,
                       ),
                     ),
                   ),
