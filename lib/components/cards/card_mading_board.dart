@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Model item memo di papan mading dengan karakteristik fisik alami
 class MadingMemoItem {
@@ -8,7 +9,7 @@ class MadingMemoItem {
   final int count;
   final Color pinColor;
   final Color paperColor;
-  final Color accentColor;
+  final Color inkColor; // Warna tinta pena / spidol yang meresap
   final IconData icon;
   final double rotation;
   final double pinXOffset;
@@ -20,7 +21,7 @@ class MadingMemoItem {
     required this.count,
     required this.pinColor,
     required this.paperColor,
-    required this.accentColor,
+    required this.inkColor,
     required this.icon,
     this.rotation = 0.0,
     this.pinXOffset = 42.0,
@@ -86,13 +87,13 @@ class CardMadingBoard extends StatelessWidget {
                       children: [
                         _buildHeaderPin(),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           "MADING AGENDA & TUGAS",
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF63472A),
-                            letterSpacing: 0.6,
+                          style: GoogleFonts.kalam(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF5A3E22),
+                            letterSpacing: 0.4,
                           ),
                         ),
                       ],
@@ -173,11 +174,12 @@ class CardMadingBoard extends StatelessWidget {
     );
   }
 
-  /// Membuat kertas memo dengan efek sobekan tangan alami & paper curl
+  /// Membuat kertas memo dengan tulisan tinta tangan menyatu & sobekan fisik
   Widget _buildRealPhysicalMemo(MadingMemoItem memo, bool isSelected) {
-    const memoWidth = 88.0;
-    const memoHeight = 94.0;
+    const memoWidth = 92.0;
+    const memoHeight = 98.0;
     final angle = isSelected ? memo.rotation * 0.25 : memo.rotation;
+    final ink = memo.inkColor;
 
     return Transform.rotate(
       angle: angle,
@@ -194,7 +196,7 @@ class CardMadingBoard extends StatelessWidget {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // ── Bayangan Melengkung Kertas (Paper Curl Shadow) ──
+              // ── Bayangan Melengkung Kertas (Paper Shadow) ──
               Positioned(
                 top: 8,
                 left: 3,
@@ -222,6 +224,13 @@ class CardMadingBoard extends StatelessWidget {
                     color: memo.paperColor,
                     child: Stack(
                       children: [
+                        // Garis-garis samar buku catatan bergaris (Notebook ruled lines)
+                        Positioned.fill(
+                          child: CustomPaint(
+                            painter: _RuledNotepadPainter(),
+                          ),
+                        ),
+
                         // Serat kertas sobekan putih tipis di tepi bawah
                         Positioned(
                           left: 0,
@@ -233,28 +242,46 @@ class CardMadingBoard extends StatelessWidget {
                           ),
                         ),
 
-                        // Konten Catatan Memo
+                        // Konten Catatan Memo: Ikon & Teks Berpadu Tinta Asli
                         Padding(
                           padding: const EdgeInsets.fromLTRB(6, 12, 6, 8),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                memo.icon,
-                                size: 21,
-                                color: memo.accentColor,
+                              // Ikon bergaya cap stempel / coretan tinta menyatu ke kertas
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: ink.withValues(alpha: 0.08),
+                                ),
+                                child: Icon(
+                                  memo.icon,
+                                  size: 19,
+                                  color: ink.withValues(alpha: 0.88),
+                                ),
                               ),
-                              const SizedBox(height: 5),
+                              const SizedBox(height: 4),
+
+                              // Teks bergaya tulisan tangan spidol / pulpen fisik nyata (GoogleFonts.kalam)
                               Text(
                                 memo.title,
                                 textAlign: TextAlign.center,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: isSelected ? FontWeight.w900 : FontWeight.w700,
-                                  color: const Color(0xFF334155),
-                                  height: 1.1,
+                                style: GoogleFonts.kalam(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: ink.withValues(alpha: 0.90),
+                                  height: 1.05,
+                                  letterSpacing: 0.2,
+                                  shadows: [
+                                    Shadow(
+                                      color: ink.withValues(alpha: 0.18),
+                                      offset: const Offset(0.3, 0.4),
+                                      blurRadius: 0.5,
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -266,7 +293,7 @@ class CardMadingBoard extends StatelessWidget {
                 ),
               ),
 
-              // ── Badge Angka Alami (Red Paper Tag) ──
+              // ── Badge Angka Alami (Red Paper Tag / Sticker) ──
               if (memo.count > 0)
                 Positioned(
                   top: 2,
@@ -274,11 +301,11 @@ class CardMadingBoard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                     decoration: BoxDecoration(
-                      color: memo.accentColor,
+                      color: ink,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.18),
+                          color: Colors.black.withValues(alpha: 0.20),
                           blurRadius: 2.5,
                           offset: const Offset(0, 1),
                         ),
@@ -286,10 +313,11 @@ class CardMadingBoard extends StatelessWidget {
                     ),
                     child: Text(
                       memo.count.toString(),
-                      style: const TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w900,
+                      style: GoogleFonts.kalam(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
                         color: Colors.white,
+                        height: 1.0,
                       ),
                     ),
                   ),
@@ -455,6 +483,26 @@ class _RealTornPaperClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant _RealTornPaperClipper oldClipper) =>
       oldClipper.seed != seed;
+}
+
+/// Melukis garis catatan buku binder bergaris samar di kertas memo
+class _RuledNotepadPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = const Color(0xFF94A3B8).withValues(alpha: 0.15)
+      ..strokeWidth = 0.8;
+
+    // Garis horizontal memo
+    double y = 32.0;
+    while (y < size.height - 12) {
+      canvas.drawLine(Offset(4, y), Offset(size.width - 4, y), linePaint);
+      y += 14.0;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// Melukis tekstur serat gabus alami papan mading
