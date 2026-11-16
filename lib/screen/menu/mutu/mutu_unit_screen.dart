@@ -1309,34 +1309,71 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: isVerified ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isVerified ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isVerified ? Icons.check_circle : Icons.access_time_filled,
-                        size: 11,
-                        color: isVerified ? const Color(0xFF059669) : const Color(0xFFD97706),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        isVerified ? 'Tervalidasi' : 'Pending',
-                        style: TextStyle(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w800,
-                          color: isVerified ? const Color(0xFF059669) : const Color(0xFFD97706),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    // Status Validasi
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isVerified ? const Color(0xFFECFDF5) : const Color(0xFFFFFBEB),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isVerified ? const Color(0xFFA7F3D0) : const Color(0xFFFDE68A),
                         ),
                       ),
-                    ],
-                  ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isVerified ? Icons.check_circle : Icons.access_time_filled,
+                            size: 11,
+                            color: isVerified ? const Color(0xFF059669) : const Color(0xFFD97706),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            isVerified ? 'Tervalidasi' : 'Pending',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: isVerified ? const Color(0xFF059669) : const Color(0xFFD97706),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Status Analisa
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                      decoration: BoxDecoration(
+                        color: item.hasAnalisa ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: item.hasAnalisa ? const Color(0xFF86EFAC) : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            item.hasAnalisa ? Icons.assignment_turned_in_rounded : Icons.assignment_late_outlined,
+                            size: 10,
+                            color: item.hasAnalisa ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            item.hasAnalisa ? 'Analisa Terisi' : 'Belum Dianalisa',
+                            style: TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: item.hasAnalisa ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1469,21 +1506,37 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
 
                 // Button 2: Analisa & Tindak Lanjut
                 Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    icon: const Icon(Icons.analytics_outlined, size: 15),
-                    label: const Text(
-                      'Analisa Capaian',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
-                    ),
-                    onPressed: () => _openAnalisaDialog(item),
-                  ),
+                  child: item.hasAnalisa
+                      ? OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF0FDFA),
+                            foregroundColor: const Color(0xFF0D9488),
+                            side: const BorderSide(color: Color(0xFF14B8A6), width: 1.2),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          icon: const Icon(Icons.edit_note_rounded, size: 16, color: Color(0xFF0D9488)),
+                          label: const Text(
+                            'Edit Analisa',
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF0D9488)),
+                          ),
+                          onPressed: () => _openAnalisaDialog(item),
+                        )
+                      : ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          icon: const Icon(Icons.post_add_rounded, size: 15),
+                          label: const Text(
+                            '+ Isi Analisa',
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                          ),
+                          onPressed: () => _openAnalisaDialog(item),
+                        ),
                 ),
               ],
             ),
@@ -1751,8 +1804,16 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
 
     if (!mounted) return;
 
-    final analisaCtrl = TextEditingController(text: existing?.analisa ?? '');
-    final tindakLanjutCtrl = TextEditingController(text: existing?.tindakLanjut ?? '');
+    final initialAnalisa = (existing != null && existing.analisa.isNotEmpty)
+        ? existing.analisa
+        : (item.analisa ?? '');
+    final initialTindakLanjut = (existing != null && existing.tindakLanjut.isNotEmpty)
+        ? existing.tindakLanjut
+        : (item.tindakLanjut ?? '');
+    final isEditMode = item.hasAnalisa || initialAnalisa.isNotEmpty;
+
+    final analisaCtrl = TextEditingController(text: initialAnalisa);
+    final tindakLanjutCtrl = TextEditingController(text: initialTindakLanjut);
 
     final numVal = item.numValidasi > 0 ? item.numValidasi : item.sumNum;
     final denumVal = item.denumValidasi > 0 ? item.denumValidasi : item.sumDenum;
@@ -1791,9 +1852,9 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Analisa & Tindak Lanjut',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                        Text(
+                          isEditMode ? 'Edit Analisa & Tindak Lanjut' : 'Analisa & Tindak Lanjut',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1973,7 +2034,10 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                           );
                           _fetchIndicators();
                         },
-                        child: const Text('Simpan Analisa', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+                        child: Text(
+                          isEditMode ? 'Perbarui Analisa' : 'Simpan Analisa',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                        ),
                       ),
                     ),
                   ],

@@ -110,6 +110,10 @@ class InmutValidationItem {
   final String? requesterNama;
   final String? requestNote;
   final String? revisionNote;
+  final bool hasAnalisa;
+  final int? idAnalisa;
+  String? analisa;
+  String? tindakLanjut;
 
   InmutValidationItem({
     required this.idInmut,
@@ -137,6 +141,10 @@ class InmutValidationItem {
     this.requesterNama,
     this.requestNote,
     this.revisionNote,
+    this.hasAnalisa = false,
+    this.idAnalisa,
+    this.analisa,
+    this.tindakLanjut,
   });
 
   factory InmutValidationItem.fromJson(Map<String, dynamic> json) {
@@ -166,6 +174,10 @@ class InmutValidationItem {
       requesterNama: json['requester_nama']?.toString(),
       requestNote: json['request_note']?.toString(),
       revisionNote: json['revision_note']?.toString(),
+      hasAnalisa: json['has_analisa'] == true,
+      idAnalisa: json['id_analisa'] != null ? int.tryParse(json['id_analisa'].toString()) : null,
+      analisa: json['analisa']?.toString(),
+      tindakLanjut: json['tindak_lanjut']?.toString(),
     );
   }
 
