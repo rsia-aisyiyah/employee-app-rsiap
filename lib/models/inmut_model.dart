@@ -181,7 +181,11 @@ class InmutValidationItem {
     return double.parse(val.toStringAsFixed(2));
   }
 
-  double get agreementRate {
+  bool get hasSample => sumDenum > 0;
+  bool get hasValidationSample => denumValidasi > 0;
+
+  double? get agreementRate {
+    if (sumDenum <= 0 && denumValidasi <= 0) return null;
     final a = p1;
     final b = p2;
     if (a == 0 && b == 0) return 100.0;
@@ -192,7 +196,7 @@ class InmutValidationItem {
     return double.parse(ar.toStringAsFixed(2));
   }
 
-  bool get isAgreementValid => agreementRate >= 90.0;
+  bool get isAgreementValid => (agreementRate != null) && (agreementRate! >= 90.0);
 
   String get targetSymbol {
     switch (rumus) {

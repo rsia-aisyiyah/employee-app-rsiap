@@ -110,9 +110,9 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
       case 'Terverifikasi':
         return _indicators.where((i) => i.status == 'verified').toList();
       case 'Valid (AR ≥ 90%)':
-        return _indicators.where((i) => i.isAgreementValid).toList();
+        return _indicators.where((i) => i.status == 'verified' && i.isAgreementValid).toList();
       case 'Perhatian (AR < 90%)':
-        return _indicators.where((i) => !i.isAgreementValid).toList();
+        return _indicators.where((i) => i.status == 'verified' && !i.isAgreementValid && i.agreementRate != null).toList();
       default:
         return _indicators;
     }
@@ -1206,7 +1206,28 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
     final ar = item.agreementRate;
     final isArValid = item.isAgreementValid;
 
-    Color arColor = isArValid ? const Color(0xFF10B981) : const Color(0xFFEF4444);
+    // AR Badge calculation
+    Color arColor;
+    String arValueText;
+    String arStatusText;
+
+    if (!isVerified) {
+      arColor = const Color(0xFF94A3B8); // Slate grey
+      arValueText = 'AR: -';
+      arStatusText = 'Belum Validasi';
+    } else if (ar == null) {
+      arColor = const Color(0xFF94A3B8);
+      arValueText = 'AR: N/A';
+      arStatusText = 'Nihil Data';
+    } else if (isArValid) {
+      arColor = const Color(0xFF10B981); // Emerald green
+      arValueText = 'AR: $ar%';
+      arStatusText = 'Valid';
+    } else {
+      arColor = const Color(0xFFEF4444); // Red
+      arValueText = 'AR: $ar%';
+      arStatusText = 'Perhatian';
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1380,16 +1401,16 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                         textBaseline: TextBaseline.alphabetic,
                         children: [
                           Text(
-                            '${item.p2}%',
+                            isVerified ? '${item.p2}%' : '-',
                             style: TextStyle(
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
-                              color: isVerified ? const Color(0xFF10B981) : const Color(0xFF475569),
+                              color: isVerified ? const Color(0xFF10B981) : const Color(0xFF94A3B8),
                             ),
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '(${item.numValidasi}/${item.denumValidasi})',
+                            isVerified ? '(${item.numValidasi}/${item.denumValidasi})' : '(-/-)',
                             style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
                           ),
                         ],
@@ -1409,11 +1430,11 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'AR: $ar%',
+                        arValueText,
                         style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: arColor),
                       ),
                       Text(
-                        isArValid ? 'Valid' : 'Invalid',
+                        arStatusText,
                         style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: arColor),
                       ),
                     ],
