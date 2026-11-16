@@ -1259,9 +1259,11 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
                         children: [
-                          if (item.kategoriUtama != null) ...[
+                          if (item.kategoriUtama != null)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
@@ -1277,8 +1279,6 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 6),
-                          ],
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
@@ -1309,6 +1309,7 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
