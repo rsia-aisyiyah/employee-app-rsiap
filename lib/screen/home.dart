@@ -447,17 +447,53 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _getPendingApprovalLembur() async {
     try {
+      // 1. Cek apakah user memiliki hak akses menu Approval Lembur
+      final hasLemburAccess = _menus.any((m) {
+        final name = (m['name'] ?? m['nama'] ?? m['menu'] ?? '').toString().toLowerCase();
+        final title = (m['title'] ?? m['judul'] ?? '').toString().toLowerCase();
+        final url = (m['url'] ?? m['route'] ?? '').toString().toLowerCase();
+        return name == 'menu_approval_lembur' ||
+            title.contains('approval lembur') ||
+            url.contains('approval_lembur') ||
+            url.contains('approval-lembur');
+      });
+
+      if (!hasLemburAccess) {
+        if (mounted) {
+          setState(() {
+            _pendingApprovalLembur = [];
+          });
+        }
+        return;
+      }
+
+      // 2. Ambil departemen user dari bio
+      final userDept = _bio['departemen']?.toString();
       final now = DateTime.now();
-      final res = await Api().getData(
-        "/sdi/lembur/approval?limit=20&status=PENGAJUAN&month=${now.month}&year=${now.year}",
-      );
+
+      String url = "/sdi/lembur/approval?limit=20&status=PENGAJUAN&month=${now.month}&year=${now.year}";
+      if (userDept != null && userDept != '-' && userDept.isNotEmpty) {
+        url += "&departemen=$userDept";
+      }
+
+      final res = await Api().getData(url);
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
         final list = body['data']?['data'] ?? body['data'] ?? [];
         if (list is List) {
+          // 3. Filter ketat: pastikan hanya pengajuan dari unit sendiri (kecuali role SDI '-')
+          final filtered = list.where((item) {
+            if (userDept == null || userDept == '-' || userDept.isEmpty) return true;
+            final empDept = item['pegawai']?['departemen']?.toString();
+            final empNik = item['pegawai']?['nik']?.toString();
+            // Pengecualian khusus RSIA: DM5 (Kamar Operasi) boleh approve Eni Rusmawati
+            if (userDept == 'DM5' && empNik == '2.401.0502') return true;
+            return empDept == userDept;
+          }).toList();
+
           if (mounted) {
             setState(() {
-              _pendingApprovalLembur = list.map((e) => Map<String, dynamic>.from(e)).toList();
+              _pendingApprovalLembur = filtered.map((e) => Map<String, dynamic>.from(e)).toList();
             });
           }
         }
