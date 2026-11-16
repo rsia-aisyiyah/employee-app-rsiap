@@ -1888,46 +1888,57 @@ class _MutuUnitScreenState extends State<MutuUnitScreen> {
                       runSpacing: 6,
                       children: [
                         _buildTemplateChip(
-                          label: '🟢 Target Tercapai (SOP Patuh)',
+                          label: '🟢 Target Tercapai (SOP & Sistem Patuh)',
                           onTap: () {
                             setModalState(() {
                               analisaCtrl.text =
-                                  'Capaian indikator ${item.namaInmut} pada periode ${_bulanNames[_selectedBulan - 1]} $_selectedTahun sebesar $finalScore% telah memenuhi target standar RS (${item.targetSymbol} ${item.standar}%). Pelaksanaan pelayanan dan kepatuhan petugas terhadap SOP terpelihara dengan baik.';
+                                  'Capaian indikator ${item.namaInmut} pada periode ${_bulanNames[_selectedBulan - 1]} $_selectedTahun sebesar $finalScore% telah memenuhi target standar RS (${item.targetSymbol} ${item.standar}%). Pelaksanaan operasional dan kepatuhan prosedur berjalan dengan baik.';
                               tindakLanjutCtrl.text =
-                                  'Pertahankan konsistensi kepatuhan petugas dan lakukan pengawasan monitoring berkala.';
+                                  'Pertahankan konsistensi kinerja dan lakukan pengawasan monitoring berkala.';
                             });
                           },
                         ),
                         _buildTemplateChip(
-                          label: '🟡 Belum Tercapai (Beban Kerja/SDM)',
+                          label: '⚪ Nihil / 0 Kasus (Zero Incident)',
                           onTap: () {
                             setModalState(() {
                               analisaCtrl.text =
-                                  'Capaian indikator ${item.namaInmut} sebesar $finalScore% belum mencapai target standar RS (${item.targetSymbol} ${item.standar}%). Kendala dipicu oleh tingginya beban kerja unit dan keterbatasan personil pada jam sibuk.';
+                                  'Pada periode ${_bulanNames[_selectedBulan - 1]} $_selectedTahun tidak ditemukan kejadian/kasus (0 kejadian). Kondisi operasional dan sistem berjalan normal sesuai standar mutu RS.';
                               tindakLanjutCtrl.text =
-                                  'Evaluasi redistribusi penugasan, koordinasi jadwal jaga, serta refresh edukasi kepatuhan SOP.';
+                                  'Pertahankan sistem pencegahan dan lakukan pemantauan aktif setiap ada aktivitas layanan/operasional.';
                             });
                           },
                         ),
                         _buildTemplateChip(
-                          label: '🔴 Belum Tercapai (Sarana/BHP)',
+                          label: '🔵 Belum Tercapai (Kendala Teknis / Sistem / IT)',
                           onTap: () {
                             setModalState(() {
                               analisaCtrl.text =
-                                  'Capaian indikator ${item.namaInmut} sebesar $finalScore% belum mencapai target standar RS (${item.targetSymbol} ${item.standar}%). Kendala teknis terkait ketersediaan dan kecepatan pasokan logistik/sarana penunjang.';
+                                  'Capaian indikator ${item.namaInmut} sebesar $finalScore% belum mencapai target standar RS (${item.targetSymbol} ${item.standar}%). Kendala dipicu oleh faktor teknis pada infrastruktur jaringan/server/sistem atau jadwal pemeliharaan (maintenance) di luar batas toleransi.';
                               tindakLanjutCtrl.text =
-                                  'Koordinasi dengan bagian terkait untuk optimalisasi ketersediaan sarana dan penyediaan buffer stock.';
+                                  'Evaluasi kestabilan infrastruktur bersama tim teknis/IT terkait, optimalisasi sistem cadangan (redundansi), dan review jadwal maintenance berkala.';
                             });
                           },
                         ),
                         _buildTemplateChip(
-                          label: '⚪ Nihil / 0 Kasus',
+                          label: '🟡 Belum Tercapai (Beban Kerja / SDM)',
                           onTap: () {
                             setModalState(() {
                               analisaCtrl.text =
-                                  'Pada periode ${_bulanNames[_selectedBulan - 1]} $_selectedTahun tidak ditemukan kejadian/kasus (0 kejadian). Target mutu terpenuhi.';
+                                  'Capaian indikator ${item.namaInmut} sebesar $finalScore% belum mencapai target standar RS (${item.targetSymbol} ${item.standar}%). Kendala dipicu oleh tingginya volume beban kerja unit dan keterbatasan personel pada jam sibuk.';
                               tindakLanjutCtrl.text =
-                                  'Pertahankan sistem pencegahan dan lakukan pencatatan aktif setiap ada tindakan.';
+                                  'Evaluasi redistribusi penugasan, koordinasi jadwal jaga staf, serta refresh edukasi kepatuhan SOP.';
+                            });
+                          },
+                        ),
+                        _buildTemplateChip(
+                          label: '🔴 Belum Tercapai (Sarana / BHP / Logistik)',
+                          onTap: () {
+                            setModalState(() {
+                              analisaCtrl.text =
+                                  'Capaian indikator ${item.namaInmut} sebesar $finalScore% belum mencapai target standar RS (${item.targetSymbol} ${item.standar}%). Kendala teknis terkait ketersediaan dan kecepatan pasokan logistik/sarana/BHP penunjang.';
+                              tindakLanjutCtrl.text =
+                                  'Koordinasi dengan bagian terkait untuk optimalisasi pemenuhan sarana dan penyediaan buffer stock cadangan.';
                             });
                           },
                         ),
