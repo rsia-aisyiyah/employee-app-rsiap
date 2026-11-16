@@ -1449,7 +1449,7 @@ class _HomePageState extends State<HomePage> {
     final tglMulai = firstItem['tanggal_mulai']?.toString() ?? '';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         height: 88,
         decoration: BoxDecoration(
@@ -1494,20 +1494,34 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                "PERSETUJUAN CUTI",
-                                style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFF8B5CF6)),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  "PERSETUJUAN CUTI",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFF8B5CF6)),
+                                ),
                               ),
                             ),
                             if (count > 1) ...[
-                              const SizedBox(width: 6),
-                              Text("+$count pengajuan", style: const TextStyle(fontSize: 9.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  "+$count",
+                                  style: const TextStyle(fontSize: 8.5, color: Color(0xFF8B5CF6), fontWeight: FontWeight.w700),
+                                ),
+                              ),
                             ],
                           ],
                         ),
@@ -1559,7 +1573,7 @@ class _HomePageState extends State<HomePage> {
     final tanggal = firstItem['tanggal']?.toString() ?? '';
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         height: 88,
         decoration: BoxDecoration(
@@ -1604,20 +1618,34 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEA580C).withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                "PERSETUJUAN LEMBUR",
-                                style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFFEA580C)),
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEA580C).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  "PERSETUJUAN LEMBUR",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Color(0xFFEA580C)),
+                                ),
                               ),
                             ),
                             if (count > 1) ...[
-                              const SizedBox(width: 6),
-                              Text("+$count pengajuan", style: const TextStyle(fontSize: 9.5, color: Colors.grey, fontWeight: FontWeight.w600)),
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEA580C).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  "+$count",
+                                  style: const TextStyle(fontSize: 8.5, color: Color(0xFFEA580C), fontWeight: FontWeight.w700),
+                                ),
+                              ),
                             ],
                           ],
                         ),

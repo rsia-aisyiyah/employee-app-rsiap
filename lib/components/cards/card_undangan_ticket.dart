@@ -412,46 +412,52 @@ class _CardUndanganTicketState extends State<CardUndanganTicket> {
                         Row(
                           children: [
                             // Status Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: countdownColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: countdownColor.withValues(alpha: 0.25),
-                                  width: 0.6,
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (countdownColor == const Color(0xFFEF4444)) ...[
-                                    Container(
-                                      width: 4,
-                                      height: 4,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFEF4444),
-                                        shape: BoxShape.circle,
+                                decoration: BoxDecoration(
+                                  color: countdownColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: countdownColor.withValues(alpha: 0.25),
+                                    width: 0.6,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (countdownColor == const Color(0xFFEF4444)) ...[
+                                      Container(
+                                        width: 4,
+                                        height: 4,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFEF4444),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 3),
+                                    ],
+                                    Flexible(
+                                      child: Text(
+                                        countdownLabel,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontSize: 8.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: countdownColor,
+                                          letterSpacing: 0.3,
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 3),
                                   ],
-                                  Text(
-                                    countdownLabel,
-                                    style: TextStyle(
-                                      fontSize: 8.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: countdownColor,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
                             ),
-                            const Spacer(),
+                            const SizedBox(width: 4),
 
                             // Pagination with mini chevrons if multi-item, else Ticket ID
                             if (totalCount > 1) ...[
