@@ -410,7 +410,7 @@ class _DaftarHadirPageState extends State<DaftarHadirPage> {
         if (isHadir && kehadiran['created_at'] != null) {
           try {
             final raw = kehadiran['created_at'].toString();
-            final parsed = DateTime.parse(raw);
+            final parsed = DateTime.parse(raw).toLocal();
             jamHadir =
                 "${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')} WIB";
           } catch (_) {

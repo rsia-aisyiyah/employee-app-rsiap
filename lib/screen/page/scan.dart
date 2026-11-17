@@ -50,10 +50,20 @@ class _QRAttendanceScanPageState extends State<QRAttendanceScanPage> {
       if (!mounted) return;
 
       if (res.statusCode == 200) {
-        Msg.success(context, body['message'] ?? 'Kehadiran berhasil dicatat');
+        String msg = 'Kehadiran berhasil dicatat';
+        if (body['message'] is String && (body['message'] as String).isNotEmpty) {
+          msg = body['message'];
+        } else if (body['data'] is String && (body['data'] as String).isNotEmpty) {
+          msg = body['data'];
+        }
+        Msg.success(context, msg);
         Navigator.pop(context, true);
       } else {
-        Msg.error(context, body['message'] ?? 'Presensi gagal');
+        String msg = 'Presensi gagal';
+        if (body['message'] is String && (body['message'] as String).isNotEmpty) {
+          msg = body['message'];
+        }
+        Msg.error(context, msg);
         // Beri jeda sejenak sebelum kamera aktif kembali agar tidak langsung scan ulang
         await Future.delayed(const Duration(seconds: 2));
         if (mounted) {
