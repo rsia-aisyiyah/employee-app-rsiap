@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:rsia_employee_app/api/request.dart';
@@ -446,9 +447,9 @@ class _TindakLanjutDetailScreenState extends State<TindakLanjutDetailScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          HtmlWidget(
             item.deskripsi,
-            style: const TextStyle(
+            textStyle: const TextStyle(
               fontSize: 14,
               color: Color(0xFF334155),
               height: 1.4,

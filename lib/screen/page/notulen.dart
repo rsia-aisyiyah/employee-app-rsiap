@@ -701,9 +701,9 @@ class _NotulenPageState extends State<NotulenPage> {
               const SizedBox(height: 10),
 
               // Deskripsi Tugas
-              Text(
+              HtmlWidget(
                 deskripsi,
-                style: const TextStyle(
+                textStyle: const TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1E293B),
