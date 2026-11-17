@@ -26,87 +26,65 @@ class BabyBathHud extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Column(
           children: [
+            // ── Baris 1: Tombol Kembali, Profil Bayi, Timer & Skor ──
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Tombol Kembali / Pause
-                    InkWell(
-                      onTap: onExit,
+                // Tombol Kembali
+                InkWell(
+                  onTap: onExit,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.90),
                       borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.90),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
                         ),
-                        child: const Icon(Icons.arrow_back_rounded, size: 20, color: Color(0xFF1E293B)),
-                      ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    // Profil Bayi Aktif (Tanpa teks RSIA berulang)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.94),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.25)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Image.asset(
-                            'assets/images/logo-rsia-aisyiyah.png',
-                            height: 18,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.local_hospital_rounded, size: 16, color: Color(0xFF0D9488)),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
+                    child: const Icon(Icons.arrow_back_rounded, size: 18, color: Color(0xFF1E293B)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Profil Bayi Aktif
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.94),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      children: [
+                        Image.asset(
+                          'assets/images/logo-rsia-aisyiyah.png',
+                          height: 18,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.local_hospital_rounded, size: 16, color: Color(0xFF0D9488)),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
                             controller.currentBaby.motherName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 11.5,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF0F766E),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Counter Bayi Selesai Masuk Boks
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.bedroom_baby_rounded, size: 15, color: Color(0xFF10B981)),
-                      const SizedBox(width: 4),
-                      Text(
-                        "${controller.completedBabiesCount} Selesai",
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF065F46),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
 
                 // Timer Shift Countdown
                 Container(
@@ -131,11 +109,11 @@ class BabyBathHud extends StatelessWidget {
                             ? const Color(0xFFEF4444)
                             : const Color(0xFF64748B),
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 4),
                       Text(
                         "${(controller.shiftSecondsRemaining ~/ 60)}:${(controller.shiftSecondsRemaining.toInt() % 60).toString().padLeft(2, '0')}",
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w800,
                           color: controller.shiftSecondsRemaining <= 30
                               ? const Color(0xFFDC2626)
@@ -145,30 +123,7 @@ class BabyBathHud extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Indikator Suhu Air Termometer
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.90),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: tempColor.withValues(alpha: 0.40)),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.thermostat_rounded, size: 15, color: tempColor),
-                      const SizedBox(width: 3),
-                      Text(
-                        "${temp.toStringAsFixed(1)}°",
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
-                          color: tempColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                const SizedBox(width: 6),
 
                 // Indikator Skor
                 Container(
@@ -187,6 +142,71 @@ class BabyBathHud extends StatelessWidget {
                           fontSize: 11.5,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── Baris 2: Bayi Selesai di Boks & Suhu Air ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Counter Bayi Selesai Masuk Boks
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bedroom_baby_rounded, size: 15, color: Color(0xFF10B981)),
+                      const SizedBox(width: 5),
+                      Text(
+                        "${controller.completedBabiesCount} Bayi di Boks",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF065F46),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Indikator Suhu Air Termometer
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.90),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: tempColor.withValues(alpha: 0.40)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.thermostat_rounded, size: 15, color: tempColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${temp.toStringAsFixed(1)}°C",
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: tempColor,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isOptimalTemp ? "(Ideal)" : (temp > 38.0 ? "(Panas)" : "(Dingin)"),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: tempColor,
                         ),
                       ),
                     ],
