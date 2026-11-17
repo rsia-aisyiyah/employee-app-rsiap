@@ -9,13 +9,27 @@ class BabyBathController extends ChangeNotifier {
   BathTool activeTool = BathTool.waterTap;
   BabyMood mood = BabyMood.neutral;
 
+  // Antrean Bayi di Ruang Perinatologi
+  final List<BabyProfile> babyQueue = const [
+    BabyProfile(id: 1, motherName: "Bayi Ny. Annisa", gender: "P", initialTemp: 32.0, swaddleColor: Color(0xFFFBCFE8)),
+    BabyProfile(id: 2, motherName: "Bayi Ny. Fatimah", gender: "L", initialTemp: 31.0, swaddleColor: Color(0xFFBAE6FD)),
+    BabyProfile(id: 3, motherName: "Bayi Ny. Khadijah", gender: "P", initialTemp: 33.5, swaddleColor: Color(0xFFDDD6FE)),
+    BabyProfile(id: 4, motherName: "Bayi Ny. Zahra", gender: "P", initialTemp: 30.5, swaddleColor: Color(0xFFFEF08A)),
+    BabyProfile(id: 5, motherName: "Bayi Ny. Maryam", gender: "L", initialTemp: 32.5, swaddleColor: Color(0xFFA7F3D0)),
+  ];
+
+  int currentBabyIndex = 0;
+  BabyProfile get currentBaby => babyQueue[currentBabyIndex % babyQueue.length];
+
   // Parameter Fisika & Status
   double waterLevel = 0.2; // 0.0 - 1.0
   double waterTemp = 32.0; // Suhu air ideal: 36.5 - 37.5 °C
   double cleanlinessProgress = 0.0; // 0.0 - 1.0
   double comfortMeter = 85.0; // 0 - 100
   int score = 0;
-  int elapsedSeconds = 0;
+  int completedBabiesCount = 0;
+  bool isBabyInCrib = false;
+  double shiftSecondsRemaining = 120.0; // 2 Menit Shift Challenge
   bool isCompleted = false;
 
   // Posisi Mainan Bebek Karet
@@ -44,15 +58,18 @@ class BabyBathController extends ChangeNotifier {
   }
 
   void restart() {
+    currentBabyIndex = 0;
+    completedBabiesCount = 0;
+    isBabyInCrib = false;
+    shiftSecondsRemaining = 120.0;
     phase = BathPhase.waterPrep;
     activeTool = BathTool.waterTap;
-    mood = BabyMood.neutral;
+    mood = currentBaby.initialMood;
     waterLevel = 0.2;
-    waterTemp = 32.0;
+    waterTemp = currentBaby.initialTemp;
     cleanlinessProgress = 0.0;
     comfortMeter = 85.0;
     score = 0;
-    elapsedSeconds = 0;
     isCompleted = false;
     floatingToasts.clear();
     particleSystem.clear();
@@ -231,25 +248,31 @@ class BabyBathController extends ChangeNotifier {
 
       case BathPhase.dryingCare:
         if (activeTool == BathTool.softTowel) {
-          cleanlinessProgress = (cleanlinessProgress + 0.04).clamp(0.0, 1.0);
+          cleanlinessProgress = (cleanlinessProgress + 0.05).clamp(0.0, 1.0);
           score += 25;
           comfortMeter = (comfortMeter + 2.0).clamp(0, 100);
           mood = BabyMood.happy;
-          addFloatingToast("🧸 Keringkan dengan handuk lembut RSIA (+25)", position: localPos);
+          addFloatingToast("🧸 Keringkan dengan handuk lembut (+25)", position: localPos);
 
           if (cleanlinessProgress >= 1.0) {
-            _finishGame();
+            _advanceToNextPhase();
           }
         } else if (activeTool == BathTool.babyOil) {
-          cleanlinessProgress = (cleanlinessProgress + 0.05).clamp(0.0, 1.0);
+          cleanlinessProgress = (cleanlinessProgress + 0.06).clamp(0.0, 1.0);
           score += 30;
           comfortMeter = (comfortMeter + 3.0).clamp(0, 100);
           mood = BabyMood.giggling;
           addFloatingToast("🌿 Oleskan minyak telon wangi & hangat (+30)", position: localPos);
 
           if (cleanlinessProgress >= 1.0) {
-            _finishGame();
+            _advanceToNextPhase();
           }
+        }
+        break;
+
+      case BathPhase.returnToCrib:
+        if (!isBabyInCrib) {
+          putBabyInCrib();
         }
         break;
 
@@ -291,6 +314,44 @@ class BabyBathController extends ChangeNotifier {
     }
   }
 
+  /// Menaruh Bayi ke Tempat Tidur Bayi (Baby Crib)
+  void putBabyInCrib() {
+    if (isBabyInCrib) return;
+    isBabyInCrib = true;
+    completedBabiesCount++;
+    score += 150;
+    comfortMeter = 100.0;
+    mood = BabyMood.happy;
+    addFloatingToast("✨ ${currentBaby.motherName} aman & nyaman di boks! (+150)", position: const Offset(160, 200));
+    notifyListeners();
+
+    // Beri jeda 2.2 detik untuk animasi tidur damai, lalu panggil bayi berikutnya
+    Timer(const Duration(milliseconds: 2200), () {
+      if (!isCompleted) {
+        if (completedBabiesCount >= babyQueue.length || shiftSecondsRemaining <= 0) {
+          _finishGame();
+        } else {
+          loadNextBaby();
+        }
+      }
+    });
+  }
+
+  /// Memuat Bayi Berikutnya dalam Antrean Shift
+  void loadNextBaby() {
+    currentBabyIndex++;
+    isBabyInCrib = false;
+    phase = BathPhase.waterPrep;
+    activeTool = BathTool.waterTap;
+    cleanlinessProgress = 0.0;
+    comfortMeter = 85.0;
+    waterTemp = currentBaby.initialTemp;
+    mood = currentBaby.initialMood;
+    particleSystem.clear();
+    addFloatingToast("👶 Menyambut ${currentBaby.motherName}! Cek suhu air dahulu.", position: const Offset(160, 180));
+    notifyListeners();
+  }
+
   /// Melangkah ke Fase Berikutnya
   void advancePhaseManually() {
     _advanceToNextPhase();
@@ -321,7 +382,14 @@ class BabyBathController extends ChangeNotifier {
         addFloatingToast("Fase 5: Keringkan handuk & telon!", position: const Offset(150, 150));
         break;
       case BathPhase.dryingCare:
-        _finishGame();
+        phase = BathPhase.returnToCrib;
+        activeTool = BathTool.cribAction;
+        addFloatingToast("Fase 6: Pindahkan ${currentBaby.motherName} ke tempat tidur boks!", position: const Offset(150, 150));
+        break;
+      case BathPhase.returnToCrib:
+        if (!isBabyInCrib) {
+          putBabyInCrib();
+        }
         break;
       case BathPhase.completed:
         break;
@@ -337,9 +405,17 @@ class BabyBathController extends ChangeNotifier {
   }
 
   void _updateGameLoop(double dt) {
-    // Comfort meter sedikit berkurang perlahan jika didiamkan
-    if (!isCompleted && comfortMeter > 10) {
-      comfortMeter = (comfortMeter - 0.2 * dt).clamp(0, 100);
+    if (!isCompleted) {
+      shiftSecondsRemaining -= dt;
+      if (shiftSecondsRemaining <= 0) {
+        shiftSecondsRemaining = 0;
+        _finishGame();
+      }
+
+      // Comfort meter sedikit berkurang perlahan jika didiamkan
+      if (comfortMeter > 10) {
+        comfortMeter = (comfortMeter - 0.2 * dt).clamp(0, 100);
+      }
     }
 
     // Update floating toasts
@@ -350,12 +426,14 @@ class BabyBathController extends ChangeNotifier {
     floatingToasts.removeWhere((t) => t.lifeTime <= 0);
   }
 
-  /// Menghitung Bintang Prestasi (1 - 3 Bintang)
+  /// Menghitung Bintang Prestasi (Berdasarkan jumlah bayi selesai & kenyamanan)
   int calculateStars() {
-    if (comfortMeter >= 80 && waterTemp >= 36.0 && waterTemp <= 38.0) {
+    if (completedBabiesCount >= 3 && comfortMeter >= 65) {
       return 3;
-    } else if (comfortMeter >= 50) {
+    } else if (completedBabiesCount >= 2) {
       return 2;
+    } else if (completedBabiesCount >= 1) {
+      return 1;
     }
     return 1;
   }

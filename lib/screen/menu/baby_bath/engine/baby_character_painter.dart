@@ -16,6 +16,10 @@ class BabyCharacterPainter extends CustomPainter {
   final bool isDuckSqueaking;
   final List<BabyFloatingToast> floatingToasts;
 
+  final bool isBabyInCrib;
+  final String babyName;
+  final Color swaddleColor;
+
   BabyCharacterPainter({
     required this.phase,
     required this.mood,
@@ -27,12 +31,22 @@ class BabyCharacterPainter extends CustomPainter {
     required this.duckPosition,
     this.isDuckSqueaking = false,
     this.floatingToasts = const [],
+    this.isBabyInCrib = false,
+    this.babyName = "Bayi Ny. Annisa",
+    this.swaddleColor = const Color(0xFFBAE6FD),
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height * 0.52;
+
+    // ── SCENE KHUSUS: Mengembalikan Bayi ke Tempat Tidur (Baby Crib) ──
+    if (phase == BathPhase.returnToCrib) {
+      _drawBabyCribScene(canvas, size, cx, cy);
+      _drawFloatingToasts(canvas, size);
+      return;
+    }
 
     // ── 1. Menggambar Bak Mandi Bayi (Bathtub) ──
     _drawBathtubBackground(canvas, size, cx, cy);
@@ -53,7 +67,7 @@ class BabyCharacterPainter extends CustomPainter {
     // ── 5. Partikel Busa Sabun & Percikan Air ──
     _drawParticles(canvas);
 
-    // ── 6. Bibir Depan Bak Mandi & Ornamen RSIA Aisyiyah ──
+    // ── 6. Bibir Depan Bak Mandi & Ornamen Halus ──
     _drawBathtubFrontRim(canvas, size, cx, cy);
 
     // ── 7. Notifikasi Teks Melayang (Floating Feedback Toasts) ──
@@ -166,9 +180,6 @@ class BabyCharacterPainter extends CustomPainter {
     canvas.drawCircle(leftWrist, 15, skinPaint);
     canvas.drawCircle(rightWrist, 15, skinPaint);
 
-    // ── Gelang Pasien Bayi RSIA Aisyiyah (Newborn ID Bracelet) ──
-    _drawRsiaIdWristband(canvas, rightWrist);
-
     // ── Kepala Bayi (Chubby Cute Head) ──
     final headRect = Rect.fromCenter(
       center: Offset(cx, babyY),
@@ -216,31 +227,6 @@ class BabyCharacterPainter extends CustomPainter {
       canvas.drawCircle(Offset(cx + 15, babyY - 53), 14, foamPaint);
       canvas.drawCircle(Offset(cx, babyY - 58), 16, foamPaint);
     }
-  }
-
-  /// Gelang Pasien Identitas Bayi RSIA Aisyiyah
-  void _drawRsiaIdWristband(Canvas canvas, Offset wristPos) {
-    // Pita gelang pink muda / biru muda
-    final bandPaint = Paint()
-      ..color = const Color(0xFF0D9488) // Tosca RSIA
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.5;
-    canvas.drawCircle(wristPos, 14.5, bandPaint);
-
-    // Label tag putih bertuliskan RSIA
-    final tagPaint = Paint()..color = Colors.white;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: Offset(wristPos.dx, wristPos.dy - 12), width: 18, height: 7),
-        const Radius.circular(2),
-      ),
-      tagPaint,
-    );
-
-    final dotPaint = Paint()..color = const Color(0xFF0D9488);
-    canvas.drawCircle(Offset(wristPos.dx - 4, wristPos.dy - 12), 1.2, dotPaint);
-    canvas.drawCircle(Offset(wristPos.dx, wristPos.dy - 12), 1.2, dotPaint);
-    canvas.drawCircle(Offset(wristPos.dx + 4, wristPos.dy - 12), 1.2, dotPaint);
   }
 
   void _drawBabyEyes(Canvas canvas, double cx, double babyY) {
@@ -448,59 +434,204 @@ class BabyCharacterPainter extends CustomPainter {
     _drawRsiaTubBadge(canvas, badgeCenter);
   }
 
-  /// Badge Resmi RSIA Aisyiyah Pekajangan di Bak Mandi
+  /// Ornamen Bersih Simbol Perinatologi di Dinding Bak Mandi
   void _drawRsiaTubBadge(Canvas canvas, Offset center) {
-    // Background Pill Badge
-    final badgeRect = Rect.fromCenter(center: center, width: 170, height: 26);
+    // Background Pill Badge Bersih
+    final badgeRect = Rect.fromCenter(center: center, width: 70, height: 22);
     final badgeBg = Paint()..color = Colors.white;
     final badgeBorder = Paint()
       ..color = const Color(0xFF0D9488) // Tosca RSIA
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6;
+      ..strokeWidth = 1.4;
 
-    final rrect = RRect.fromRectAndRadius(badgeRect, const Radius.circular(13));
+    final rrect = RRect.fromRectAndRadius(badgeRect, const Radius.circular(11));
     canvas.drawRRect(rrect, badgeBg);
     canvas.drawRRect(rrect, badgeBorder);
 
-    // Simbol Matahari / Bintang Hijau Aisyiyah di Sisi Kiri Badge
-    final sunCenter = Offset(center.dx - 62, center.dy);
-    final sunPaint = Paint()
+    // Simbol Hati & Daun Kasih Sayang Perinatologi
+    final heartPaint = Paint()
       ..color = const Color(0xFF10B981)
       ..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(center.dx - 10, center.dy), 4.5, heartPaint);
+    canvas.drawCircle(Offset(center.dx, center.dy - 2), 4.5, heartPaint);
+    canvas.drawCircle(Offset(center.dx + 10, center.dy), 4.5, heartPaint);
+  }
 
-    // Lingkaran pusat matahari
-    canvas.drawCircle(sunCenter, 5.0, sunPaint);
+  /// Gambar Scene Tempat Tidur Bayi (Baby Bassinet / Crib)
+  void _drawBabyCribScene(Canvas canvas, Size size, double cx, double cy) {
+    final cribY = cy + 10;
 
-    // Sinar matahari Aisyiyah
-    final rayPaint = Paint()
-      ..color = const Color(0xFF059669)
+    // ── 1. Rangka Tiang & Kaki Boks Bayi Modern ──
+    final standPaint = Paint()
+      ..color = const Color(0xFF94A3B8)
+      ..strokeWidth = 5.0
+      ..strokeCap = StrokeCap.round;
+
+    // Tiang kaki kiri & kanan
+    canvas.drawLine(Offset(cx - 85, cribY + 65), Offset(cx - 95, cribY + 155), standPaint);
+    canvas.drawLine(Offset(cx + 85, cribY + 65), Offset(cx + 95, cribY + 155), standPaint);
+    // Palang horizontal bawah
+    canvas.drawLine(Offset(cx - 105, cribY + 150), Offset(cx + 105, cribY + 150), standPaint);
+
+    // 4 Roda Boks Bayi (Wheels)
+    final wheelPaint = Paint()..color = const Color(0xFF334155);
+    canvas.drawCircle(Offset(cx - 105, cribY + 158), 6, wheelPaint);
+    canvas.drawCircle(Offset(cx - 85, cribY + 158), 5, wheelPaint);
+    canvas.drawCircle(Offset(cx + 85, cribY + 158), 5, wheelPaint);
+    canvas.drawCircle(Offset(cx + 105, cribY + 158), 6, wheelPaint);
+
+    // ── 2. Keranjang Akrilik Transparan Boks Bayi (Acrylic Bassinet) ──
+    final cribRect = Rect.fromCenter(center: Offset(cx, cribY), width: 235, height: 140);
+    final cribBg = Paint()..color = const Color(0xFFF0FDFA).withValues(alpha: 0.95);
+    final cribBorder = Paint()
+      ..color = const Color(0xFF0D9488).withValues(alpha: 0.50)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.5;
+
+    final cribRRect = RRect.fromRectAndRadius(cribRect, const Radius.circular(32));
+    canvas.drawRRect(cribRRect, cribBg);
+    canvas.drawRRect(cribRRect, cribBorder);
+
+    // ── 3. Kasur Bayi Empuk & Bantal ──
+    final mattressRect = Rect.fromCenter(center: Offset(cx, cribY + 12), width: 205, height: 95);
+    final mattressPaint = Paint()..color = Colors.white;
+    canvas.drawRRect(RRect.fromRectAndRadius(mattressRect, const Radius.circular(22)), mattressPaint);
+
+    // Bantal kepala bayi (Pillow)
+    final pillowRect = Rect.fromCenter(center: Offset(cx, cribY - 14), width: 100, height: 42);
+    final pillowPaint = Paint()..color = const Color(0xFFFEF3C7);
+    canvas.drawRRect(RRect.fromRectAndRadius(pillowRect, const Radius.circular(16)), pillowPaint);
+
+    // ── 4. Label Akrilik di Depan Boks (Nama Bayi) ──
+    final nameTagRect = Rect.fromCenter(center: Offset(cx, cribY + 70), width: 170, height: 26);
+    final nameTagBg = Paint()..color = Colors.white;
+    final nameTagBorder = Paint()
+      ..color = const Color(0xFF0D9488)
+      ..style = PaintingStyle.stroke
       ..strokeWidth = 1.4;
-    for (int i = 0; i < 8; i++) {
-      final rad = (i * math.pi / 4);
-      final p1 = Offset(sunCenter.dx + math.cos(rad) * 6.5, sunCenter.dy + math.sin(rad) * 6.5);
-      final p2 = Offset(sunCenter.dx + math.cos(rad) * 9.5, sunCenter.dy + math.sin(rad) * 9.5);
-      canvas.drawLine(p1, p2, rayPaint);
-    }
+    final tagRRect = RRect.fromRectAndRadius(nameTagRect, const Radius.circular(8));
+    canvas.drawRRect(tagRRect, nameTagBg);
+    canvas.drawRRect(tagRRect, nameTagBorder);
 
-    // Teks Tinta "RSIA AISYIYAH"
-    const textSpan = TextSpan(
-      text: "RSIA AISYIYAH",
-      style: TextStyle(
+    final nameSpan = TextSpan(
+      text: "🛏️ $babyName",
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
         color: Color(0xFF0F766E),
-        fontSize: 10,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0.8,
       ),
     );
-    final tp = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
-    tp.layout();
-    tp.paint(canvas, Offset(center.dx - 45, center.dy - tp.height / 2));
+    final nameTp = TextPainter(text: nameSpan, textDirection: TextDirection.ltr);
+    nameTp.layout(maxWidth: 160);
+    nameTp.paint(canvas, Offset(cx - nameTp.width / 2, cribY + 70 - nameTp.height / 2));
 
-    // Dot pemisah kecil
-    canvas.drawCircle(Offset(center.dx + 42, center.dy), 2.0, Paint()..color = const Color(0xFF10B981));
+    // ── 5. Bayi di Atas Menunggu Ditaruh ATAU Sudah di Boks ──
+    if (!isBabyInCrib) {
+      final bobbing = math.sin(animationTime * 3.5) * 8.0;
+      final babyCenter = Offset(cx, cribY - 80 + bobbing);
+      _drawSwaddledBaby(canvas, babyCenter, false);
+
+      // Teks instruksi
+      const promptSpan = TextSpan(
+        text: "👇 Ketuk Boks untuk Menaruh Bayi",
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF0284C7),
+        ),
+      );
+      final promptTp = TextPainter(text: promptSpan, textDirection: TextDirection.ltr);
+      promptTp.layout();
+      promptTp.paint(canvas, Offset(cx - promptTp.width / 2, cribY - 145));
+    } else {
+      final babyCenter = Offset(cx, cribY - 6);
+      _drawSwaddledBaby(canvas, babyCenter, true);
+
+      // Selimut lembut menutupi dada
+      final blanketRect = Rect.fromCenter(center: Offset(cx, cribY + 32), width: 195, height: 55);
+      final blanketPaint = Paint()..color = swaddleColor.withValues(alpha: 0.94);
+      canvas.drawRRect(RRect.fromRectAndRadius(blanketRect, const Radius.circular(16)), blanketPaint);
+
+      // Efek Gelembung Tidur "Zzz..."
+      _drawSleepingZzz(canvas, cx + 46, cribY - 32);
+    }
+  }
+
+  /// Menggambar Karakter Bayi yang Dibedong Hangat (Swaddled Baby)
+  void _drawSwaddledBaby(Canvas canvas, Offset center, bool isSleeping) {
+    final skinPaint = Paint()..color = const Color(0xFFFFDFC4);
+    final swaddlePaint = Paint()..color = swaddleColor;
+
+    // Tubuh dibedong (Swaddle Wrap)
+    final bodyRect = Rect.fromCenter(center: Offset(center.dx, center.dy + 35), width: 85, height: 95);
+    canvas.drawRRect(RRect.fromRectAndRadius(bodyRect, const Radius.circular(35)), swaddlePaint);
+
+    // Kepala Bayi
+    final headCenter = Offset(center.dx, center.dy - 10);
+    canvas.drawCircle(headCenter, 34, skinPaint);
+
+    // Pipi Merona
+    final blushPaint = Paint()..color = const Color(0xFFF472B6).withValues(alpha: 0.40);
+    canvas.drawOval(Rect.fromCenter(center: Offset(center.dx - 18, center.dy - 3), width: 14, height: 9), blushPaint);
+    canvas.drawOval(Rect.fromCenter(center: Offset(center.dx + 18, center.dy - 3), width: 14, height: 9), blushPaint);
+
+    // Mata (Terpejam Bahagia / Melek Senyum)
+    final eyePaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round;
+
+    if (isSleeping) {
+      // Mata terpejam tersenyum lengkung
+      final leftPath = Path()..addArc(Rect.fromCenter(center: Offset(center.dx - 14, center.dy - 12), width: 14, height: 10), 0, math.pi);
+      final rightPath = Path()..addArc(Rect.fromCenter(center: Offset(center.dx + 14, center.dy - 12), width: 14, height: 10), 0, math.pi);
+      canvas.drawPath(leftPath, eyePaint);
+      canvas.drawPath(rightPath, eyePaint);
+    } else {
+      // Mata melek imut
+      canvas.drawCircle(Offset(center.dx - 14, center.dy - 12), 4, Paint()..color = const Color(0xFF1E293B));
+      canvas.drawCircle(Offset(center.dx + 14, center.dy - 12), 4, Paint()..color = const Color(0xFF1E293B));
+    }
+
+    // Mulut Senyum
+    final mouthPath = Path()..addArc(Rect.fromCenter(center: Offset(center.dx, center.dy), width: 12, height: 8), 0, math.pi);
+    canvas.drawPath(mouthPath, eyePaint);
+
+    // Rambut Bayi Halus
+    final hairPaint = Paint()
+      ..color = const Color(0xFF78350F)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0
+      ..strokeCap = StrokeCap.round;
+    final hairPath = Path();
+    hairPath.moveTo(center.dx, center.dy - 44);
+    hairPath.quadraticBezierTo(center.dx - 6, center.dy - 56, center.dx + 4, center.dy - 58);
+    canvas.drawPath(hairPath, hairPaint);
+  }
+
+  /// Menggambar Efek "Zzz..." Saat Bayi Tidur di Boks
+  void _drawSleepingZzz(Canvas canvas, double startX, double startY) {
+    const letters = ["z", "Z", "Z"];
+    for (int i = 0; i < letters.length; i++) {
+      final float = math.sin((animationTime * 2.0) + (i * 1.2)) * 4.0;
+      final x = startX + (i * 14.0);
+      final y = startY - (i * 15.0) + float;
+
+      final tp = TextPainter(
+        text: TextSpan(
+          text: letters[i],
+          style: TextStyle(
+            fontSize: 12.0 + (i * 3.5),
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF0284C7).withValues(alpha: 0.85),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      tp.layout();
+      tp.paint(canvas, Offset(x, y));
+    }
   }
 
   /// Gambar Notifikasi Floating Feedback di Canvas

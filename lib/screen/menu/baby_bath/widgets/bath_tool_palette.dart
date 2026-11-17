@@ -66,8 +66,12 @@ class BathToolPalette extends StatelessWidget {
         instruction = "Keringkan dengan handuk lembut lalu oleskan minyak telon";
         icon = Icons.spa_rounded;
         break;
+      case BathPhase.returnToCrib:
+        instruction = "Pindahkan ${controller.currentBaby.motherName} ke boks tempat tidur bayi!";
+        icon = Icons.bedroom_baby_rounded;
+        break;
       case BathPhase.completed:
-        instruction = "Mandi selesai! Bayi bersih, harum, dan gembira!";
+        instruction = "Shift selesai! Evaluasi performa memandikan bayi!";
         icon = Icons.check_circle_rounded;
         break;
     }
@@ -209,6 +213,51 @@ class BathToolPalette extends StatelessWidget {
             ),
           ],
         );
+
+      case BathPhase.returnToCrib:
+        if (!controller.isBabyInCrib) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: controller.putBabyInCrib,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.bedroom_baby_rounded, size: 20),
+                label: const Text(
+                  "Letakkan di Boks Bayi (+150)",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          );
+        } else {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton.icon(
+                onPressed: controller.loadNextBaby,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0284C7),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  elevation: 2,
+                ),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 20),
+                label: const Text(
+                  "Panggil Bayi Berikutnya ➜",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          );
+        }
 
       case BathPhase.completed:
         return const SizedBox.shrink();

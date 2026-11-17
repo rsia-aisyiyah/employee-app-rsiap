@@ -97,6 +97,9 @@ class _BabyBathGameScreenState extends State<BabyBathGameScreen>
                           duckPosition: _controller.duckPosition,
                           isDuckSqueaking: _controller.isDuckSqueaking,
                           floatingToasts: _controller.floatingToasts,
+                          isBabyInCrib: _controller.isBabyInCrib,
+                          babyName: _controller.currentBaby.motherName,
+                          swaddleColor: _controller.currentBaby.swaddleColor,
                         ),
                         child: Container(),
                       );

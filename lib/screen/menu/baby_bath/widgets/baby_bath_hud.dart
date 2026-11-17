@@ -53,11 +53,11 @@ class BabyBathHud extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Mini RSIA Perinatologi Badge
+                    // Profil Bayi Aktif (Tanpa teks RSIA berulang)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.92),
+                        color: Colors.white.withValues(alpha: 0.94),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF0D9488).withValues(alpha: 0.25)),
                       ),
@@ -69,14 +69,13 @@ class BabyBathHud extends StatelessWidget {
                             height: 18,
                             errorBuilder: (_, __, ___) => const Icon(Icons.local_hospital_rounded, size: 16, color: Color(0xFF0D9488)),
                           ),
-                          const SizedBox(width: 5),
-                          const Text(
-                            "RSIA",
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
+                          const SizedBox(width: 6),
+                          Text(
+                            controller.currentBaby.motherName,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
                               color: Color(0xFF0F766E),
-                              letterSpacing: 0.4,
                             ),
                           ),
                         ],
@@ -85,39 +84,85 @@ class BabyBathHud extends StatelessWidget {
                   ],
                 ),
 
-                // Indikator Suhu Air Termometer
+                // Counter Bayi Selesai Masuk Boks
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.90),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: tempColor.withValues(alpha: 0.40)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.35)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.thermostat_rounded, size: 16, color: tempColor),
+                      const Icon(Icons.bedroom_baby_rounded, size: 15, color: Color(0xFF10B981)),
                       const SizedBox(width: 4),
                       Text(
-                        "${temp.toStringAsFixed(1)}°C",
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: tempColor,
+                        "${controller.completedBabiesCount} Selesai",
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF065F46),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                    ],
+                  ),
+                ),
+
+                // Timer Shift Countdown
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: controller.shiftSecondsRemaining <= 30
+                        ? const Color(0xFFFEF2F2)
+                        : Colors.white.withValues(alpha: 0.90),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: controller.shiftSecondsRemaining <= 30
+                          ? const Color(0xFFEF4444)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.timer_outlined,
+                        size: 14,
+                        color: controller.shiftSecondsRemaining <= 30
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 3),
                       Text(
-                        isOptimalTemp ? "Ideal" : (temp > 38.0 ? "Panas" : "Dingin"),
+                        "${(controller.shiftSecondsRemaining ~/ 60)}:${(controller.shiftSecondsRemaining.toInt() % 60).toString().padLeft(2, '0')}",
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: controller.shiftSecondsRemaining <= 30
+                              ? const Color(0xFFDC2626)
+                              : const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Indikator Suhu Air Termometer
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.90),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: tempColor.withValues(alpha: 0.40)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.thermostat_rounded, size: 15, color: tempColor),
+                      const SizedBox(width: 3),
+                      Text(
+                        "${temp.toStringAsFixed(1)}°",
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
                           color: tempColor,
                         ),
                       ),
@@ -127,26 +172,19 @@ class BabyBathHud extends StatelessWidget {
 
                 // Indikator Skor
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.90),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.stars_rounded, size: 16, color: Color(0xFFF59E0B)),
-                      const SizedBox(width: 4),
+                      const Icon(Icons.stars_rounded, size: 15, color: Color(0xFFF59E0B)),
+                      const SizedBox(width: 3),
                       Text(
                         "${controller.score}",
                         style: const TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 11.5,
                           fontWeight: FontWeight.w900,
                           color: Color(0xFF1E293B),
                         ),

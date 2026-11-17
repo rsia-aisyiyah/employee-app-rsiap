@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 
 /// Tahapan (Fase) Memandikan Bayi sesuai SOP Medis RSIA
 enum BathPhase {
-  waterPrep,  // 1. Mengatur suhu air hangat & mengecek termometer
-  faceAndHair,// 2. Membersihkan wajah dengan kapas & keramas sampo bayi
-  bodyScrub,  // 3. Menggosok sabun & bermain bebek air di bak mandi
-  rinsing,    // 4. Membilas seluruh badan dengan air bersih
-  dryingCare, // 5. Mengeringkan dengan handuk, mengoles minyak telon & bedak
-  completed,  // Mandi selesai dengan hasil bintang 1-3
+  waterPrep,   // 1. Mengatur suhu air hangat & mengecek termometer
+  faceAndHair, // 2. Membersihkan wajah dengan kapas & keramas sampo bayi
+  bodyScrub,   // 3. Menggosok sabun & bermain bebek air di bak mandi
+  rinsing,     // 4. Membilas seluruh badan dengan air bersih
+  dryingCare,  // 5. Mengeringkan dengan handuk, mengoles minyak telon & bedong
+  returnToCrib,// 6. Mengembalikan bayi ke tempat tidur boks bayi (Baby Crib)
+  completed,   // Shift selesai dengan evaluasi multi-bayi
 }
 
 /// Tipe alat yang sedang aktif digunakan
@@ -22,6 +23,26 @@ enum BathTool {
   rubberDuck,   // Bebek karet mainan (mood booster)
   softTowel,    // Handuk lembut penghangat
   babyOil,      // Minyak telon harum
+  cribAction,   // Aksi meletakkan bayi ke tempat tidur boks
+}
+
+/// Profil Bayi dalam Antrean Shift Perinatologi
+class BabyProfile {
+  final int id;
+  final String motherName; // misal "Ny. Annisa", "Ny. Fatimah"
+  final String gender;     // "L" / "P"
+  final double initialTemp;
+  final BabyMood initialMood;
+  final Color swaddleColor;
+
+  const BabyProfile({
+    required this.id,
+    required this.motherName,
+    required this.gender,
+    this.initialTemp = 32.0,
+    this.initialMood = BabyMood.neutral,
+    this.swaddleColor = const Color(0xFFBAE6FD),
+  });
 }
 
 /// Ekspresi emosi bayi

@@ -83,7 +83,7 @@ class BabyBathHomeScreen extends StatelessWidget {
 
                     const SizedBox(height: 14),
 
-                    // Badge Unit
+                    // Badge Unit Perinatologi (Tanpa pengulangan kata RSIA)
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -92,7 +92,7 @@ class BabyBathHomeScreen extends StatelessWidget {
                         border: Border.all(color: const Color(0xFF0284C7).withValues(alpha: 0.3)),
                       ),
                       child: const Text(
-                        "RSIA AISYIYAH PEKAJANGAN",
+                        "INSTALASI PERINATOLOGI & KEBIDANAN",
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w800,
@@ -116,7 +116,7 @@ class BabyBathHomeScreen extends StatelessWidget {
                     const SizedBox(height: 6),
 
                     const Text(
-                      "Simulasi interaktif memandikan bayi baru lahir sesuai SOP kebidanan & perinatologi RSIA.",
+                      "Simulasi interaktif memandikan bayi sesuai SOP medis, menaruh kembali ke boks bayi, dan menyelesaikan shift perinatologi.",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12.5,

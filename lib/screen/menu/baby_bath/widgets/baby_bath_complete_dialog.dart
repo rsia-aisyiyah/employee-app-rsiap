@@ -18,21 +18,13 @@ class BabyBathCompleteDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final stars = controller.calculateStars();
 
-    String title = "Luar Biasa!";
-    String subtitle = "Bayi bersih, wangi, dan sangat nyaman!";
     Color titleColor = const Color(0xFF10B981);
 
     if (stars == 3) {
-      title = "Spesialis Mandi Bayi Teladan!";
-      subtitle = "Suhu air pas dan bayi sangat ceria & nyaman!";
       titleColor = const Color(0xFF0284C7);
     } else if (stars == 2) {
-      title = "Hebat & Teliti!";
-      subtitle = "Bayi sudah bersih, jaga kestabilan suhu air ya.";
       titleColor = const Color(0xFFF59E0B);
     } else {
-      title = "Perlu Perhatian Ekstra!";
-      subtitle = "Perhatikan suhu air agar bayi tidak menangis.";
       titleColor = const Color(0xFFEF4444);
     }
 
@@ -43,23 +35,23 @@ class BabyBathCompleteDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // RSIA Header Badge
+            // Header Bersih Tanpa Redundansi Teks
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Image.asset(
                   'assets/images/logo-rsia-aisyiyah.png',
-                  height: 28,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.local_hospital_rounded, size: 24, color: Color(0xFF0D9488)),
+                  height: 26,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.local_hospital_rounded, size: 22, color: Color(0xFF0D9488)),
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  "RSIA AISYIYAH PEKAJANGAN",
+                  "Evaluasi Shift Perinatologi",
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F766E),
-                    letterSpacing: 0.5,
+                    letterSpacing: 0.3,
                   ),
                 ),
               ],
@@ -86,10 +78,14 @@ class BabyBathCompleteDialog extends StatelessWidget {
             const SizedBox(height: 12),
 
             Text(
-              title,
+              controller.completedBabiesCount >= 3
+                  ? "Bidan Perinatologi Teladan!"
+                  : (controller.completedBabiesCount >= 2
+                      ? "Perawat Mahir Mandi Bayi!"
+                      : "Shift Telah Berakhir!"),
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 17,
                 fontWeight: FontWeight.w900,
                 color: titleColor,
               ),
@@ -98,18 +94,18 @@ class BabyBathCompleteDialog extends StatelessWidget {
             const SizedBox(height: 6),
 
             Text(
-              subtitle,
+              "${controller.completedBabiesCount} bayi telah bersih, wangi, dan tertidur lelap di boks!",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 12,
                 color: Colors.grey.shade600,
                 height: 1.3,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // Kartu Skor Rincian
+            // Kartu Skor Rincian Multi-Bayi
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -119,11 +115,11 @@ class BabyBathCompleteDialog extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildScoreRow("Skor Total", "${controller.score} Poin"),
-                  const Divider(height: 16),
-                  _buildScoreRow("Suhu Akhir", "${controller.waterTemp.toStringAsFixed(1)}°C"),
+                  _buildScoreRow("Bayi Selesai di Boks", "👶 ${controller.completedBabiesCount} Bayi"),
+                  const Divider(height: 14),
+                  _buildScoreRow("Skor Total Shift", "${controller.score} Poin"),
                   const SizedBox(height: 6),
-                  _buildScoreRow("Kenyamanan", "${controller.comfortMeter.toInt()}%"),
+                  _buildScoreRow("Tingkat Kenyamanan", "${controller.comfortMeter.toInt()}%"),
                 ],
               ),
             ),
