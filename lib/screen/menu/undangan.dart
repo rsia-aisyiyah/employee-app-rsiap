@@ -11,7 +11,6 @@ import 'package:rsia_employee_app/components/skeletons/skeleton_list.dart';
 
 import 'package:rsia_employee_app/utils/fonts.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
-import 'package:rsia_employee_app/utils/table.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 
@@ -628,8 +627,12 @@ class _UndanganState extends State<Undangan> {
                                                                         dataUdgn:
                                                                             dataUdgn)));
                                                       },
-                                                      label:
-                                                          const Text("Notulen"),
+                                                      label: const Text(
+                                                        "Notulen & RTL",
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
