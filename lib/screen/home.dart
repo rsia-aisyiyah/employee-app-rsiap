@@ -24,6 +24,7 @@ import 'package:rsia_employee_app/screen/menu/surat_internal/surat_internal_scre
 import 'package:rsia_employee_app/components/cards/card_mading_board.dart';
 import 'package:rsia_employee_app/screen/menu/approval_cuti.dart';
 import 'package:rsia_employee_app/screen/menu/approval_lembur.dart';
+import 'package:rsia_employee_app/components/cards/card_helpdesk_ticket.dart';
 
 class _MenuCategory {
   final String title;
@@ -77,6 +78,9 @@ class _HomePageState extends State<HomePage> {
   // ── Approval Cuti & Lembur ──────────────────────────────────────────────
   List<Map<String, dynamic>> _pendingApprovalCuti = [];
   List<Map<String, dynamic>> _pendingApprovalLembur = [];
+
+  // ── Helpdesk Tickets ────────────────────────────────────────────────────
+  List<Map<String, dynamic>> _unclosedHelpdesk = [];
 
   // ── Selected Mading Tab ─────────────────────────────────────────────────
   String _selectedMadingKey = 'undangan';
@@ -133,6 +137,7 @@ class _HomePageState extends State<HomePage> {
     await _getPendingMutuUnits();
     await _getPendingApprovalCuti();
     await _getPendingApprovalLembur();
+    await _getUnclosedHelpdesk();
     _autoSelectMadingKey();
 
     if (mounted) {
@@ -503,6 +508,23 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _getUnclosedHelpdesk() async {
+    try {
+      var res = await Api().getData('/helpdesk/tiket/unclosed');
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        final list = body['data'] ?? [];
+        if (list is List && mounted) {
+          setState(() {
+            _unclosedHelpdesk = list.map((e) => Map<String, dynamic>.from(e)).toList();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Error fetching unclosed helpdesk: $e");
+    }
+  }
+
   void _autoSelectMadingKey() {
     if (_upcomingUndangan.isNotEmpty) {
       _selectedMadingKey = 'undangan';
@@ -510,6 +532,8 @@ class _HomePageState extends State<HomePage> {
       _selectedMadingKey = 'rtl';
     } else if (_pendingMutuUnits.isNotEmpty) {
       _selectedMadingKey = 'mutu';
+    } else if (_unclosedHelpdesk.isNotEmpty) {
+      _selectedMadingKey = 'helpdesk';
     } else if (_pendingPjSurat.isNotEmpty) {
       _selectedMadingKey = 'surat';
     } else if (_pendingApprovalCuti.isNotEmpty) {
@@ -1410,6 +1434,18 @@ class _HomePageState extends State<HomePage> {
         pinXOffset: 20.0,
         seed: 5,
       ),
+      MadingMemoItem(
+        key: 'helpdesk',
+        title: 'Helpdesk',
+        count: _unclosedHelpdesk.length,
+        pinColor: const Color(0xFFEF4444),
+        paperColor: const Color(0xFFFEF2F2),
+        inkColor: const Color(0xFFB91C1C),
+        icon: Icons.support_agent_rounded,
+        rotation: -0.025,
+        pinXOffset: 34.0,
+        seed: 6,
+      ),
     ];
 
     // HANYA tampilkan memo yang memiliki data (count > 0)
@@ -1488,6 +1524,15 @@ class _HomePageState extends State<HomePage> {
         return KeyedSubtree(
           key: const ValueKey('mading_lembur'),
           child: _buildPendingLemburCard(),
+        );
+      case 'helpdesk':
+        if (_unclosedHelpdesk.isEmpty) {
+          return _buildEmptyMadingDetail("Tidak ada tiket helpdesk yang menunggu penanganan.", Icons.support_agent_rounded);
+        }
+        return CardHelpdeskTicket(
+          key: const ValueKey('mading_helpdesk'),
+          items: _unclosedHelpdesk,
+          onRefresh: _getUnclosedHelpdesk,
         );
       default:
         return const SizedBox.shrink();
