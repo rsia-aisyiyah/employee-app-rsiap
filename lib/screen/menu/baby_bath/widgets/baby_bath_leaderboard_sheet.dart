@@ -44,18 +44,26 @@ class _BabyBathLeaderboardSheetState extends State<BabyBathLeaderboardSheet> {
 
       if (resLeaderboard.statusCode == 200) {
         final bodyLeaderboard = jsonDecode(resLeaderboard.body);
-        if (bodyLeaderboard['success'] == true) {
-          _leaderboard = bodyLeaderboard['data'] ?? [];
+        if (bodyLeaderboard['success'] == true && bodyLeaderboard['data'] != null) {
+          final data = bodyLeaderboard['data'];
+          if (data is List) {
+            _leaderboard = data;
+          } else if (data is Map && data['leaderboard'] is List) {
+            _leaderboard = data['leaderboard'];
+          }
         }
+      } else {
+        _errorMessage = "Gagal memuat papan peringkat (${resLeaderboard.statusCode})";
       }
 
       if (resMyStats.statusCode == 200) {
         final bodyMyStats = jsonDecode(resMyStats.body);
-        if (bodyMyStats['success'] == true) {
+        if (bodyMyStats['success'] == true && bodyMyStats['data'] is Map<String, dynamic>) {
           _myStats = bodyMyStats['data'];
         }
       }
     } catch (e) {
+      debugPrint("Error fetching baby bath leaderboard: $e");
       _errorMessage = "Gagal memuat papan peringkat. Pastikan koneksi internet stabil.";
     } finally {
       if (mounted) {
@@ -222,8 +230,8 @@ class _BabyBathLeaderboardSheetState extends State<BabyBathLeaderboardSheet> {
 
   Widget _buildMyStatsCard() {
     final highScore = _myStats?['high_score'] ?? 0;
-    final totalBabies = _myStats?['total_babies_bathed'] ?? 0;
-    final gamesPlayed = _myStats?['total_games_played'] ?? 0;
+    final totalBabies = _myStats?['total_babies'] ?? _myStats?['total_babies_bathed'] ?? 0;
+    final gamesPlayed = _myStats?['total_shifts'] ?? _myStats?['total_games_played'] ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -315,11 +323,11 @@ class _BabyBathLeaderboardSheetState extends State<BabyBathLeaderboardSheet> {
     }
 
     final pegawai = item['pegawai'] ?? {};
-    final nama = pegawai['nama'] ?? item['nik'] ?? 'Pegawai RSIA';
-    final jabatan = pegawai['jbtn'] ?? 'Unit Perinatologi';
-    final score = item['score'] ?? 0;
-    final babies = item['completed_babies'] ?? 0;
-    final stars = item['stars'] ?? 1;
+    final nama = item['nama'] ?? pegawai['nama'] ?? item['nik'] ?? 'Pegawai RSIA';
+    final jabatan = item['jabatan'] ?? pegawai['jbtn'] ?? 'Unit Perinatologi';
+    final score = item['high_score'] ?? item['score'] ?? 0;
+    final babies = item['max_babies'] ?? item['total_babies_bathed'] ?? item['completed_babies'] ?? 0;
+    final stars = item['stars'] ?? (score >= 2000 ? 3 : (score >= 1500 ? 2 : 1));
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
