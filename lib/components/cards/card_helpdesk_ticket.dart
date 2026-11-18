@@ -222,18 +222,16 @@ class _CardHelpdeskTicketState extends State<CardHelpdeskTicket> {
       deptName = data['departemen']['nama'].toString();
     }
 
-    // Color theme based on priority & status
-    Color priorityColor = const Color(0xFFF59E0B); // Amber for Medium
-    if (prioritas.toLowerCase() == 'high') {
-      priorityColor = const Color(0xFFEF4444); // Red
-    } else if (prioritas.toLowerCase() == 'low') {
-      priorityColor = const Color(0xFF0EA5E9); // Blue
-    }
+    // Harmonized Helpdesk Red Palette
+    const helpdeskColor = Color(0xFFEF4444);
+    const helpdeskDark = Color(0xFFDC2626);
+    const helpdeskBg = Color(0xFFFEF2F2);
+    const helpdeskBorder = Color(0xFFFECACA);
 
     final isProses = status.toLowerCase() == 'proses';
-    final Color statusColor = isProses ? const Color(0xFF2563EB) : const Color(0xFFDC2626);
-    final Color statusBg = isProses ? const Color(0xFFEFF6FF) : const Color(0xFFFEF2F2);
-    final Color statusBorder = isProses ? const Color(0xFFBFDBFE) : const Color(0xFFFECACA);
+    final Color statusColor = isProses ? const Color(0xFFB91C1C) : helpdeskDark;
+    const Color statusBg = helpdeskBg;
+    const Color statusBorder = helpdeskBorder;
 
     // Format tanggal
     String dateStr = '';
@@ -296,8 +294,8 @@ class _CardHelpdeskTicketState extends State<CardHelpdeskTicket> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        priorityColor.withValues(alpha: 0.16),
-                        priorityColor.withValues(alpha: 0.04),
+                        helpdeskColor.withValues(alpha: 0.14),
+                        helpdeskColor.withValues(alpha: 0.04),
                       ],
                     ),
                   ),
@@ -307,28 +305,28 @@ class _CardHelpdeskTicketState extends State<CardHelpdeskTicket> {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: priorityColor.withValues(alpha: 0.12),
+                          color: helpdeskColor.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.support_agent_rounded,
                           size: 22,
-                          color: priorityColor,
+                          color: helpdeskColor,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                         decoration: BoxDecoration(
-                          color: priorityColor.withValues(alpha: 0.15),
+                          color: helpdeskColor.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           prioritas.toUpperCase(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 8.5,
                             fontWeight: FontWeight.w800,
-                            color: priorityColor,
+                            color: helpdeskDark,
                             letterSpacing: 0.3,
                           ),
                         ),
@@ -341,7 +339,7 @@ class _CardHelpdeskTicketState extends State<CardHelpdeskTicket> {
                 CustomPaint(
                   size: Size(1, cardHeight),
                   painter: _DashedLinePainter(
-                    color: const Color(0xFFE2E8F0),
+                    color: const Color(0xFFFECACA),
                     notchRadius: notchRadius,
                   ),
                 ),
@@ -482,7 +480,7 @@ class _CardHelpdeskTicketState extends State<CardHelpdeskTicket> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7).withValues(alpha: 0.08),
+                                color: helpdeskColor.withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Row(
@@ -493,14 +491,14 @@ class _CardHelpdeskTicketState extends State<CardHelpdeskTicket> {
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0284C7),
+                                      color: helpdeskDark,
                                     ),
                                   ),
                                   SizedBox(width: 2),
                                   Icon(
                                     Icons.arrow_forward_rounded,
                                     size: 10.5,
-                                    color: Color(0xFF0284C7),
+                                    color: helpdeskDark,
                                   ),
                                 ],
                               ),
