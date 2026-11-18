@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:rsia_employee_app/api/request.dart';
 import '../models/baby_bath_models.dart';
 import 'foam_particle_system.dart';
 
@@ -31,6 +32,12 @@ class BabyBathController extends ChangeNotifier {
   bool isBabyInCrib = false;
   double shiftSecondsRemaining = 120.0; // 2 Menit Shift Challenge
   bool isCompleted = false;
+  bool isSubmittingScore = false;
+  bool isScoreSubmitted = false;
+  String? scoreSubmitMessage;
+
+  // Daftar Titik Noda Visual & Area Anatomi Pembersihan Medis
+  List<BabyDirtSpot> dirtSpots = [];
 
   // Posisi Mainan Bebek Karet
   Offset duckPosition = const Offset(80, 240);
@@ -45,6 +52,7 @@ class BabyBathController extends ChangeNotifier {
   Timer? _moodResetTimer;
 
   void start() {
+    _initDirtSpots();
     _gameLoopTimer?.cancel();
     _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 33), (timer) {
       particleSystem.update(0.033);
@@ -55,6 +63,136 @@ class BabyBathController extends ChangeNotifier {
 
   void stop() {
     _gameLoopTimer?.cancel();
+  }
+
+  void _initDirtSpots() {
+    dirtSpots = [
+      // ── Fase 2: Wajah & Rambut (Face & Scalp Care) ──
+      BabyDirtSpot(
+        id: 'spot_forehead',
+        name: 'Dahi Bayi',
+        dxOffset: 0,
+        dyOffset: -24,
+        phase: BathPhase.faceAndHair,
+        requiredTool: BathTool.cottonPad,
+        radius: 14,
+        spotColor: const Color(0xFFD97706),
+      ),
+      BabyDirtSpot(
+        id: 'spot_cheek_l',
+        name: 'Pipi Kiri',
+        dxOffset: -26,
+        dyOffset: 10,
+        phase: BathPhase.faceAndHair,
+        requiredTool: BathTool.cottonPad,
+        radius: 13,
+        spotColor: const Color(0xFFD97706),
+      ),
+      BabyDirtSpot(
+        id: 'spot_cheek_r',
+        name: 'Pipi Kanan',
+        dxOffset: 26,
+        dyOffset: 10,
+        phase: BathPhase.faceAndHair,
+        requiredTool: BathTool.cottonPad,
+        radius: 13,
+        spotColor: const Color(0xFFD97706),
+      ),
+      BabyDirtSpot(
+        id: 'spot_hair',
+        name: 'Rambut Kepala',
+        dxOffset: 0,
+        dyOffset: -54,
+        phase: BathPhase.faceAndHair,
+        requiredTool: BathTool.shampoo,
+        radius: 18,
+        spotColor: const Color(0xFF78350F),
+      ),
+
+      // ── Fase 3: Gosok Sabun Tubuh (Body Scrub) ──
+      BabyDirtSpot(
+        id: 'spot_neck',
+        name: 'Lipatan Leher',
+        dxOffset: 0,
+        dyOffset: 38,
+        phase: BathPhase.bodyScrub,
+        requiredTool: BathTool.soapSponge,
+        radius: 15,
+        spotColor: const Color(0xFFB45309),
+      ),
+      BabyDirtSpot(
+        id: 'spot_chest',
+        name: 'Dada & Perut',
+        dxOffset: 0,
+        dyOffset: 65,
+        phase: BathPhase.bodyScrub,
+        requiredTool: BathTool.soapSponge,
+        radius: 18,
+        spotColor: const Color(0xFFB45309),
+      ),
+      BabyDirtSpot(
+        id: 'spot_arm_l',
+        name: 'Ketiak & Lengan Kiri',
+        dxOffset: -38,
+        dyOffset: 52,
+        phase: BathPhase.bodyScrub,
+        requiredTool: BathTool.soapSponge,
+        radius: 14,
+        spotColor: const Color(0xFFB45309),
+      ),
+      BabyDirtSpot(
+        id: 'spot_arm_r',
+        name: 'Ketiak & Lengan Kanan',
+        dxOffset: 38,
+        dyOffset: 52,
+        phase: BathPhase.bodyScrub,
+        requiredTool: BathTool.soapSponge,
+        radius: 14,
+        spotColor: const Color(0xFFB45309),
+      ),
+      BabyDirtSpot(
+        id: 'spot_groin',
+        name: 'Lipatan Paha',
+        dxOffset: 0,
+        dyOffset: 95,
+        phase: BathPhase.bodyScrub,
+        requiredTool: BathTool.soapSponge,
+        radius: 16,
+        spotColor: const Color(0xFFB45309),
+      ),
+
+      // ── Fase 5: Keringkan & Telon (Drying Care) ──
+      BabyDirtSpot(
+        id: 'spot_dry_head',
+        name: 'Keringkan Rambut',
+        dxOffset: 0,
+        dyOffset: -45,
+        phase: BathPhase.dryingCare,
+        requiredTool: BathTool.softTowel,
+        radius: 18,
+        spotColor: const Color(0xFF38BDF8),
+      ),
+      BabyDirtSpot(
+        id: 'spot_dry_body',
+        name: 'Keringkan Tubuh',
+        dxOffset: 0,
+        dyOffset: 55,
+        phase: BathPhase.dryingCare,
+        requiredTool: BathTool.softTowel,
+        radius: 20,
+        spotColor: const Color(0xFF38BDF8),
+      ),
+      BabyDirtSpot(
+        id: 'spot_telon',
+        name: 'Minyak Telon Hangat',
+        dxOffset: 0,
+        dyOffset: 68,
+        phase: BathPhase.dryingCare,
+        requiredTool: BathTool.babyOil,
+        radius: 18,
+        spotColor: const Color(0xFF10B981),
+      ),
+    ];
   }
 
   void restart() {
@@ -71,8 +209,10 @@ class BabyBathController extends ChangeNotifier {
     comfortMeter = 85.0;
     score = 0;
     isCompleted = false;
+    isSubmittingScore = false;
     floatingToasts.clear();
     particleSystem.clear();
+    _initDirtSpots();
     start();
     notifyListeners();
   }
@@ -131,149 +271,82 @@ class BabyBathController extends ChangeNotifier {
     }
   }
 
-  /// Interaksi Sentuh pada Karakter / Bak Mandi dengan Deteksi Area Sensitif Mata & SOP
-  void onTouch(Offset localPos, [Size screenSize = const Size(360, 640)]) {
+  /// Handler Gestur Tap Langsung
+  void onTapDown(Offset localPos, [Size screenSize = const Size(360, 640)]) {
+    // Interaksi bebek mainan
+    _handleDuckTouch(localPos);
+
+    if (phase == BathPhase.returnToCrib && !isBabyInCrib) {
+      putBabyInCrib();
+      return;
+    }
+
+    // Jika di fase air, beri feedback
+    if (phase == BathPhase.waterPrep) {
+      if (waterTemp >= 36.5 && waterTemp <= 37.5) {
+        _advanceToNextPhase();
+      } else {
+        addFloatingToast("Sesuaikan suhu air 36.5°C - 37.5°C terlebih dahulu!", isWarning: true, position: localPos);
+      }
+    }
+  }
+
+  /// Handler Gestur Usap / Pan Berirama (Deteksi Kecepatan & Area Titik Medis)
+  void onPanUpdate(Offset localPos, Offset delta, [Size screenSize = const Size(360, 640)]) {
     final cx = screenSize.width / 2;
     final cy = screenSize.height * 0.46;
     final babyY = cy - 25;
 
-    // Koordinat anatomis mata bayi
+    // 1. Cek Kecepatan Usapan (Roughness Detection)
+    final speed = delta.distance;
+    if (speed > 36.0) {
+      // Usapan terlalu cepat/kasar: Bayi terkejut/menangis!
+      mood = BabyMood.crying;
+      comfortMeter = (comfortMeter - 1.2).clamp(0, 100);
+      score = (score - 5).clamp(0, 99999);
+      particleSystem.spawnWaterSplash(localPos.dx, localPos.dy, count: 2);
+      addFloatingToast("⚠️ Terlalu kasar! Usap dengan lembut perlahan", isWarning: true, position: localPos);
+      _scheduleMoodReset();
+      notifyListeners();
+      return;
+    }
+
+    // 2. Deteksi Area Mata Bayi (Sensitivitas Sabun/Sampo)
     final leftEye = Offset(cx - 24, babyY - 1);
     final rightEye = Offset(cx + 24, babyY - 1);
     final distLeftEye = (localPos - leftEye).distance;
     final distRightEye = (localPos - rightEye).distance;
     final isEyeContact = distLeftEye < 18 || distRightEye < 18;
 
+    if (isEyeContact && (activeTool == BathTool.shampoo || activeTool == BathTool.soapSponge)) {
+      mood = BabyMood.crying;
+      comfortMeter = (comfortMeter - 4).clamp(0, 100);
+      score = (score - 10).clamp(0, 99999);
+      particleSystem.spawnWaterSplash(localPos.dx, localPos.dy, count: 3);
+      addFloatingToast("⚠️ Pedih! Sabun masuk ke mata bayi! (-10)", isWarning: true, position: localPos);
+      _scheduleMoodReset();
+      notifyListeners();
+      return;
+    }
+
+    // 3. Proses Titik Noda Medis Sesuai Fase Aktif
     switch (phase) {
       case BathPhase.waterPrep:
         _handleDuckTouch(localPos);
         break;
 
       case BathPhase.faceAndHair:
-        if (isEyeContact) {
-          // ── KENA MATA BAYI (PENALTI SOP) ──
-          if (activeTool == BathTool.shampoo || activeTool == BathTool.soapSponge) {
-            mood = BabyMood.crying;
-            comfortMeter = (comfortMeter - 10).clamp(0, 100);
-            score = (score - 20).clamp(0, 99999);
-            particleSystem.spawnWaterSplash(localPos.dx, localPos.dy, count: 4);
-            addFloatingToast("⚠️ Pedih! Sabun masuk ke mata bayi! (-20)", isWarning: true, position: localPos);
-            _scheduleMoodReset();
-          } else if (activeTool == BathTool.cottonPad) {
-            mood = BabyMood.crying;
-            comfortMeter = (comfortMeter - 4).clamp(0, 100);
-            score = (score - 10).clamp(0, 99999);
-            addFloatingToast("⚠️ Usap kelopak mata lembut dari arah dalam ke luar! (-10)", isWarning: true, position: localPos);
-            _scheduleMoodReset();
-          }
-        } else {
-          // ── USAPAN AMAN PADA WAJAH / RAMBUT ──
-          if (activeTool == BathTool.cottonPad) {
-            // Usap pipi, dahi, dagu
-            cleanlinessProgress = (cleanlinessProgress + 0.045).clamp(0.0, 1.0);
-            score += 15;
-            comfortMeter = (comfortMeter + 1.2).clamp(0, 100);
-            mood = BabyMood.happy;
-            particleSystem.spawnFoam(localPos.dx, localPos.dy, count: 2);
-            addFloatingToast("✨ Usapan Wajah Lembut (+15)", position: localPos);
-
-            if (cleanlinessProgress >= 1.0) {
-              _advanceToNextPhase();
-            }
-          } else if (activeTool == BathTool.shampoo) {
-            // Keramas rambut di atas dahi
-            if (localPos.dy < babyY + 5) {
-              cleanlinessProgress = (cleanlinessProgress + 0.04).clamp(0.0, 1.0);
-              score += 20;
-              comfortMeter = (comfortMeter + 1.5).clamp(0, 100);
-              mood = BabyMood.happy;
-              particleSystem.spawnFoam(localPos.dx, localPos.dy, count: 4);
-              addFloatingToast("🫧 Keramas rambut harum (+20)", position: localPos);
-
-              if (cleanlinessProgress >= 1.0) {
-                _advanceToNextPhase();
-              }
-            } else {
-              addFloatingToast("Sampo khusus untuk rambut kepala!", isWarning: true, position: localPos);
-            }
-          }
-        }
-        break;
-
       case BathPhase.bodyScrub:
-        _handleDuckTouch(localPos);
-        if (isEyeContact && activeTool == BathTool.soapSponge) {
-          // Sabun badan mengenai mata
-          mood = BabyMood.crying;
-          comfortMeter = (comfortMeter - 8).clamp(0, 100);
-          score = (score - 15).clamp(0, 99999);
-          addFloatingToast("⚠️ Jangan gunakan spons sabun badan ke area mata!", isWarning: true, position: localPos);
-          _scheduleMoodReset();
-        } else if (activeTool == BathTool.soapSponge) {
-          cleanlinessProgress = (cleanlinessProgress + 0.035).clamp(0.0, 1.0);
-          score += 20;
-          particleSystem.spawnFoam(localPos.dx, localPos.dy, count: 4);
-          mood = BabyMood.giggling;
-          addFloatingToast("🧼 Gosok ketiak & lipatan badan (+20)", position: localPos);
-
-          if (cleanlinessProgress >= 1.0) {
-            _advanceToNextPhase();
-          }
-        }
+      case BathPhase.dryingCare:
+        _processDirtSpotsCleaning(localPos, cx, babyY);
         break;
 
       case BathPhase.rinsing:
-        _handleDuckTouch(localPos);
-        if (activeTool == BathTool.showerSpray) {
-          if (isEyeContact) {
-            addFloatingToast("⚠️ Lindungi dahi bayi saat menyiram air!", isWarning: true, position: localPos);
-            comfortMeter = (comfortMeter - 4).clamp(0, 100);
-            mood = BabyMood.crying;
-            _scheduleMoodReset();
-          } else {
-            final removed = particleSystem.rinseNear(localPos.dx, localPos.dy, 45);
-            particleSystem.spawnWaterSplash(localPos.dx, localPos.dy, count: 3);
-            cleanlinessProgress = (cleanlinessProgress + 0.04).clamp(0.0, 1.0);
-            score += (removed * 10) + 15;
-            comfortMeter = (comfortMeter + 1.0).clamp(0, 100);
-            mood = BabyMood.happy;
-            addFloatingToast("🚿 Pembilasan air hangat segar (+15)", position: localPos);
-
-            if (cleanlinessProgress >= 1.0 && particleSystem.bubbles.isEmpty) {
-              _advanceToNextPhase();
-            }
-          }
-        }
-        break;
-
-      case BathPhase.dryingCare:
-        if (activeTool == BathTool.softTowel) {
-          cleanlinessProgress = (cleanlinessProgress + 0.05).clamp(0.0, 1.0);
-          score += 25;
-          comfortMeter = (comfortMeter + 2.0).clamp(0, 100);
-          mood = BabyMood.happy;
-          addFloatingToast("🧸 Keringkan dengan handuk lembut (+25)", position: localPos);
-
-          if (cleanlinessProgress >= 1.0) {
-            _advanceToNextPhase();
-          }
-        } else if (activeTool == BathTool.babyOil) {
-          cleanlinessProgress = (cleanlinessProgress + 0.06).clamp(0.0, 1.0);
-          score += 30;
-          comfortMeter = (comfortMeter + 3.0).clamp(0, 100);
-          mood = BabyMood.giggling;
-          addFloatingToast("🌿 Oleskan minyak telon wangi & hangat (+30)", position: localPos);
-
-          if (cleanlinessProgress >= 1.0) {
-            _advanceToNextPhase();
-          }
-        }
+        _processRinsingFoam(localPos, cx, babyY);
         break;
 
       case BathPhase.returnToCrib:
-        if (!isBabyInCrib) {
-          putBabyInCrib();
-        }
+        if (!isBabyInCrib) putBabyInCrib();
         break;
 
       case BathPhase.completed:
@@ -281,6 +354,125 @@ class BabyBathController extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  /// Backward-compatibility untuk onTouch (delegasi ke onPanUpdate)
+  void onTouch(Offset localPos, [Size screenSize = const Size(360, 640)]) {
+    onPanUpdate(localPos, const Offset(5, 5), screenSize);
+  }
+
+  /// Membersihkan titik noda visual dengan alat medis yang tepat
+  void _processDirtSpotsCleaning(Offset localPos, double cx, double babyY) {
+    // Ambil spot yang cocok dengan fase saat ini
+    final currentSpots = dirtSpots.where((s) => s.phase == phase).toList();
+    if (currentSpots.isEmpty) return;
+
+    for (final spot in currentSpots) {
+      final spotWorldPos = Offset(cx + spot.dxOffset, babyY + spot.dyOffset);
+      final dist = (localPos - spotWorldPos).distance;
+
+      // Jarak toleransi sentuh ke spot
+      if (dist <= spot.radius + 20) {
+        if (spot.requiredTool == activeTool) {
+          // Alat tepat: bersihkan noda
+          if (!spot.isClean) {
+            spot.cleanliness = (spot.cleanliness + 0.05).clamp(0.0, 1.0);
+            spot.isFoamed = true;
+            score += 10;
+            comfortMeter = (comfortMeter + 0.4).clamp(0, 100);
+            mood = BabyMood.happy;
+
+            if (activeTool == BathTool.shampoo || activeTool == BathTool.soapSponge) {
+              particleSystem.spawnFoam(spotWorldPos.dx, spotWorldPos.dy, count: 2);
+            } else if (activeTool == BathTool.babyOil) {
+              particleSystem.spawnWaterSplash(spotWorldPos.dx, spotWorldPos.dy, count: 1);
+            }
+
+            if (spot.isClean) {
+              addFloatingToast("✓ ${spot.name} Bersih!", position: spotWorldPos);
+            }
+          }
+        } else {
+          // Alat salah untuk spot ini
+          final toolName = _getToolName(spot.requiredTool);
+          addFloatingToast("Gunakan $toolName untuk ${spot.name}!", isWarning: true, position: localPos);
+        }
+      }
+    }
+
+    // Hitung persentase kebersihan akumulatif fase saat ini
+    final cleanSpots = currentSpots.where((s) => s.isClean).length;
+    cleanlinessProgress = cleanSpots / currentSpots.length;
+
+    // Jika seluruh titik pada fase ini sudah bersih tuntas, lanjutkan fase otomatis!
+    if (cleanlinessProgress >= 1.0) {
+      score += 50;
+      addFloatingToast("✨ Sempurna! Lanjut ke langkah berikutnya (+50)", position: Offset(cx, babyY));
+      _advanceToNextPhase();
+    }
+  }
+
+  /// Pembilasan Busa Sabun dengan Shower Air Hangat di Fase Rinsing
+  void _processRinsingFoam(Offset localPos, double cx, double babyY) {
+    _handleDuckTouch(localPos);
+
+    if (activeTool != BathTool.showerSpray) {
+      addFloatingToast("Gunakan Shower Air untuk membilas!", isWarning: true, position: localPos);
+      return;
+    }
+
+    particleSystem.spawnWaterSplash(localPos.dx, localPos.dy, count: 3);
+    particleSystem.rinseNear(localPos.dx, localPos.dy, 45);
+
+    final foamedSpots = dirtSpots.where((s) => s.isFoamed && !s.isRinsed).toList();
+    for (final spot in foamedSpots) {
+      final spotWorldPos = Offset(cx + spot.dxOffset, babyY + spot.dyOffset);
+      if ((localPos - spotWorldPos).distance <= spot.radius + 25) {
+        spot.isRinsed = true;
+        score += 20;
+        comfortMeter = (comfortMeter + 0.8).clamp(0, 100);
+        mood = BabyMood.happy;
+        addFloatingToast("🫧 Busa di ${spot.name} terbilas!", position: spotWorldPos);
+      }
+    }
+
+    // Progres pembilasan
+    final totalFoamed = dirtSpots.where((s) => s.isFoamed).length;
+    final rinsedCount = dirtSpots.where((s) => s.isFoamed && s.isRinsed).length;
+    cleanlinessProgress = totalFoamed > 0 ? (rinsedCount / totalFoamed).clamp(0.0, 1.0) : 1.0;
+
+    if (cleanlinessProgress >= 1.0) {
+      score += 60;
+      addFloatingToast("🚿 Seluruh busa dibilas tuntas! (+60)", position: Offset(cx, babyY));
+      _advanceToNextPhase();
+    }
+  }
+
+  String _getToolName(BathTool tool) {
+    switch (tool) {
+      case BathTool.waterTap:
+        return "Kran Air";
+      case BathTool.thermometer:
+        return "Termometer Air";
+      case BathTool.cottonPad:
+        return "Kapas Wajah";
+      case BathTool.shampoo:
+        return "Sampo Bayi";
+      case BathTool.soapSponge:
+        return "Spons Sabun";
+      case BathTool.showerSpray:
+        return "Shower Bilas";
+      case BathTool.rubberDuck:
+        return "Bebek Karet";
+      case BathTool.softTowel:
+        return "Handuk Lembut";
+      case BathTool.babyOil:
+        return "Minyak Telon";
+      case BathTool.cribAction:
+        return "Tempat Tidur Bayi";
+      case BathTool.none:
+        return "Tangan Bersih";
+    }
   }
 
   void _scheduleMoodReset() {
@@ -402,6 +594,38 @@ class BabyBathController extends ChangeNotifier {
     isCompleted = true;
     _gameLoopTimer?.cancel();
     notifyListeners();
+    submitScoreToBackend();
+  }
+
+  /// Kirim skor dan data shift ke database backend RSIA API
+  Future<void> submitScoreToBackend() async {
+    if (isSubmittingScore || isScoreSubmitted) return;
+
+    isSubmittingScore = true;
+    notifyListeners();
+
+    try {
+      final payload = {
+        'score': score,
+        'completed_babies': completedBabiesCount,
+        'avg_comfort': comfortMeter.round(),
+        'duration_seconds': (120 - shiftSecondsRemaining).round(),
+        'stars': calculateStars(),
+      };
+
+      final res = await Api().postData(payload, '/game/baby-bath/submit');
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        isScoreSubmitted = true;
+        scoreSubmitMessage = "Skor berhasil disimpan di Leaderboard!";
+      } else {
+        scoreSubmitMessage = "Gagal menyimpan skor (${res.statusCode})";
+      }
+    } catch (e) {
+      scoreSubmitMessage = "Gagal terhubung ke server untuk menyimpan skor";
+    } finally {
+      isSubmittingScore = false;
+      notifyListeners();
+    }
   }
 
   void _updateGameLoop(double dt) {

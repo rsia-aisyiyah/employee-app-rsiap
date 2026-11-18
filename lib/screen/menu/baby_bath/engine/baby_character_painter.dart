@@ -14,8 +14,8 @@ class BabyCharacterPainter extends CustomPainter {
   final double waterTemp; // misal 37.0 C
   final Offset duckPosition;
   final bool isDuckSqueaking;
+  final List<BabyDirtSpot> dirtSpots;
   final List<BabyFloatingToast> floatingToasts;
-
   final bool isBabyInCrib;
   final String babyName;
   final Color swaddleColor;
@@ -29,6 +29,7 @@ class BabyCharacterPainter extends CustomPainter {
     required this.waterLevel,
     required this.waterTemp,
     required this.duckPosition,
+    this.dirtSpots = const [],
     this.isDuckSqueaking = false,
     this.floatingToasts = const [],
     this.isBabyInCrib = false,
@@ -226,6 +227,47 @@ class BabyCharacterPainter extends CustomPainter {
       canvas.drawCircle(Offset(cx - 20, babyY - 50), 12, foamPaint);
       canvas.drawCircle(Offset(cx + 15, babyY - 53), 14, foamPaint);
       canvas.drawCircle(Offset(cx, babyY - 58), 16, foamPaint);
+    }
+
+    // ── Titik Noda Medis & Gumpalan Busa Sabun Tubuh ──
+    _drawDirtSpotsAndFoam(canvas, cx, babyY);
+  }
+
+  /// Gambar Titik Noda Visual & Efek Busa Sabun Interaktif
+  void _drawDirtSpotsAndFoam(Canvas canvas, double cx, double babyY) {
+    if (dirtSpots.isEmpty) return;
+
+    for (final spot in dirtSpots) {
+      final spotPos = Offset(cx + spot.dxOffset, babyY + spot.dyOffset);
+
+      // Tampilkan noda jika berada di fase aktif dan belum bersih sempurna
+      if (spot.phase == phase && !spot.isClean) {
+        final spotAlpha = ((1.0 - spot.cleanliness) * 0.70).clamp(0.08, 0.75);
+        final spotPaint = Paint()..color = spot.spotColor.withValues(alpha: spotAlpha);
+
+        // Lingkaran noda kotoran / verniks
+        canvas.drawCircle(spotPos, spot.radius, spotPaint);
+
+        // Cincin panduan usap berdenyut lembut
+        final pulse = math.sin((animationTime * 4.0) + (spot.dxOffset * 0.1)) * 2.5;
+        final ringPaint = Paint()
+          ..color = spot.spotColor.withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4;
+        canvas.drawCircle(spotPos, spot.radius + 3.0 + pulse, ringPaint);
+      }
+
+      // Tampilkan busa jika titik ini berbusa dan belum dibilas
+      if (spot.isFoamed && !spot.isRinsed) {
+        final foamWhite = Paint()..color = Colors.white.withValues(alpha: 0.90);
+        final foamShadow = Paint()..color = const Color(0xFFBAE6FD).withValues(alpha: 0.65);
+
+        // Klaster 3 bulatan busa sabun
+        canvas.drawCircle(spotPos, spot.radius * 0.85, foamShadow);
+        canvas.drawCircle(spotPos + const Offset(-3, -2), spot.radius * 0.65, foamWhite);
+        canvas.drawCircle(spotPos + const Offset(4, 2), spot.radius * 0.60, foamWhite);
+        canvas.drawCircle(spotPos + const Offset(0, -4), spot.radius * 0.50, foamWhite);
+      }
     }
   }
 

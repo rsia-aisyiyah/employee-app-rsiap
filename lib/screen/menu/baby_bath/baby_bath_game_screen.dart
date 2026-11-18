@@ -77,10 +77,10 @@ class _BabyBathGameScreenState extends State<BabyBathGameScreen>
                 return GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onPanUpdate: (details) {
-                    _controller.onTouch(details.localPosition, screenSize);
+                    _controller.onPanUpdate(details.localPosition, details.delta, screenSize);
                   },
                   onTapDown: (details) {
-                    _controller.onTouch(details.localPosition, screenSize);
+                    _controller.onTapDown(details.localPosition, screenSize);
                   },
                   child: AnimatedBuilder(
                     animation: Listenable.merge([_controller, _animController]),
@@ -95,6 +95,7 @@ class _BabyBathGameScreenState extends State<BabyBathGameScreen>
                           waterLevel: _controller.waterLevel,
                           waterTemp: _controller.waterTemp,
                           duckPosition: _controller.duckPosition,
+                          dirtSpots: _controller.dirtSpots,
                           isDuckSqueaking: _controller.isDuckSqueaking,
                           floatingToasts: _controller.floatingToasts,
                           isBabyInCrib: _controller.isBabyInCrib,

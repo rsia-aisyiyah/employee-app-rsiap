@@ -124,7 +124,54 @@ class BabyBathCompleteDialog extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
+
+            // Status Simpan ke Leaderboard Server
+            AnimatedBuilder(
+              animation: controller,
+              builder: (context, _) {
+                if (controller.isSubmittingScore) {
+                  return const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0284C7)),
+                      ),
+                      SizedBox(width: 8),
+                      Text("Menyimpan ke Leaderboard...", style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    ],
+                  );
+                }
+
+                if (controller.isScoreSubmitted) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.check_circle_rounded, size: 14, color: Color(0xFF10B981)),
+                        SizedBox(width: 6),
+                        Text(
+                          "Skor tersimpan di Leaderboard RSIA",
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return const SizedBox.shrink();
+              },
+            ),
+
+            const SizedBox(height: 16),
 
             // Tombol Main Lagi / Keluar
             Row(

@@ -114,3 +114,41 @@ class BabyFloatingToast {
   });
 }
 
+/// Model Titik Noda Visual & Area Pembersihan Anatomi Bayi
+class BabyDirtSpot {
+  final String id;
+  final String name;
+  final double dxOffset; // relatif thd cx
+  final double dyOffset; // relatif thd babyY
+  final BathPhase phase;
+  final BathTool requiredTool;
+  final double radius;
+  final Color spotColor;
+
+  double cleanliness; // 0.0 (kotor) s/d 1.0 (bersih)
+  bool isFoamed;      // apakah tertutup busa
+  bool isRinsed;      // apakah busa sudah dibilas
+
+  BabyDirtSpot({
+    required this.id,
+    required this.name,
+    required this.dxOffset,
+    required this.dyOffset,
+    required this.phase,
+    required this.requiredTool,
+    this.radius = 16.0,
+    this.spotColor = const Color(0xFFD97706),
+    this.cleanliness = 0.0,
+    this.isFoamed = false,
+    this.isRinsed = false,
+  });
+
+  bool get isClean => cleanliness >= 1.0;
+
+  void reset() {
+    cleanliness = 0.0;
+    isFoamed = false;
+    isRinsed = false;
+  }
+}
+

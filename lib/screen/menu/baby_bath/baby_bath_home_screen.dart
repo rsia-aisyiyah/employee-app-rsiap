@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'baby_bath_game_screen.dart';
+import 'widgets/baby_bath_leaderboard_sheet.dart';
 
 /// Layar Menu Utama Game "RSIA Baby Spa & Bath Care"
 class BabyBathHomeScreen extends StatelessWidget {
@@ -202,6 +203,33 @@ class BabyBathHomeScreen extends StatelessWidget {
                     "Mulai Memandikan Bayi",
                     style: TextStyle(
                       fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Tombol Papan Peringkat (Leaderboard)
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: OutlinedButton.icon(
+                  onPressed: () => BabyBathLeaderboardSheet.show(context),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0369A1),
+                    side: const BorderSide(color: Color(0xFFBAE6FD), width: 1.5),
+                    backgroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFD97706), size: 20),
+                  label: const Text(
+                    "Papan Peringkat (Leaderboard)",
+                    style: TextStyle(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
