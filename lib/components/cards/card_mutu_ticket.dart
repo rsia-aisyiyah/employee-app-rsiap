@@ -64,8 +64,8 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
               left: 20,
               right: 12,
               child: _buildDummyStackedTicket(
-                backgroundColor: const Color(0xFFF1F5F9),
-                borderColor: const Color(0xFFCBD5E1),
+                backgroundColor: const Color(0xFFF0FDFA).withValues(alpha: 0.5),
+                borderColor: const Color(0xFFCCFBF1),
                 shadowAlpha: 0.04,
               ),
             ),
@@ -78,8 +78,8 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
               left: 20,
               right: total >= 3 ? 22 : 16,
               child: _buildDummyStackedTicket(
-                backgroundColor: const Color(0xFFF8FAFC),
-                borderColor: const Color(0xFFE2E8F0),
+                backgroundColor: const Color(0xFFF0FDFA),
+                borderColor: const Color(0xFF99F6E4).withValues(alpha: 0.7),
                 shadowAlpha: 0.05,
               ),
             ),
@@ -187,21 +187,9 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
     if (status == 'revision') {
       accentColor = const Color(0xFFEF4444);
       lightBg = const Color(0xFFFEF2F2);
-    } else if (unit.isValidator && unit.pendingIndicators > 0 && unit.pendingAnalyses > 0) {
-      accentColor = const Color(0xFFF59E0B);
-      lightBg = const Color(0xFFFFFBEB);
-    } else if (unit.isValidator && unit.pendingIndicators > 0) {
-      accentColor = const Color(0xFFF59E0B);
-      lightBg = const Color(0xFFFFFBEB);
-    } else if (unit.isValidator && unit.pendingAnalyses > 0) {
-      accentColor = const Color(0xFF8B5CF6);
-      lightBg = const Color(0xFFF5F3FF);
-    } else if (status == 'requested') {
-      accentColor = const Color(0xFFF59E0B);
-      lightBg = const Color(0xFFFFFBEB);
     } else {
-      accentColor = const Color(0xFF2563EB);
-      lightBg = const Color(0xFFEFF6FF);
+      accentColor = const Color(0xFF0D9488); // Teal (sesuai memo Indikator Mutu)
+      lightBg = const Color(0xFFF0FDFA);
     }
 
     final double pct = unit.totalIndicators > 0
@@ -304,7 +292,7 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                 CustomPaint(
                   size: Size(1, cardHeight),
                   painter: _DashedLinePainter(
-                    color: Colors.grey.shade300,
+                    color: const Color(0xFFCCFBF1),
                     dashHeight: 3,
                     dashGap: 3,
                   ),
@@ -426,7 +414,7 @@ class _CardMutuTicketState extends State<CardMutuTicket> {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
+                                color: accentColor.withValues(alpha: 0.10),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
