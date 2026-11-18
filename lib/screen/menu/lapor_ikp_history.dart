@@ -10,7 +10,6 @@ import 'package:rsia_employee_app/api/request.dart';
 import 'package:rsia_employee_app/config/config.dart';
 import 'package:rsia_employee_app/config/colors.dart';
 import 'package:rsia_employee_app/screen/menu/lapor_ikp_form.dart';
-import 'package:rsia_employee_app/components/loadingku.dart';
 import 'package:rsia_employee_app/utils/msg.dart';
 
 class LaporIkpHistoryScreen extends StatefulWidget {
@@ -67,11 +66,13 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
 
     if (dep == 'IT' ||
         dep == 'SIT' ||
-        dep.contains('MUTU') ||
+        dep == 'DIR' ||
+        dep.contains('DIREKSI') ||
+        jbtn.contains('DIREKTUR') ||
+        jbtn.contains('DIREKSI') ||
         role == 'IT' ||
         role.contains('ADMIN') ||
-        role.contains('MUTU') ||
-        jbtn.contains('MUTU')) {
+        role.contains('DIREKSI')) {
       setState(() => _isMutuOrAdmin = true);
     }
   }
@@ -858,9 +859,9 @@ class _LaporIkpHistoryScreenState extends State<LaporIkpHistoryScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       appBar: AppBar(
-        title: const Text(
-          "Riwayat IKP Unit",
-          style: TextStyle(
+        title: Text(
+          _isMutuOrAdmin ? "Riwayat IKP" : "Riwayat IKP Saya",
+          style: const TextStyle(
             fontWeight: FontWeight.bold, 
             fontSize: 20, 
             letterSpacing: 0.5,
