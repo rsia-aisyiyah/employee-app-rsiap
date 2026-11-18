@@ -128,15 +128,19 @@ class _TindakLanjutDetailScreenState extends State<TindakLanjutDetailScreen> {
       return;
     }
 
+    FocusScope.of(context).unfocus();
     setState(() => _isSubmitting = true);
 
     try {
       final myNik = box.read('sub')?.toString();
+      final isCompleting = _selectedProgress >= 100 || _selectedStatus.toLowerCase() == 'selesai';
+
       Map<String, String> fields = {
         'pesan': pesan.isNotEmpty ? pesan : 'Mengirimkan berkas lampiran',
+        'komentar': pesan.isNotEmpty ? pesan : 'Mengirimkan berkas lampiran',
         'tipe': _selectedTipe,
         'progress_percent': _selectedProgress.toString(),
-        'status': _selectedStatus,
+        'status': isCompleting ? 'completed' : _selectedStatus,
         if (myNik != null && myNik.isNotEmpty) 'nik': myNik,
       };
 
@@ -153,9 +157,18 @@ class _TindakLanjutDetailScreenState extends State<TindakLanjutDetailScreen> {
         _pesanController.clear();
         _clearAttachedFile();
         if (mounted) {
-          Msg.success(context, 'Laporan / respon berhasil dikirim');
+          if (isCompleting) {
+            Msg.success(context, 'Tindak lanjut berhasil diselesaikan!');
+            Future.delayed(const Duration(milliseconds: 650), () {
+              if (mounted) {
+                Navigator.pop(context, true);
+              }
+            });
+          } else {
+            Msg.success(context, 'Laporan / respon berhasil dikirim');
+            await _loadDetail();
+          }
         }
-        await _loadDetail();
       } else {
         var body = json.decode(res.body);
         String errorMessage = body['message'] ?? 'Gagal mengirim respon';
