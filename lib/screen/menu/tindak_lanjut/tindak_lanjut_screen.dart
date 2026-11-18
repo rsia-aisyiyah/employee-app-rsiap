@@ -418,7 +418,7 @@ class _TindakLanjutScreenState extends State<TindakLanjutScreen>
 
             // Deskripsi Tindak Lanjut
             Text(
-              item.deskripsi.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ').trim(),
+              item.cleanDeskripsi,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(

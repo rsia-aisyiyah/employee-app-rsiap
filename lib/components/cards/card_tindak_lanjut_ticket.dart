@@ -480,7 +480,7 @@ class _CardTindakLanjutTicketState extends State<CardTindakLanjutTicket> {
                             ),
                             const SizedBox(height: 1.5),
                             Text(
-                              item.deskripsi,
+                              item.cleanDeskripsi,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(

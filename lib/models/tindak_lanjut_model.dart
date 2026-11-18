@@ -76,6 +76,14 @@ class TindakLanjutItem {
   String get creatorNama => creator?['nama'] ?? createdBy ?? '-';
   String get perihalRapat => undangan?['perihal'] ?? 'Rapat';
 
+  String get cleanDeskripsi {
+    if (deskripsi.isEmpty) return '-';
+    return deskripsi
+        .replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   DateTime? get deadlineDate {
     if (targetSelesai == null || targetSelesai!.isEmpty) return null;
     return DateTime.tryParse(targetSelesai!);
